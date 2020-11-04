@@ -1,0 +1,4 @@
+deskwm
+src/*.o
+*-protocol.c
+*-protocol.h
