@@ -39,11 +39,4 @@ struct view {
 };
 
 
-void on_frame(struct wl_listener *listener, void *data);
-void on_new_output(struct wl_listener *listener, void *data);
-void on_map(struct wl_listener *listener, void *data);
-void on_unmap(struct wl_listener *listener, void *data);
-void on_surface_destroy(struct wl_listener *listener, void *data);
-void on_request_move(struct wl_listener *listener, void *data);
-void on_request_resize(struct wl_listener *listener, void *data);
-void on_new_xdg_surface(struct wl_listener *listener, void *data);
+void create_serve();

@@ -12,4 +12,6 @@ struct output {
 };
 
 
+void on_frame(struct wl_listener *listener, void *data);
 void on_new_output(struct wl_listener *listener, void *data);
+void set_up_outputs(struct server *server);
