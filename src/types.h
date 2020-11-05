@@ -66,4 +66,10 @@ struct view {
 };
 
 
-struct server create_server();
+struct keyboard {
+    struct wl_list link;
+    struct server *server;
+    struct wlr_input_device *device;
+    struct wl_listener modifier_listener;
+    struct wl_listener key_listener;
+};

@@ -4,15 +4,15 @@
 #include "types.h"
 
 
-static void focus_view(struct view *view, struct wlr_surface *surface) {
+void focus_view(struct view *view, struct wlr_surface *surface) {
     if (view == NULL) {
-	    return;
+	return;
     }
     struct server *server = view->server;
     struct wlr_seat *seat = server->seat;
     struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
     if (prev_surface == surface) {
-	    return;
+	return;
     }
     if (prev_surface) {
 	struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
@@ -31,6 +31,7 @@ static void focus_view(struct view *view, struct wlr_surface *surface) {
 	keyboard->num_keycodes, &keyboard->modifiers
     );
 }
+
 
 void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
@@ -98,30 +99,30 @@ void on_request_resize(struct wl_listener *listener, void *data) {
 
 
 void on_new_xdg_surface(struct wl_listener *listener, void *data) {
-	struct server *server = wl_container_of(listener, server, new_xdg_surface_listener);
-	struct wlr_xdg_surface *surface = data;
-	if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		return;
-	}
+    struct server *server = wl_container_of(listener, server, new_xdg_surface_listener);
+    struct wlr_xdg_surface *surface = data;
+    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+	return;
+    }
 
-	struct view *view = calloc(1, sizeof(struct view));
-	view->server = server;
-	view->surface = surface;
+    struct view *view = calloc(1, sizeof(struct view));
+    view->server = server;
+    view->surface = surface;
 
-	view->map_listener.notify = on_map;
-	wl_signal_add(&surface->events.map, &view->map_listener);
-	view->unmap_listener.notify = on_unmap;
-	wl_signal_add(&surface->events.unmap, &view->unmap_listener);
-	view->destroy_listener.notify = on_surface_destroy;
-	wl_signal_add(&surface->events.destroy, &view->destroy_listener);
+    view->map_listener.notify = on_map;
+    wl_signal_add(&surface->events.map, &view->map_listener);
+    view->unmap_listener.notify = on_unmap;
+    wl_signal_add(&surface->events.unmap, &view->unmap_listener);
+    view->destroy_listener.notify = on_surface_destroy;
+    wl_signal_add(&surface->events.destroy, &view->destroy_listener);
 
-	struct wlr_xdg_toplevel *toplevel = surface->toplevel;
-	view->request_move_listener.notify = on_request_move;
-	wl_signal_add(&toplevel->events.request_move, &view->request_move_listener);
-	view->request_resize_listener.notify = on_request_resize;
-	wl_signal_add(&toplevel->events.request_resize, &view->request_resize_listener);
+    struct wlr_xdg_toplevel *toplevel = surface->toplevel;
+    view->request_move_listener.notify = on_request_move;
+    wl_signal_add(&toplevel->events.request_move, &view->request_move_listener);
+    view->request_resize_listener.notify = on_request_resize;
+    wl_signal_add(&toplevel->events.request_resize, &view->request_resize_listener);
 
-	wl_list_insert(&server->views, &view->link);
+    wl_list_insert(&server->views, &view->link);
 }
 
 
@@ -130,4 +131,4 @@ void set_up_shell(struct server *server) {
     server->shell = wlr_xdg_shell_create(server->display);
     server->new_xdg_surface_listener.notify = on_new_xdg_surface;
     wl_signal_add(&server->shell->events.new_surface, &server->new_xdg_surface_listener);
-};
+}
