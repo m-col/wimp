@@ -3,6 +3,7 @@
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -20,6 +21,7 @@ struct server create_server() {
     server.renderer = wlr_backend_get_renderer(server.backend);
     wlr_renderer_init_wl_display(server.renderer, server.display);
     wlr_compositor_create(server.display, server.renderer);
+    wlr_data_device_manager_create(server.display);
     return server;
 }
 
