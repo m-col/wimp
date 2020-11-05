@@ -56,11 +56,11 @@ struct view {
     struct wl_list link;
     struct server *server;
     struct wlr_xdg_surface *surface;
-    struct wl_listener map;
-    struct wl_listener unmap;
-    struct wl_listener destroy;
-    struct wl_listener request_move;
-    struct wl_listener request_resize;
+    struct wl_listener map_listener;
+    struct wl_listener unmap_listener;
+    struct wl_listener destroy_listener;
+    struct wl_listener request_move_listener;
+    struct wl_listener request_resize_listener;
     bool is_mapped;
     int x, y;
 };
