@@ -5,7 +5,18 @@
 
 
 void on_frame(struct wl_listener *listener, void *data) {
-    return;
+	struct output *output = wl_container_of(listener, output, frame_listener);
+	struct wlr_output *wlr_output = output->wlr_output;
+
+	wlr_output_attach_render(wlr_output, NULL);
+
+	struct wlr_renderer *renderer =
+	    wlr_backend_get_renderer(wlr_output->backend);
+
+	wlr_renderer_begin(renderer, wlr_output->width, wlr_output->height);
+	wlr_renderer_clear(renderer, (float[]){0, 0, 0, 1});
+	wlr_renderer_end(renderer);
+	wlr_output_commit(wlr_output);
 }
 
 
