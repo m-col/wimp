@@ -1,7 +1,7 @@
 #include <wlr/types/wlr_output_layout.h>
 
-#include "deskwm.h"
 #include "output.h"
+#include "types.h"
 
 
 void on_frame(struct wl_listener *listener, void *data) {

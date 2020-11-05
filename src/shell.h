@@ -1,6 +1,6 @@
 #pragma once
 
-#include "deskwm.h"
+#include "types.h"
 
 
 void on_map(struct wl_listener *listener, void *data);

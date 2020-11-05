@@ -1,7 +1,7 @@
 #pragma once
 #include <wlr/types/wlr_output_layout.h>
 
-#include "deskwm.h"
+#include "types.h"
 
 
 struct output {
