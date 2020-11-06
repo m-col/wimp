@@ -1,7 +1,7 @@
-#pragma once
+#ifndef DESKWM_INPUT_H
+#define DESKWM_INPUT_H
 
 #include "types.h"
-
 
 void process_cursor_move(struct server *server, uint32_t time);
 void process_cursor_resize(struct server *server, uint32_t time);
@@ -29,3 +29,5 @@ void on_request_cursor(struct wl_listener *listener, void *data);
 void on_request_set_selection(struct wl_listener *listener, void *data);
 void set_up_cursor(struct server *server);
 void set_up_keyboard(struct server *server);
+
+#endif

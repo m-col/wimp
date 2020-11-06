@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DESKWM_SHELL_H
+#define DESKWM_SHELL_H
 
 #include "types.h"
 
@@ -12,3 +13,5 @@ void on_request_move(struct wl_listener *listener, void *data);
 void on_request_resize(struct wl_listener *listener, void *data);
 void on_new_xdg_surface(struct wl_listener *listener, void *data);
 void set_up_shell(struct server *server);
+
+#endif

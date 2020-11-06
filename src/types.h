@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DESKWM_TYPES_H
+#define DESKWM_TYPES_H
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,13 +11,11 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
     CURSOR_MOVE,
     CURSOR_RESIZE,
 };
-
 
 struct server {
     struct wl_display *display;
@@ -52,7 +51,6 @@ struct server {
     uint32_t resize_edges;
 };
 
-
 struct view {
     struct wl_list link;
     struct server *server;
@@ -66,7 +64,6 @@ struct view {
     int x, y;
 };
 
-
 struct keyboard {
     struct wl_list link;
     struct server *server;
@@ -74,3 +71,5 @@ struct keyboard {
     struct wl_listener modifier_listener;
     struct wl_listener key_listener;
 };
+
+#endif
