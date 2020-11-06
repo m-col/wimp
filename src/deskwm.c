@@ -7,6 +7,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "config.h"
 #include "deskwm.h"
 #include "input.h"
 #include "output.h"
@@ -39,6 +40,9 @@ int main(int argc, char *argv[]) {
 
     // create
     struct server server = create_server();
+
+    // read config
+    load_config(&server);
 
     // configure
     set_up_outputs(&server);

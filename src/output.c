@@ -60,8 +60,7 @@ void on_frame(struct wl_listener *listener, void *data) {
     wlr_output_effective_resolution(output->wlr_output, &width, &height);
     wlr_renderer_begin(renderer, width, height);
 
-    float color[4] = {0.3, 0.05, 0.7, 1.0};  // background
-    wlr_renderer_clear(renderer, color);
+    wlr_renderer_clear(renderer, output->server->background);
 
     struct view *view;
     wl_list_for_each_reverse(view, &output->server->views, link) {
