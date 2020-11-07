@@ -29,7 +29,7 @@ struct server {
     struct wlr_xdg_shell *shell;
     struct wl_listener new_xdg_surface_listener;
     struct wl_list views;
-    float background[4];
+    struct wl_list desks;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;
@@ -70,6 +70,14 @@ struct keyboard {
     struct wlr_input_device *device;
     struct wl_listener modifier_listener;
     struct wl_listener key_listener;
+};
+
+struct desk {
+    struct wl_list link;
+    struct server *server;
+    float background[4];
+    int x, y;
+    int index;
 };
 
 #endif

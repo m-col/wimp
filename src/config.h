@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-
-void load_config(struct server *server);
+void assign_colour(char *hex, float dest[4]);
+void load_config(struct server *server, char *config);
 
 #endif

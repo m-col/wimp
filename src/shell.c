@@ -1,5 +1,6 @@
 #include <wlr/util/edges.h>
 
+#include "config.h"
 #include "output.h"
 #include "types.h"
 
@@ -123,6 +124,39 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     wl_signal_add(&toplevel->events.request_resize, &view->request_resize_listener);
 
     wl_list_insert(&server->views, &view->link);
+}
+
+
+static int desk_index = 0;
+
+
+void add_desk(struct server *server) {
+    struct desk *desk = calloc(1, sizeof(struct desk));
+    wl_list_insert(server->desks.prev, &desk->link);
+    desk->server = server;
+    assign_colour("#5D479D", desk->background);
+    desk->index = desk_index;
+    desk_index++;
+}
+
+
+void remove_desk(struct desk *desk) {
+    wl_list_remove(&desk->link);
+    free(desk);
+}
+
+
+void next_desk(struct server *server) {
+    struct wl_list *current = server->desks.next;
+    wl_list_remove(current);
+    wl_list_insert(server->desks.prev, current);
+}
+
+
+void prev_desk(struct server *server) {
+    struct wl_list *prev = server->desks.prev;
+    wl_list_remove(prev);
+    wl_list_insert(&server->desks, prev);
 }
 
 

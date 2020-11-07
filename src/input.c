@@ -215,6 +215,14 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	wl_list_insert(server->views.prev, &current_view->link);
 	break;
 
+    case XKB_KEY_Left:
+	prev_desk(server);
+	break;
+
+    case XKB_KEY_Right:
+	next_desk(server);
+	break;
+
     default:
 	return false;
     }

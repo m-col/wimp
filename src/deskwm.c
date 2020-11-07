@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
@@ -15,7 +16,23 @@
 #include "types.h"
 
 
-struct server create_server() {
+int main(int argc, char *argv[]) {
+    wlr_log_init(WLR_ERROR, NULL);
+
+    int opt;
+    char *config = NULL;
+    while ((opt = getopt(argc, argv, "dc:")) != -1) {
+        switch (opt) {
+	    case 'd':
+		wlr_log_init(WLR_DEBUG, NULL);
+		break;
+	    case 'c':
+		config = strdup(optarg);
+		break;
+        }
+    }
+
+    // create
     struct server server;
     server.display = wl_display_create();
     server.backend = wlr_backend_autocreate(server.display, NULL);
@@ -23,26 +40,11 @@ struct server create_server() {
     wlr_renderer_init_wl_display(server.renderer, server.display);
     wlr_compositor_create(server.display, server.renderer);
     wlr_data_device_manager_create(server.display);
-    return server;
-}
-
-
-int main(int argc, char *argv[]) {
-    wlr_log_init(WLR_ERROR, NULL);
-
-    int opt;
-    while ((opt = getopt(argc, argv, "d")) != -1) {
-        switch (opt) {
-	    case 'd':
-		wlr_log_init(WLR_DEBUG, NULL);
-        }
-    }
-
-    // create
-    struct server server = create_server();
+    wl_list_init(&server.desks);
 
     // read config
-    load_config(&server);
+    load_config(&server, config);
+    free(config);
 
     // configure
     set_up_outputs(&server);
