@@ -127,7 +127,7 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
 }
 
 
-static int desk_index = 0;
+static int num_desks = 0;
 
 
 void add_desk(struct server *server) {
@@ -135,8 +135,8 @@ void add_desk(struct server *server) {
     wl_list_insert(server->desks.prev, &desk->link);
     desk->server = server;
     assign_colour("#5D479D", desk->background);
-    desk->index = desk_index;
-    desk_index++;
+    desk->index = num_desks;
+    num_desks++;
 }
 
 
@@ -147,16 +147,24 @@ void remove_desk(struct desk *desk) {
 
 
 void next_desk(struct server *server) {
-    struct wl_list *current = server->desks.next;
-    wl_list_remove(current);
-    wl_list_insert(server->desks.prev, current);
+    struct desk *desk;
+    if (server->current_desk->index + 1 == num_desks) {
+	desk = wl_container_of(server->desks.next, desk, link);
+    } else {
+	desk = wl_container_of(server->current_desk->link.next, desk, link);
+    }
+    server->current_desk = desk;
 }
 
 
 void prev_desk(struct server *server) {
-    struct wl_list *prev = server->desks.prev;
-    wl_list_remove(prev);
-    wl_list_insert(&server->desks, prev);
+    struct desk *desk;
+    if (server->current_desk->index == 0) {
+	desk = wl_container_of(server->desks.prev, desk, link);
+    } else {
+	desk = wl_container_of(server->current_desk->link.prev, desk, link);
+    }
+    server->current_desk = desk;
 }
 
 

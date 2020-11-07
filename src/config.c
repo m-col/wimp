@@ -35,6 +35,8 @@ void assign_colour(char *hex, float dest[4]) {
 
 static void set_defaults(struct server *server) {
     add_desk(server);
+    server->current_desk =
+	wl_container_of(server->desks.prev, server->current_desk, link);
 }
 
 

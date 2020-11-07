@@ -30,6 +30,7 @@ struct server {
     struct wl_listener new_xdg_surface_listener;
     struct wl_list views;
     struct wl_list desks;
+    struct desk *current_desk;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

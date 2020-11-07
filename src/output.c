@@ -60,8 +60,7 @@ void on_frame(struct wl_listener *listener, void *data) {
     wlr_output_effective_resolution(output->wlr_output, &width, &height);
     wlr_renderer_begin(renderer, width, height);
 
-    struct desk *desk = wl_container_of(output->server->desks.next, desk, link);
-    wlr_renderer_clear(renderer, desk->background);
+    wlr_renderer_clear(renderer, output->server->current_desk->background);
 
     struct view *view;
     wl_list_for_each_reverse(view, &output->server->views, link) {
