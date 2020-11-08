@@ -60,7 +60,6 @@ struct view {
     struct wl_listener destroy_listener;
     struct wl_listener request_move_listener;
     struct wl_listener request_resize_listener;
-    bool is_mapped;
     int x, y;
 };
 

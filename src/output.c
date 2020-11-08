@@ -64,9 +64,6 @@ void on_frame(struct wl_listener *listener, void *data) {
 
     struct view *view;
     wl_list_for_each_reverse(view, &output->server->views, link) {
-	if (!view->is_mapped) {
-	    continue;
-	}
 	struct render_data rdata = {
 	    .output = output->wlr_output,
 	    .view = view,
