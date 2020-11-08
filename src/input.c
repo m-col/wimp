@@ -222,14 +222,6 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	next_desk(server);
 	break;
 
-    case XKB_KEY_Up:
-	server->current_desk->y -= 10;
-	break;
-
-    case XKB_KEY_Down:
-	server->current_desk->y += 10;
-	break;
-
     default:
 	return false;
     }
