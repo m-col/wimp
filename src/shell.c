@@ -34,7 +34,7 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     /* Move the view to the front */
     wl_list_remove(&view->link);
-    wl_list_insert(&server->views, &view->link);
+    wl_list_insert(&server->current_desk->views, &view->link);
     /* Activate the new surface */
     wlr_xdg_toplevel_set_activated(view->surface, true);
     wlr_seat_keyboard_notify_enter(
@@ -124,7 +124,7 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     view->request_resize_listener.notify = on_request_resize;
     wl_signal_add(&toplevel->events.request_resize, &view->request_resize_listener);
 
-    wl_list_insert(&server->views, &view->link);
+    wl_list_insert(&server->current_desk->views, &view->link);
 }
 
 
@@ -135,6 +135,7 @@ void add_desk(struct server *server) {
     struct desk *desk = calloc(1, sizeof(struct desk));
     wl_list_insert(server->desks.prev, &desk->link);
     desk->server = server;
+    wl_list_init(&desk->views);
     assign_colour("#5D479D", desk->background);
     desk->index = num_desks;
     num_desks++;
@@ -170,7 +171,6 @@ void prev_desk(struct server *server) {
 
 
 void set_up_shell(struct server *server) {
-    wl_list_init(&server->views);
     server->shell = wlr_xdg_shell_create(server->display);
     server->new_xdg_surface_listener.notify = on_new_xdg_surface;
     wl_signal_add(&server->shell->events.new_surface, &server->new_xdg_surface_listener);

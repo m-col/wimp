@@ -28,7 +28,6 @@ struct server {
 
     struct wlr_xdg_shell *shell;
     struct wl_listener new_xdg_surface_listener;
-    struct wl_list views;
     struct wl_list desks;
     struct desk *current_desk;
 
@@ -74,6 +73,7 @@ struct keyboard {
 struct desk {
     struct wl_list link;
     struct server *server;
+    struct wl_list views;
     float background[4];
     int x, y;
     int index;

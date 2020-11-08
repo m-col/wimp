@@ -63,7 +63,7 @@ void on_frame(struct wl_listener *listener, void *data) {
     wlr_renderer_clear(renderer, output->server->current_desk->background);
 
     struct view *view;
-    wl_list_for_each_reverse(view, &output->server->views, link) {
+    wl_list_for_each_reverse(view, &output->server->current_desk->views, link) {
 	struct render_data rdata = {
 	    .output = output->wlr_output,
 	    .view = view,

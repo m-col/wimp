@@ -87,7 +87,7 @@ struct view *desktop_view_at(
     double *sx, double *sy
 ) {
     struct view *view;
-    wl_list_for_each(view, &server->views, link) {
+    wl_list_for_each(view, &server->current_desk->views, link) {
 	if (view_at(view, lx, ly, surface, sx, sy)) {
 	    return view;
 	}
