@@ -1,6 +1,8 @@
 #include "config.h"
 #include "desk.h"
+#include "shell.h"
 #include "types.h"
+
 
 static int num_desks = 0;
 
@@ -22,6 +24,18 @@ void remove_desk(struct desk *desk) {
 }
 
 
+void set_desk(struct server *server, struct desk *desk) {
+    struct view *view;
+    wl_list_for_each(view, &server->current_desk->views, link) {
+	unmap_view(view);
+    }
+    server->current_desk = desk;
+    wl_list_for_each(view, &server->current_desk->views, link) {
+	map_view(view);
+    }
+}
+
+
 void next_desk(struct server *server) {
     struct desk *desk;
     if (server->current_desk->index + 1 == num_desks) {
@@ -29,7 +43,7 @@ void next_desk(struct server *server) {
     } else {
 	desk = wl_container_of(server->current_desk->link.next, desk, link);
     }
-    server->current_desk = desk;
+    set_desk(server, desk);
 }
 
 
@@ -40,5 +54,5 @@ void prev_desk(struct server *server) {
     } else {
 	desk = wl_container_of(server->current_desk->link.prev, desk, link);
     }
-    server->current_desk = desk;
+    set_desk(server, desk);
 }
