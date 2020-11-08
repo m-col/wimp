@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_data_device.h>
@@ -97,19 +98,14 @@ struct view *desktop_view_at(
 }
 
 
-void process_cursor_motion(struct server *server, uint32_t time) {
+void process_cursor_motion(struct server *server, uint32_t time, double dx, double dy) {
+
     double sx, sy;
     struct wlr_seat *seat;
     struct wlr_surface *surface;
     struct view *view;
 
     switch (server->cursor_mode) {
-	case CURSOR_MOVE:
-	    process_cursor_move(server, time);
-	    break;
-	case CURSOR_RESIZE:
-	    process_cursor_resize(server, time);
-	    break;
 	case CURSOR_PASSTHROUGH:
 	    seat = server->seat;
 	    surface = NULL;
@@ -130,6 +126,16 @@ void process_cursor_motion(struct server *server, uint32_t time) {
 		wlr_seat_pointer_clear_focus(seat);
 	    }
 	    break;
+	case CURSOR_PAN:
+	    server->current_desk->x += dx;
+	    server->current_desk->y += dy;
+	    break;
+	case CURSOR_MOVE:
+	    process_cursor_move(server, time);
+	    break;
+	case CURSOR_RESIZE:
+	    process_cursor_resize(server, time);
+	    break;
     }
 }
 
@@ -138,7 +144,7 @@ void on_cursor_motion(struct wl_listener *listener, void *data){
     struct server *server = wl_container_of(listener, server, cursor_motion_listener);
     struct wlr_event_pointer_motion *event = data;
     wlr_cursor_move(server->cursor, event->device, event->delta_x, event->delta_y);
-    process_cursor_motion(server, event->time_msec);
+    process_cursor_motion(server, event->time_msec, event->delta_x, event->delta_y);
 }
 
 
@@ -147,7 +153,7 @@ void on_cursor_motion_absolute(struct wl_listener *listener, void *data) {
 	cursor_motion_absolute_listener);
     struct wlr_event_pointer_motion_absolute *event = data;
     wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
-    process_cursor_motion(server, event->time_msec);
+    process_cursor_motion(server, event->time_msec, 0, 0);
 }
 
 
@@ -192,6 +198,12 @@ void on_modifier(struct wl_listener *listener, void *data) {
     wlr_seat_keyboard_notify_modifiers(
 	keyboard->server->seat, &keyboard->device->keyboard->modifiers
     );
+    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+    if ((modifiers & MOD)) {
+	keyboard->server->cursor_mode = CURSOR_PAN;
+    } else {
+	keyboard->server->cursor_mode = CURSOR_PASSTHROUGH;
+    }
 }
 
 
@@ -236,13 +248,13 @@ void on_key(struct wl_listener *listener, void *data) {
     /* Get a list of keysyms based on the keymap for this keyboard */
     const xkb_keysym_t *syms;
     int nsyms = xkb_state_key_get_syms(
-		    keyboard->device->keyboard->xkb_state, keycode, &syms);
+	keyboard->device->keyboard->xkb_state, keycode, &syms);
 
     bool handled = false;
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
     if ((modifiers & MOD) && event->state == WLR_KEY_PRESSED) {
 	for (int i = 0; i < nsyms; i++) {
-		handled = handle_keybinding(server, syms[i]);
+	    handled = handle_keybinding(server, syms[i]);
 	}
     }
 

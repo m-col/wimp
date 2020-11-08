@@ -5,7 +5,6 @@
 
 void process_cursor_move(struct server *server, uint32_t time);
 void process_cursor_resize(struct server *server, uint32_t time);
-void process_cursor_motion(struct server *server, uint32_t time);
 bool view_at(
     struct view *view, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy
@@ -14,7 +13,7 @@ struct view *desktop_view_at(
     struct server *server, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy
 );
-void process_cursor_motion(struct server *server, uint32_t time);
+void process_cursor_motion(struct server *server, uint32_t time, double dx, double dy);
 void on_cursor_motion(struct wl_listener *listener, void *data);
 void on_cursor_motion_absolute(struct wl_listener *listener, void *data);
 void on_cursor_button(struct wl_listener *listener, void *data);

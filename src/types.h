@@ -13,6 +13,7 @@
 
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
+    CURSOR_PAN,
     CURSOR_MOVE,
     CURSOR_RESIZE,
 };
