@@ -12,23 +12,29 @@ void render_surface(
     struct render_data *rdata = data;
     struct view *view = rdata->view;
     struct wlr_output *output = rdata->output;
+    struct server *server = view->server;
 
     struct wlr_texture *texture = wlr_surface_get_texture(surface);
     if (texture == NULL) {
 	return;
     }
 
-    // get output-relative coordinates
-    double ox = 0, oy = 0;
-    wlr_output_layout_output_coords(
-	view->server->output_layout, output, &ox, &oy
-    );
-    ox += view->x + sx, oy += view->y + sy;
+    double x = 0, y = 0;
+    struct wlr_output_layout_output *ol;
+    wl_list_for_each(ol, &server->output_layout->outputs, link) {
+	if (ol->output == output) {
+	    x = - (double)ol->x;
+	    y = - (double)ol->y;
+	    break;
+	}
+    }
+    x += view->x + sx - server->current_desk->x;
+    y += view->y + sy - server->current_desk->y;
 
     // scale for HiDPI
     struct wlr_box box = {
-	.x = ox * output->scale,
-	.y = oy * output->scale,
+	.x = x * output->scale,
+	.y = y * output->scale,
 	.width = surface->current.width * output->scale,
 	.height = surface->current.height * output->scale,
     };

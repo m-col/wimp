@@ -59,7 +59,7 @@ struct view {
     struct wl_listener destroy_listener;
     struct wl_listener request_move_listener;
     struct wl_listener request_resize_listener;
-    int x, y;
+    double x, y;
 };
 
 struct keyboard {
@@ -75,7 +75,7 @@ struct desk {
     struct server *server;
     struct wl_list views;
     float background[4];
-    int x, y;
+    double x, y;
     int index;
 };
 
