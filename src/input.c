@@ -3,6 +3,7 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
+#include "desk.h"
 #include "input.h"
 #include "shell.h"
 #include "types.h"

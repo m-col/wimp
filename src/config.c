@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "shell.h"
+#include "desk.h"
 #include "types.h"
 
 
