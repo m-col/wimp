@@ -189,7 +189,6 @@ void on_cursor_frame(struct wl_listener *listener, void *data) {
 
 void on_modifier(struct wl_listener *listener, void *data) {
     struct keyboard *keyboard = wl_container_of(listener, keyboard, modifier_listener);
-    wlr_seat_set_keyboard(keyboard->server->seat, keyboard->device); // move to on_new_keyboard?
     wlr_seat_keyboard_notify_modifiers(
 	keyboard->server->seat, &keyboard->device->keyboard->modifiers
     );
@@ -241,7 +240,6 @@ void on_key(struct wl_listener *listener, void *data) {
 
     if (!handled) {
 	// forward to client
-	wlr_seat_set_keyboard(seat, keyboard->device); // move to on_new_keyboard?
 	wlr_seat_keyboard_notify_key(seat, event->time_msec,
 	    event->keycode, event->state);
     }
