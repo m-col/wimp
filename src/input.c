@@ -202,19 +202,6 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	wl_display_terminate(server->display);
 	break;
 
-    case XKB_KEY_F1: // to next view
-	if (wl_list_length(&server->views) < 2) {
-	    break;
-	}
-	struct view *current_view = wl_container_of(
-	    server->views.next, current_view, link);
-	struct view *next_view = wl_container_of(
-	    current_view->link.next, next_view, link);
-	focus_view(next_view, next_view->surface->surface);
-	wl_list_remove(&current_view->link);
-	wl_list_insert(server->views.prev, &current_view->link);
-	break;
-
     case XKB_KEY_Left:
 	prev_desk(server);
 	break;
