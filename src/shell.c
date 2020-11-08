@@ -5,6 +5,16 @@
 #include "types.h"
 
 
+void unmap_view(struct view *view) {
+    wl_signal_emit(&view->surface->events.unmap, view);
+}
+
+
+void map_view(struct view *view) {
+    wl_signal_emit(&view->surface->events.map, view);
+}
+
+
 void focus_view(struct view *view, struct wlr_surface *surface) {
     if (view == NULL) {
 	return;
@@ -38,12 +48,6 @@ void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
     view->is_mapped = true;
     focus_view(view, view->surface->surface);
-}
-
-
-void on_unmap(struct wl_listener *listener, void *data) {
-    struct view *view = wl_container_of(listener, view, unmap_listener);
-    view->is_mapped = false;
 }
 
 
@@ -112,8 +116,6 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
 
     view->map_listener.notify = on_map;
     wl_signal_add(&surface->events.map, &view->map_listener);
-    view->unmap_listener.notify = on_unmap;
-    wl_signal_add(&surface->events.unmap, &view->unmap_listener);
     view->destroy_listener.notify = on_surface_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy_listener);
 

@@ -57,7 +57,6 @@ struct view {
     struct server *server;
     struct wlr_xdg_surface *surface;
     struct wl_listener map_listener;
-    struct wl_listener unmap_listener;
     struct wl_listener destroy_listener;
     struct wl_listener request_move_listener;
     struct wl_listener request_resize_listener;

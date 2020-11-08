@@ -3,9 +3,10 @@
 
 #include "types.h"
 
+void unmap_view(struct view *view);
+void map_view(struct view *view);
 void focus_view(struct view *view, struct wlr_surface *surface);
 void on_map(struct wl_listener *listener, void *data);
-void on_unmap(struct wl_listener *listener, void *data);
 void on_surface_destroy(struct wl_listener *listener, void *data);
 void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edges);
 void on_request_move(struct wl_listener *listener, void *data);
