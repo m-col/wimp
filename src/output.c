@@ -28,8 +28,8 @@ void render_surface(
 	    break;
 	}
     }
-    x += view->x + sx - server->current_desk->x;
-    y += view->y + sy - server->current_desk->y;
+    x += view->x + sx;
+    y += view->y + sy;
 
     // scale for HiDPI
     struct wlr_box box = {

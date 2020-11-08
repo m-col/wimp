@@ -76,7 +76,6 @@ struct desk {
     struct server *server;
     struct wl_list views;
     float background[4];
-    double x, y;
     int index;
 };
 

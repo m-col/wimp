@@ -126,13 +126,18 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 		wlr_seat_pointer_clear_focus(seat);
 	    }
 	    break;
+
 	case CURSOR_PAN:
-	    server->current_desk->x += dx;
-	    server->current_desk->y += dy;
+	    wl_list_for_each(view, &server->current_desk->views, link) {
+		view->x += dx;
+		view->y += dy;
+	    }
 	    break;
+
 	case CURSOR_MOVE:
 	    process_cursor_move(server, time);
 	    break;
+
 	case CURSOR_RESIZE:
 	    process_cursor_resize(server, time);
 	    break;
