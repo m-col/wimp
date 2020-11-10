@@ -1,10 +1,12 @@
 #ifndef DESKWM_TYPES_H
 #define DESKWM_TYPES_H
 
+#include <cairo/cairo.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/render/wlr_texture.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -71,11 +73,18 @@ struct keyboard {
     struct wl_listener key_listener;
 };
 
+struct wallpaper {
+    struct wlr_texture *texture;
+    int width, height;
+};
+
 struct desk {
     struct wl_list link;
     struct server *server;
     struct wl_list views;
     float background[4];
+    struct wallpaper *wallpaper;
+    double panned_x, panned_y;
     int index;
 };
 

@@ -4,7 +4,8 @@ OBJECTS	= $(SOURCES:.c=.o)
 CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic
 LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs wayland-server) \
-	    $(shell pkg-config --cflags --libs xkbcommon)
+	    $(shell pkg-config --cflags --libs xkbcommon) \
+	    $(shell pkg-config --cflags --libs cairo)
 
 ${OUT}: xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
 	@$(CC) -o ${OUT} $(OBJECTS) $(LDFLAGS)

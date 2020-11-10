@@ -54,6 +54,7 @@ void render_surface(
 void on_frame(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, frame_listener);
     struct wlr_renderer *renderer = output->server->renderer;
+    struct desk *desk = output->server->current_desk;
 
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -65,11 +66,21 @@ void on_frame(struct wl_listener *listener, void *data) {
     int width, height;
     wlr_output_effective_resolution(output->wlr_output, &width, &height);
     wlr_renderer_begin(renderer, width, height);
-
-    wlr_renderer_clear(renderer, output->server->current_desk->background);
+    wlr_renderer_clear(renderer, desk->background);
+    struct wallpaper *wallpaper = desk->wallpaper;
+    if (wallpaper != NULL) {
+	int wh = wallpaper->height;
+	int ww = wallpaper->width;
+	for (int x = ((int)desk->panned_x % ww) - ww; x < width; x += ww) {
+	    for (int y = ((int)desk->panned_y % wh) - wh; y < height; y += wh) {
+		wlr_render_texture(renderer, wallpaper->texture,
+		    output->wlr_output->transform_matrix, x, y, 1.0f);
+	    }
+	}
+    }
 
     struct view *view;
-    wl_list_for_each_reverse(view, &output->server->current_desk->views, link) {
+    wl_list_for_each_reverse(view, &desk->views, link) {
 	struct render_data rdata = {
 	    .output = output->wlr_output,
 	    .view = view,

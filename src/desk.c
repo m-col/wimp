@@ -13,6 +13,7 @@ void add_desk(struct server *server) {
     desk->server = server;
     wl_list_init(&desk->views);
     assign_colour("#5D479D", desk->background);
+    desk->wallpaper = NULL;
     desk->index = num_desks;
     num_desks++;
 }

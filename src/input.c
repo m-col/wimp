@@ -132,6 +132,8 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 		view->x += dx;
 		view->y += dy;
 	    }
+	    server->current_desk->panned_x += dx;
+	    server->current_desk->panned_y += dy;
 	    break;
 
 	case CURSOR_MOVE:
