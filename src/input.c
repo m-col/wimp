@@ -173,15 +173,15 @@ void on_cursor_button(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_button(
 	server->seat, event->time_msec, event->button, event->state
     );
-    double sx, sy;
-    struct wlr_surface *surface;
-    struct view *view = desktop_view_at(
-	server, server->cursor->x, server->cursor->y, &surface, &sx, &sy
-    );
 
     if (event->state == WLR_BUTTON_RELEASED) {
 	server->cursor_mode = CURSOR_PASSTHROUGH;
     } else {
+	double sx, sy;
+	struct wlr_surface *surface;
+	struct view *view = desktop_view_at(
+	    server, server->cursor->x, server->cursor->y, &surface, &sx, &sy
+	);
 	focus_view(view, surface);
     }
 }
