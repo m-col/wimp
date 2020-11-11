@@ -128,6 +128,8 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 	    break;
 
 	case CURSOR_PAN:
+	    dx /= server->current_desk->zoom;
+	    dy /= server->current_desk->zoom;
 	    wl_list_for_each(view, &server->current_desk->views, link) {
 		view->x += dx;
 		view->y += dy;
@@ -191,6 +193,9 @@ void on_cursor_axis(struct wl_listener *listener, void *data) {
 	server->seat, event->time_msec, event->orientation, event->delta,
 	event->delta_discrete, event->source
     );
+    if (server->cursor_mode == CURSOR_PAN) {
+	zoom_desk(server->current_desk, event->delta);
+    }
 }
 
 
@@ -239,6 +244,14 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 
     case XKB_KEY_R:
 	save_pan(server->current_desk);
+	break;
+
+    case XKB_KEY_M:
+	zoom_desk(server->current_desk, -1);
+	break;
+
+    case XKB_KEY_N:
+	zoom_desk(server->current_desk, 1);
 	break;
 
     default:

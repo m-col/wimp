@@ -15,6 +15,7 @@ void add_desk(struct server *server) {
     assign_colour("#5D479D", desk->background);
     desk->wallpaper = NULL;
     desk->index = num_desks;
+    desk->zoom = 1;
     num_desks++;
 }
 
@@ -66,9 +67,17 @@ void reset_pan(struct desk *desk) {
 	view->y -= desk->panned_y;
     }
     desk->panned_x = desk->panned_y = 0;
+    desk->zoom = 1;
 }
 
 
 void save_pan(struct desk *desk) {
     desk->panned_x = desk->panned_y = 0;
+}
+
+
+void zoom_desk(struct desk *desk, int dir) {
+    /* dir > 0 ? zoom in : zoom out */
+    double f = dir > 0 ? 1.015 : 1/1.015;
+    desk->zoom *= f;
 }

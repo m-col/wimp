@@ -34,10 +34,10 @@ void render_surface(
 
     // scale for HiDPI
     struct wlr_box box = {
-	.x = x * output->scale,
-	.y = y * output->scale,
-	.width = surface->current.width * output->scale,
-	.height = surface->current.height * output->scale,
+	.x = x * output->scale * rdata->zoom,
+	.y = y * output->scale * rdata->zoom,
+	.width = surface->current.width * output->scale * rdata->zoom,
+	.height = surface->current.height * output->scale * rdata->zoom,
     };
 
     // this is where any rendering magic might happen
@@ -87,6 +87,7 @@ void on_frame(struct wl_listener *listener, void *data) {
 	    .view = view,
 	    .renderer = renderer,
 	    .when = &now,
+	    .zoom = desk->zoom,
 	};
 	wlr_xdg_surface_for_each_surface(
 	    view->surface, render_surface, &rdata

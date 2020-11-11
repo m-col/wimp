@@ -1,6 +1,7 @@
 #include <wlr/util/edges.h>
 
 #include "config.h"
+#include "desk.h"
 #include "output.h"
 #include "types.h"
 

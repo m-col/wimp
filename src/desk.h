@@ -9,6 +9,7 @@ void next_desk(struct server *server);
 void prev_desk(struct server *server);
 void reset_pan(struct desk *desk);
 void save_pan(struct desk *desk);
+void zoom_desk(struct desk *desk, int dir);
 
 struct wallpaper {
     struct wlr_texture *texture;
@@ -23,6 +24,7 @@ struct desk {
     struct wallpaper *wallpaper;
     double panned_x, panned_y;
     int index;
+    double zoom;
 };
 
 #endif

@@ -17,6 +17,7 @@ struct render_data {
     struct wlr_renderer *renderer;
     struct view *view;
     struct timespec *when;
+    double zoom;
 };
 
 void render_surface(
