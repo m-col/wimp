@@ -229,6 +229,10 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	next_desk(server);
 	break;
 
+    case XKB_KEY_Q:
+	close_current_window(server);
+	break;
+
     case XKB_KEY_r:
 	reset_pan(server->current_desk);
 	break;

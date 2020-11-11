@@ -5,6 +5,17 @@
 #include "types.h"
 
 
+void close_current_window(struct server *server) {
+    struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
+    if (surface) {
+	struct wlr_xdg_surface *xdg_surface = surface->role_data;
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
+	    xdg_toplevel_send_close(xdg_surface->toplevel->resource);
+	}
+    }
+}
+
+
 void unmap_view(struct view *view) {
     wl_signal_emit(&view->surface->events.unmap, view);
 }

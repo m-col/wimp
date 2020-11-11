@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+void close_current_window(struct server *server);
 void unmap_view(struct view *view);
 void map_view(struct view *view);
 void focus_view(struct view *view, struct wlr_surface *surface);
