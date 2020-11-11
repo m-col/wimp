@@ -81,8 +81,9 @@ void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edge
     server->cursor_mode = mode;
 
     if (mode == CURSOR_MOVE) {
-	server->grab_x = server->cursor->x - view->x;
-	server->grab_y = server->cursor->y - view->y;
+	double zoom = server->current_desk->zoom;
+	server->grab_x = server->cursor->x - view->x * zoom;
+	server->grab_y = server->cursor->y - view->y * zoom;
     } else {
 	struct wlr_box geo_box;
 	wlr_xdg_surface_get_geometry(view->surface, &geo_box);

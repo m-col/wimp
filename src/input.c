@@ -13,9 +13,9 @@
 enum wlr_keyboard_modifier MOD = WLR_MODIFIER_LOGO;
 
 
-void process_cursor_move(struct server *server, uint32_t time) {
-    server->grabbed_view->x = server->cursor->x - server->grab_x;
-    server->grabbed_view->y = server->cursor->y - server->grab_y;
+void process_cursor_move(struct server *server, uint32_t time, double zoom) {
+    server->grabbed_view->x = (server->cursor->x - server->grab_x) / zoom;
+    server->grabbed_view->y = (server->cursor->y - server->grab_y) / zoom;
 }
 
 
@@ -104,13 +104,16 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
     struct wlr_seat *seat;
     struct wlr_surface *surface;
     struct view *view;
+    double zoom = server->current_desk->zoom;
+    dx /= zoom;
+    dy /= zoom;
 
     switch (server->cursor_mode) {
 	case CURSOR_PASSTHROUGH:
 	    seat = server->seat;
 	    surface = NULL;
-	    view = desktop_view_at(server, server->cursor->x,
-		server->cursor->y, &surface, &sx, &sy);
+	    view = desktop_view_at(server, server->cursor->x / zoom,
+		server->cursor->y / zoom, &surface, &sx, &sy);
 	    if (!view) {
 		wlr_xcursor_manager_set_cursor_image(
 		    server->cursor_manager, "left_ptr", server->cursor
@@ -128,8 +131,6 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 	    break;
 
 	case CURSOR_PAN:
-	    dx /= server->current_desk->zoom;
-	    dy /= server->current_desk->zoom;
 	    wl_list_for_each(view, &server->current_desk->views, link) {
 		view->x += dx;
 		view->y += dy;
@@ -139,7 +140,7 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 	    break;
 
 	case CURSOR_MOVE:
-	    process_cursor_move(server, time);
+	    process_cursor_move(server, time, zoom);
 	    break;
 
 	case CURSOR_RESIZE:
