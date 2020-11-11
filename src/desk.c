@@ -57,3 +57,13 @@ void prev_desk(struct server *server) {
     }
     set_desk(server, desk);
 }
+
+
+void reset_pan(struct desk *desk) {
+    struct view *view;
+    wl_list_for_each(view, &desk->views, link) {
+	view->x -= desk->panned_x;
+	view->y -= desk->panned_y;
+    }
+    desk->panned_x = desk->panned_y = 0;
+}

@@ -7,5 +7,6 @@ void add_desk(struct server *server);
 void remove_desk(struct desk *desk);
 void next_desk(struct server *server);
 void prev_desk(struct server *server);
+void reset_pan(struct desk *desk);
 
 #endif
