@@ -67,3 +67,8 @@ void reset_pan(struct desk *desk) {
     }
     desk->panned_x = desk->panned_y = 0;
 }
+
+
+void save_pan(struct desk *desk) {
+    desk->panned_x = desk->panned_y = 0;
+}

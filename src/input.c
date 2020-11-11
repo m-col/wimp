@@ -233,6 +233,10 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	reset_pan(server->current_desk);
 	break;
 
+    case XKB_KEY_R:
+	save_pan(server->current_desk);
+	break;
+
     default:
 	return false;
     }
