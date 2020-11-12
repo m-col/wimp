@@ -61,6 +61,14 @@ void on_map(struct wl_listener *listener, void *data) {
     focus_view(view, view->surface->surface);
 }
 
+void on_unmap(struct wl_listener *listener, void *data) {
+    struct view *view = wl_container_of(listener, view, unmap_listener);
+    wl_list_remove(&view->link);
+    wl_list_insert(view->server->current_desk->views.prev, &view->link);
+    struct view *next_view = wl_container_of(view->server->current_desk->views.next, view, link);
+    focus_view(next_view, next_view->surface->surface);
+}
+
 
 void on_surface_destroy(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, destroy_listener);
@@ -119,6 +127,8 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
 
     view->map_listener.notify = on_map;
     wl_signal_add(&surface->events.map, &view->map_listener);
+    view->unmap_listener.notify = on_unmap;
+    wl_signal_add(&surface->events.unmap, &view->unmap_listener);
     view->destroy_listener.notify = on_surface_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy_listener);
 
