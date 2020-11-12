@@ -65,17 +65,22 @@ void on_frame(struct wl_listener *listener, void *data) {
     }
 
     int width, height;
+    double zoom = desk->zoom;
     wlr_output_effective_resolution(output->wlr_output, &width, &height);
     wlr_renderer_begin(renderer, width, height);
     wlr_renderer_clear(renderer, desk->background);
+
+    // paint wallpaper
     struct wallpaper *wallpaper = desk->wallpaper;
     if (wallpaper != NULL) {
 	int wh = wallpaper->height;
 	int ww = wallpaper->width;
-	for (int x = ((int)desk->panned_x % ww) - ww; x < width; x += ww) {
-	    for (int y = ((int)desk->panned_y % wh) - wh; y < height; y += wh) {
-		wlr_render_texture(renderer, wallpaper->texture,
-		    output->wlr_output->transform_matrix, x, y, 1.0f);
+	float mat[9];
+	memcpy(mat, output->wlr_output->transform_matrix, 9 * sizeof(float));
+	wlr_matrix_scale(mat, zoom, zoom);
+	for (int x = ((int)desk->panned_x % ww) - ww; x < width / zoom; x += ww) {
+	    for (int y = ((int)desk->panned_y % wh) - wh; y < height / zoom; y += wh) {
+		wlr_render_texture(renderer, wallpaper->texture, mat, x, y, 1.0f);
 	    }
 	}
     }
@@ -87,7 +92,7 @@ void on_frame(struct wl_listener *listener, void *data) {
 	    .view = view,
 	    .renderer = renderer,
 	    .when = &now,
-	    .zoom = desk->zoom,
+	    .zoom = zoom,
 	};
 	wlr_xdg_surface_for_each_surface(
 	    view->surface, render_surface, &rdata

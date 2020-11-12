@@ -80,4 +80,13 @@ void zoom_desk(struct desk *desk, int dir) {
     /* dir > 0 ? zoom in : zoom out */
     double f = dir > 0 ? 1.015 : 1/1.015;
     desk->zoom *= f;
+    double fx = desk->server->cursor->x * (f - 1) / desk->zoom;
+    double fy = desk->server->cursor->y * (f - 1) / desk->zoom;
+    struct view *view;
+    wl_list_for_each(view, &desk->views, link) {
+	view->x -= fx;
+	view->y -= fy;
+    }
+    desk->panned_x -= fx;
+    desk->panned_y -= fy;
 }
