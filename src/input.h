@@ -4,7 +4,7 @@
 #include "types.h"
 
 void process_cursor_move(struct server *server, uint32_t time, double zoom);
-void process_cursor_resize(struct server *server, uint32_t time);
+void process_cursor_resize(struct server *server, uint32_t time, double zoom);
 bool view_at(
     struct view *view, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy

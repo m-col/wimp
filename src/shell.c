@@ -80,23 +80,14 @@ void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edge
     server->grabbed_view = view;
     server->cursor_mode = mode;
 
-    if (mode == CURSOR_MOVE) {
-	double zoom = server->current_desk->zoom;
-	server->grab_x = server->cursor->x - view->x * zoom;
-	server->grab_y = server->cursor->y - view->y * zoom;
-    } else {
-	struct wlr_box geo_box;
-	wlr_xdg_surface_get_geometry(view->surface, &geo_box);
+    double zoom = server->current_desk->zoom;
+    server->grab_x = server->cursor->x - view->x * zoom;
+    server->grab_y = server->cursor->y - view->y * zoom;
 
-	double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
-	double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
-	server->grab_x = server->cursor->x - border_x;
-	server->grab_y = server->cursor->y - border_y;
-
-	server->grab_geobox = geo_box;
-	server->grab_geobox.x += view->x;
-	server->grab_geobox.y += view->y;
-
+    if (mode == CURSOR_RESIZE) {
+	wlr_xdg_surface_get_geometry(view->surface, &server->grab_geobox);
+	server->grab_geobox.x = view->x;
+	server->grab_geobox.y = view->y;
 	server->resize_edges = edges;
     }
 }

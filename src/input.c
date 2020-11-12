@@ -19,46 +19,32 @@ void process_cursor_move(struct server *server, uint32_t time, double zoom) {
 }
 
 
-void process_cursor_resize(struct server *server, uint32_t time) {
+void process_cursor_resize(struct server *server, uint32_t time, double zoom) {
     struct view *view = server->grabbed_view;
-    double border_x = server->cursor->x - server->grab_x;
-    double border_y = server->cursor->y - server->grab_y;
-    int new_left = server->grab_geobox.x;
-    int new_right = server->grab_geobox.x + server->grab_geobox.width;
-    int new_top = server->grab_geobox.y;
-    int new_bottom = server->grab_geobox.y + server->grab_geobox.height; 
+    int x = server->grab_geobox.x;
+    int width = server->grab_geobox.width;
+    int y = server->grab_geobox.y;
+    int height = server->grab_geobox.height;
+
+    double cx = (server->cursor->x - server->grab_x) / zoom;
+    double cy = (server->cursor->y - server->grab_y) / zoom;
 
     if (server->resize_edges & WLR_EDGE_TOP) {
-        new_top = border_y;
-        if (new_top >= new_bottom) {
-            new_top = new_bottom - 1;
-        }
+	height -= cy - y;
+	y = cy;
     } else if (server->resize_edges & WLR_EDGE_BOTTOM) {
-        new_bottom = border_y;
-        if (new_bottom <= new_top) {
-            new_bottom = new_top + 1;
-        }
+        height += cy - y;
     }
     if (server->resize_edges & WLR_EDGE_LEFT) {
-        new_left = border_x;
-        if (new_left >= new_right) {
-            new_left = new_right - 1;
-        }
+        width -= cx - x;
+	x = cx;
     } else if (server->resize_edges & WLR_EDGE_RIGHT) {
-        new_right = border_x;
-        if (new_right <= new_left) {
-            new_right = new_left + 1;
-        }
+        width += cx - x;
     }
 
-    struct wlr_box geo_box;
-    wlr_xdg_surface_get_geometry(view->surface, &geo_box);
-    view->x = new_left - geo_box.x;
-    view->y = new_top - geo_box.y;
-
-    int new_width = new_right - new_left;
-    int new_height = new_bottom - new_top;
-    wlr_xdg_toplevel_set_size(view->surface, new_width, new_height);
+    view->x = x;
+    view->y = y;
+    wlr_xdg_toplevel_set_size(view->surface, width, height);
 }
 
 
@@ -144,7 +130,7 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 	    break;
 
 	case CURSOR_RESIZE:
-	    process_cursor_resize(server, time);
+	    process_cursor_resize(server, time, zoom);
 	    break;
     }
 }
