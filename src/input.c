@@ -233,14 +233,6 @@ bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
 	save_pan(server->current_desk);
 	break;
 
-    case XKB_KEY_M:
-	zoom_desk(server->current_desk, -1);
-	break;
-
-    case XKB_KEY_N:
-	zoom_desk(server->current_desk, 1);
-	break;
-
     default:
 	return false;
     }
