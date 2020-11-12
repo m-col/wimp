@@ -85,7 +85,6 @@ struct view *desktop_view_at(
 
 
 void process_cursor_motion(struct server *server, uint32_t time, double dx, double dy) {
-
     double sx, sy;
     struct wlr_seat *seat;
     struct wlr_surface *surface;
@@ -176,12 +175,13 @@ void on_cursor_button(struct wl_listener *listener, void *data) {
 void on_cursor_axis(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_axis_listener);
     struct wlr_event_pointer_axis *event = data;
-    wlr_seat_pointer_notify_axis(
-	server->seat, event->time_msec, event->orientation, event->delta,
-	event->delta_discrete, event->source
-    );
     if (server->cursor_mode == CURSOR_PAN) {
 	zoom_desk(server->current_desk, event->delta);
+    } else {
+	wlr_seat_pointer_notify_axis(
+	    server->seat, event->time_msec, event->orientation, event->delta,
+	    event->delta_discrete, event->source
+	);
     }
 }
 
