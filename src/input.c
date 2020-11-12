@@ -209,6 +209,12 @@ void on_modifier(struct wl_listener *listener, void *data) {
 bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
     switch (sym) {
 
+    case XKB_KEY_Up:
+	if (fork() == 0) {
+	    execl("/usr/bin/thunar", "/usr/bin/thunar", (void *)NULL);
+	}
+	break;
+
     case XKB_KEY_Escape:
 	wl_display_terminate(server->display);
 	break;
