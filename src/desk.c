@@ -78,10 +78,17 @@ void save_pan(struct desk *desk) {
 
 void zoom_desk(struct desk *desk, int dir) {
     /* dir > 0 ? zoom in : zoom out */
+    struct server *server = desk->server;
     double f = dir > 0 ? 1.015 : 1/1.015;
+    if (
+	(f > 1 && desk->zoom >= server->zoom_max) ||
+	(f < 1 && desk->zoom <= server->zoom_min)
+    ) {
+	return;
+    }
     desk->zoom *= f;
-    double fx = desk->server->cursor->x * (f - 1) / desk->zoom;
-    double fy = desk->server->cursor->y * (f - 1) / desk->zoom;
+    double fx = server->cursor->x * (f - 1) / desk->zoom;
+    double fy = server->cursor->y * (f - 1) / desk->zoom;
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
 	view->x -= fx;

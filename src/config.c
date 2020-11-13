@@ -10,6 +10,8 @@
 #include "desk.h"
 #include "types.h"
 
+#define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
+
 
 void assign_colour(char *hex, float dest[4]) {
     if (strlen(hex) != 7 || hex[0] != '#') {
@@ -86,6 +88,8 @@ static void set_defaults(struct server *server) {
     add_desk(server);
     server->current_desk =
 	wl_container_of(server->desks.next, server->current_desk, link);
+    server->zoom_min = 0.5;
+    server->zoom_max = 3;
 }
 
 
@@ -123,7 +127,14 @@ void load_config(struct server *server, char *config) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
 		set_wallpaper(server, s);
 	    }
-	} else if (!strcasecmp(s, "modifier")) {
+	} else if (!strcasecmp(s, "zoom_min")) {
+	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
+		server->zoom_min = strtod(s, NULL);
+	    }
+	} else if (!strcasecmp(s, "zoom_max")) {
+	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
+		server->zoom_max = strtod(s, NULL);
+	    }
 	}
     }
     fclose(fd);

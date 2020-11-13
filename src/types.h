@@ -52,6 +52,7 @@ struct server {
     double grab_x, grab_y;
     struct wlr_box grab_geobox;
     uint32_t resize_edges;
+    double zoom_min, zoom_max;
 };
 
 struct view {
