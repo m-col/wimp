@@ -20,6 +20,8 @@ To do list:
  - configurable keybindings
  - functions to shift focus
  - functions to shift desk view
+ - screenshots protocol
+ - vim-like marks to save desk views
  - handle fullscreening
  - pinch gestures for desk zooming
  - draw rect with mouse when zoomed out to set new view
