@@ -10,7 +10,24 @@
 #include "types.h"
 
 
-enum wlr_keyboard_modifier MOD = WLR_MODIFIER_LOGO;
+void set_modifier(struct server *server, char *mod) {
+    if (strcasecmp(mod, "shift") == 0)
+	server->mod = WLR_MODIFIER_SHIFT;
+    else if (strcasecmp(mod, "caps") == 0)
+	server->mod = WLR_MODIFIER_CAPS;
+    else if (strcasecmp(mod, "ctrl") == 0)
+	server->mod = WLR_MODIFIER_CTRL;
+    else if (strcasecmp(mod, "alt") == 0)
+	server->mod = WLR_MODIFIER_ALT;
+    else if (strcasecmp(mod, "mod2") == 0)
+	server->mod = WLR_MODIFIER_MOD2;
+    else if (strcasecmp(mod, "mod3") == 0)
+	server->mod = WLR_MODIFIER_MOD3;
+    else if (strcasecmp(mod, "mod4") == 0)
+	server->mod = WLR_MODIFIER_LOGO;
+    else if (strcasecmp(mod, "mod5") == 0)
+	server->mod = WLR_MODIFIER_MOD5;
+}
 
 
 void process_cursor_move(struct server *server, uint32_t time, double zoom) {
@@ -198,7 +215,7 @@ void on_modifier(struct wl_listener *listener, void *data) {
 	keyboard->server->seat, &keyboard->device->keyboard->modifiers
     );
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    if ((modifiers & MOD)) {
+    if ((modifiers & keyboard->server->mod)) {
 	keyboard->server->cursor_mode = CURSOR_PAN;
     } else {
 	keyboard->server->cursor_mode = CURSOR_PASSTHROUGH;
@@ -261,7 +278,7 @@ void on_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    if ((modifiers & MOD) && event->state == WLR_KEY_PRESSED) {
+    if ((modifiers & server->mod) && event->state == WLR_KEY_PRESSED) {
 	for (int i = 0; i < nsyms; i++) {
 	    handled = handle_keybinding(server, syms[i]);
 	}

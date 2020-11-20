@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "desk.h"
+#include "input.h"
 #include "types.h"
 
 #define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
@@ -90,6 +91,8 @@ static void set_defaults(struct server *server) {
 	wl_container_of(server->desks.next, server->current_desk, link);
     server->zoom_min = 0.5;
     server->zoom_max = 3;
+
+    server->mod = WLR_MODIFIER_LOGO;
 }
 
 
@@ -126,6 +129,10 @@ void load_config(struct server *server, char *config) {
 	} else if (!strcasecmp(s, "background")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
 		set_wallpaper(server, s);
+	    }
+	} else if (!strcasecmp(s, "set_modifier")) {
+	    if ((s = strtok(NULL, " \t\n\r"))) {
+		set_modifier(server, s);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {

@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+void set_modifier(struct server *server, char *modifier);
 void process_cursor_move(struct server *server, uint32_t time, double zoom);
 void process_cursor_resize(struct server *server, uint32_t time, double zoom);
 bool view_at(

@@ -47,6 +47,7 @@ struct server {
     struct wl_listener request_cursor_listener;
     struct wl_listener request_set_selection_listener;
     struct wl_list keyboards;
+    enum wlr_keyboard_modifier mod;
     enum cursor_mode cursor_mode;
     struct view *grabbed_view;
     double grab_x, grab_y;
