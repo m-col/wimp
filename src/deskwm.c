@@ -26,6 +26,9 @@ int main(int argc, char *argv[]) {
 	    case 'd':
 		wlr_log_init(WLR_DEBUG, NULL);
 		break;
+	    case 'i':
+		wlr_log_init(WLR_INFO, NULL);
+		break;
 	    case 'c':
 		config = strdup(optarg);
 		break;
