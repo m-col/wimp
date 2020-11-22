@@ -112,7 +112,7 @@ void load_config(struct server *server, char *config) {
     wordexp(config, &p, WRDE_NOCMD | WRDE_UNDEF);
 
     if (access(p.we_wordv[0], R_OK) == -1) {
-	wlr_log(WLR_INFO, "%s not accessible. Using defaults.", p.we_wordv[0]);
+	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", p.we_wordv[0]);
 	wordfree(&p);
 	return;
     }
@@ -136,7 +136,10 @@ void load_config(struct server *server, char *config) {
 	} else if (!strcasecmp(s, "set_modifier")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
 		int mod = modifier_by_name(s);
-		server->mod = (mod ? mod : WLR_MODIFIER_LOGO);
+		if (mod)
+		    server->mod = mod;
+		else
+		    wlr_log(WLR_ERROR, "Config line %i: invalid modifier name '%s'.", line, s);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
