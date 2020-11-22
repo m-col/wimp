@@ -39,6 +39,8 @@ struct server {
     int desk_count;
     struct desk *current_desk;
     bool can_steal_focus;
+    struct wl_list marks;
+    bool mark_waiting;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;
@@ -121,6 +123,13 @@ struct motion {
 enum mouse_keys {
     MOTION,
     SCROLL,
+};
+
+struct mark {
+    struct wl_list link;
+    uint32_t key;
+    struct desk *desk;
+    double zoom, x, y;
 };
 
 #endif

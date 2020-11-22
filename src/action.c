@@ -112,3 +112,69 @@ void zoom_desk(struct server *server, void *data) {
     desk->panned_x -= fx;
     desk->panned_y -= fy;
 }
+
+
+void set_mark(struct server *server, void *data) {
+    struct mark *mark = calloc(1, sizeof(struct mark));
+    struct desk *desk = server->current_desk;
+    mark->desk = desk;
+    mark->x = desk->panned_x;
+    mark->y = desk->panned_y;
+    mark->zoom = desk->zoom;
+    mark->key = 0;
+    server->mark_waiting = true;
+    wl_list_insert(&server->marks, &mark->link);
+}
+
+
+void actually_set_mark(struct server *server, const xkb_keysym_t sym) {
+    struct mark *mark;
+    struct mark *existing = NULL;
+
+    if (sym == XKB_KEY_Escape) {
+	mark = wl_container_of(server->marks.next, mark, link);
+	wl_list_remove(&mark->link);
+	free(mark);
+	return;
+    }
+
+    wl_list_for_each(mark, &server->marks, link) {
+	if (mark->key == sym) {
+	    existing = mark;
+	    break;
+	}
+    }
+    if (existing) {
+	wl_list_remove(&existing->link);
+	free(existing);
+    }
+
+    mark = wl_container_of(server->marks.next, mark, link);
+    mark->key = sym;
+}
+
+
+void go_to_mark(struct server *server, void *data) {
+    server->mark_waiting = true;
+}
+
+
+void actually_go_to_mark(struct server *server, const xkb_keysym_t sym) {
+    struct mark *mark;
+
+    if (sym == XKB_KEY_Escape)
+	return;
+
+    wl_list_for_each(mark, &server->marks, link) {
+	if (mark->key == sym) {
+	    struct motion motion = {
+		.dx = mark->x - mark->desk->panned_x,
+		.dy = mark->y - mark->desk->panned_y,
+	    };
+	    mark->desk->zoom = mark->zoom;
+	    set_desk(server, mark->desk);
+	    pan_desk(server, &motion);
+	    return;
+	}
+    }
+}

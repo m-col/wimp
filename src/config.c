@@ -69,6 +69,10 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->data = calloc(1, sizeof(int));
 	*(int *)(kb->data) = -1;
     }
+    else if (strcasecmp(name, "set_mark") == 0)
+	kb->action = &set_mark;
+    else if (strcasecmp(name, "go_to_mark") == 0)
+	kb->action = &go_to_mark;
     else if (strcasecmp(name, "exec") == 0) {
 	kb->action = &exec_command;
 	kb->data = calloc(strlen(data), sizeof(char));
@@ -226,6 +230,9 @@ static void set_defaults(struct server *server) {
     server->zoom_max = 3;
     server->reverse_scrolling = false;
     server->vt_switching = true;
+
+    wl_list_init(&server->marks);
+    server->mark_waiting = false;
 }
 
 

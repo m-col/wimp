@@ -5,6 +5,7 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
+#include "action.h"
 #include "input.h"
 #include "shell.h"
 #include "types.h"
@@ -248,26 +249,38 @@ void on_key(struct wl_listener *listener, void *data) {
     int nsyms = xkb_state_key_get_syms(
 	keyboard->device->keyboard->xkb_state, keycode, &syms);
 
-    bool handled = false;
-    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    struct binding *kb;
-    if ((modifiers & server->mod) && event->state == WLR_KEY_PRESSED) {
-	modifiers &= ~server->mod;
-	for (int i = 0; i < nsyms; i++) {
-	    wl_list_for_each(kb, &server->key_bindings, link) {
-		if (syms[i] == kb->key && modifiers == kb->mods) {
-		    kb->action(server, kb->data);
-		    handled = true;
+    if (event->state == WLR_KEY_PRESSED) {
+	if (server->mark_waiting) {
+	    server->mark_waiting = false;
+	    struct mark *mark;
+	    mark = wl_container_of(server->marks.next, mark, link);
+	    if (mark->key == 0) {
+		actually_set_mark(server, syms[0]);
+	    } else {
+		actually_go_to_mark(server, syms[0]);
+	    }
+	    return;
+	}
+
+	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+	struct binding *kb;
+	if ((modifiers & server->mod)) {
+	    modifiers &= ~server->mod;
+	    for (int i = 0; i < nsyms; i++) {
+		wl_list_for_each(kb, &server->key_bindings, link) {
+		    if (syms[i] == kb->key && modifiers == kb->mods) {
+			kb->action(server, kb->data);
+			return;
+		    }
 		}
 	    }
 	}
     }
 
-    if (!handled) {
-	// forward to client
-	wlr_seat_keyboard_notify_key(seat, event->time_msec,
-	    event->keycode, event->state);
-    }
+    // forward to client
+    wlr_seat_keyboard_notify_key(
+	seat, event->time_msec, event->keycode, event->state
+    );
 }
 
 
