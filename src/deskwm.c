@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 
     int opt;
     char *config = NULL;
-    while ((opt = getopt(argc, argv, "dc:")) != -1) {
+    while ((opt = getopt(argc, argv, "dic:")) != -1) {
         switch (opt) {
 	    case 'd':
 		wlr_log_init(WLR_DEBUG, NULL);
