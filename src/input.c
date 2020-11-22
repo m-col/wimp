@@ -48,7 +48,7 @@ enum wlr_keyboard_modifier modifier_by_name(char *mod) {
 }
 
 
-void assign_action(char *name, char *data, struct keybinding *kb) {
+void assign_action(char *name, char *data, struct key_binding *kb) {
     kb->data = NULL;
     kb->action = NULL;
 
@@ -60,14 +60,26 @@ void assign_action(char *name, char *data, struct keybinding *kb) {
 	kb->action = &next_desk;
     else if (strcasecmp(name, "prev_desk") == 0)
 	kb->action = &prev_desk;
+    else if (strcasecmp(name, "pan_desk") == 0)
+	kb->action = &pan_desk;
     else if (strcasecmp(name, "reset_pan") == 0)
 	kb->action = &reset_pan;
     else if (strcasecmp(name, "save_pan") == 0)
 	kb->action = &save_pan;
-    else if (strcasecmp(name, "zoom_desk") == 0) {
+    else if (strcasecmp(name, "zoom_in") == 0) {
 	kb->action = &zoom_desk;
 	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = atoi(data);
+	*(int *)(kb->data) = 1;
+    }
+    else if (strcasecmp(name, "zoom_out") == 0) {
+	kb->action = &zoom_desk;
+	kb->data = calloc(1, sizeof(int));
+	*(int *)(kb->data) = -1;
+    }
+    else if (strcasecmp(name, "zoom_out") == 0) {
+	kb->action = &zoom_desk;
+	kb->data = calloc(1, sizeof(int));
+	*(int *)(kb->data) = -1;
     }
     else if (strcasecmp(name, "exec") == 0) {
 	kb->action = &exec_command;
@@ -77,12 +89,28 @@ void assign_action(char *name, char *data, struct keybinding *kb) {
 }
 
 
+enum mouse_keys {
+    MOTION,
+    SCROLL,
+};
+
+
+enum mouse_keys mouse_key_from_name(char *name) {
+    if (strcasecmp(name, "motion") == 0)
+	return MOTION;
+    else if (strcasecmp(name, "scroll") == 0)
+	return SCROLL;
+    return 0;
+}
+
+
 void add_binding(struct server *server, char *data, int line) {
-    struct keybinding *kb = calloc(1, sizeof(struct keybinding));
+    struct key_binding *kb = calloc(1, sizeof(struct key_binding));
     enum wlr_keyboard_modifier mod;
     char *s = strtok(data, " \t\n\r");
+    bool is_mouse_binding = false;
 
-    // modifiers
+    // additional modifiers
     kb->mods = 0;
     for (int i = 0; i < 8; i++) {
 	mod = modifier_by_name(s);
@@ -95,9 +123,13 @@ void add_binding(struct server *server, char *data, int line) {
     // key
     kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
     if (kb->key == XKB_KEY_NoSymbol) {
-	wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
-	free(kb);
-	return;
+	kb->key = mouse_key_from_name(s);
+	if (kb->key == 0) {
+	    wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
+	    free(kb);
+	    return;
+	}
+	is_mouse_binding = true;
     }
 
     // action
@@ -109,15 +141,21 @@ void add_binding(struct server *server, char *data, int line) {
 	return;
     }
 
-    struct keybinding *kb_existing;
-    wl_list_for_each(kb_existing, &server->keybindings, link) {
+    struct key_binding *kb_existing;
+    struct wl_list *bindings;
+    if (is_mouse_binding) {
+	bindings = &server->mouse_bindings;
+    } else {
+	bindings = &server->key_bindings;
+    }
+    wl_list_for_each(kb_existing, bindings, link) {
 	if (kb_existing->key == kb->key && kb_existing->mods == kb->mods) {
 	    wlr_log(WLR_ERROR, "Config line %i: binding exists for key combo.", line);
 	    free(kb);
 	    return;
 	}
     }
-    wl_list_insert(&server->keybindings, &kb->link);
+    wl_list_insert(bindings, &kb->link);
 }
 
 
@@ -223,13 +261,14 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 	    }
 	    break;
 
-	case CURSOR_PAN:
-	    wl_list_for_each(view, &server->current_desk->views, link) {
-		view->x += dx;
-		view->y += dy;
+	case CURSOR_MOD:
+	    if (server->on_mouse_motion) {
+		struct motion motion = {
+		    .dx = dx,
+		    .dy = dy,
+		};
+		server->on_mouse_motion(server, &motion);
 	    }
-	    server->current_desk->panned_x += dx;
-	    server->current_desk->panned_y += dy;
 	    break;
 
 	case CURSOR_MOVE:
@@ -283,8 +322,19 @@ void on_cursor_button(struct wl_listener *listener, void *data) {
 void on_cursor_axis(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_axis_listener);
     struct wlr_event_pointer_axis *event = data;
-    if (server->cursor_mode == CURSOR_PAN) {
-	zoom_desk(server, &event->delta);
+    if (server->cursor_mode == CURSOR_MOD) {
+	if (server->on_mouse_scroll) {
+	    struct motion motion = {
+		.dx = 0,
+		.dy = 0,
+	    };
+	    if (event->orientation == WLR_AXIS_ORIENTATION_VERTICAL) {
+		motion.dy = event->delta;
+	    } else {
+		motion.dx = event->delta;
+	    };
+	    server->on_mouse_scroll(server, &motion);
+	}
     } else {
 	wlr_seat_pointer_notify_axis(
 	    server->seat, event->time_msec, event->orientation, event->delta,
@@ -302,15 +352,34 @@ void on_cursor_frame(struct wl_listener *listener, void *data) {
 
 void on_modifier(struct wl_listener *listener, void *data) {
     struct keyboard *keyboard = wl_container_of(listener, keyboard, modifier_listener);
+    struct server *server = keyboard->server;
     wlr_seat_keyboard_notify_modifiers(
-	keyboard->server->seat, &keyboard->device->keyboard->modifiers
+	server->seat, &keyboard->device->keyboard->modifiers
     );
+
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    if ((modifiers & keyboard->server->mod)) {
-	keyboard->server->cursor_mode = CURSOR_PAN;
-    } else {
-	keyboard->server->cursor_mode = CURSOR_PASSTHROUGH;
+    struct key_binding *kb;
+    bool handled = false;
+    if ((modifiers & server->mod)) {
+	modifiers &= ~server->mod;
+	wl_list_for_each(kb, &server->mouse_bindings, link) {
+	    if (modifiers == kb->mods) {
+		switch (kb->key) {
+		    case MOTION:
+			printf("MOTION\n");
+			server->on_mouse_motion = kb->action;
+			break;
+		    case SCROLL:
+			server->on_mouse_scroll = kb->action;
+			break;
+		}
+		keyboard->server->cursor_mode = CURSOR_MOD;
+		handled = true;
+	    }
+	}
     }
+    if (!handled)
+	keyboard->server->cursor_mode = CURSOR_PASSTHROUGH;
 }
 
 
@@ -329,11 +398,11 @@ void on_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    struct keybinding *kb;
+    struct key_binding *kb;
     if ((modifiers & server->mod) && event->state == WLR_KEY_PRESSED) {
 	modifiers &= ~server->mod;
 	for (int i = 0; i < nsyms; i++) {
-	    wl_list_for_each(kb, &server->keybindings, link) {
+	    wl_list_for_each(kb, &server->key_bindings, link) {
 		if (syms[i] == kb->key && modifiers == kb->mods) {
 		    kb->action(server, kb->data);
 		    handled = true;

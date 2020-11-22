@@ -15,10 +15,14 @@
 
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
-    CURSOR_PAN,
+    CURSOR_MOD,
     CURSOR_MOVE,
     CURSOR_RESIZE,
 };
+
+struct server;
+
+typedef void (*action)(struct server *server, void *data);
 
 struct server {
     struct wl_display *display;
@@ -48,7 +52,10 @@ struct server {
     struct wl_listener request_set_selection_listener;
     struct wl_list keyboards;
     enum wlr_keyboard_modifier mod;
-    struct wl_list keybindings;
+    struct wl_list key_bindings;
+    struct wl_list mouse_bindings;
+    action on_mouse_motion;
+    action on_mouse_scroll;
     enum cursor_mode cursor_mode;
     struct view *grabbed_view;
     double grab_x, grab_y;
@@ -75,6 +82,11 @@ struct keyboard {
     struct wlr_input_device *device;
     struct wl_listener modifier_listener;
     struct wl_listener key_listener;
+};
+
+struct motion {
+    double dx;
+    double dy;
 };
 
 #endif

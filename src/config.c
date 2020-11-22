@@ -93,7 +93,10 @@ static void set_defaults(struct server *server) {
     server->zoom_max = 3;
 
     server->mod = WLR_MODIFIER_LOGO;
-    wl_list_init(&server->keybindings);
+    wl_list_init(&server->key_bindings);
+    wl_list_init(&server->mouse_bindings);
+    server->on_mouse_motion = NULL;
+    server->on_mouse_scroll = NULL;
 }
 
 

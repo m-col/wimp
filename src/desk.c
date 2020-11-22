@@ -60,6 +60,21 @@ void prev_desk(struct server *server, void *data) {
 }
 
 
+void pan_desk(struct server *server, void *data) {
+    struct desk *desk = server->current_desk;
+    struct motion motion = *(struct motion*)data;
+    double dx = motion.dx;
+    double dy = motion.dy;
+    struct view *view;
+    wl_list_for_each(view, &desk->views, link) {
+	view->x += dx;
+	view->y += dy;
+    }
+    desk->panned_x += dx;
+    desk->panned_y += dy;
+}
+
+
 void reset_pan(struct server *server, void *data) {
     struct desk *desk = server->current_desk;
     struct view *view;

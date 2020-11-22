@@ -7,6 +7,7 @@ void add_desk(struct server *server);
 void remove_desk(struct desk *desk);
 void next_desk(struct server *server, void *data);
 void prev_desk(struct server *server, void *data);
+void pan_desk(struct server *server, void *data);
 void reset_pan(struct server *server, void *data);
 void save_pan(struct server *server, void *data);
 void zoom_desk(struct server *server, void *data);

@@ -31,12 +31,10 @@ void on_request_set_selection(struct wl_listener *listener, void *data);
 void set_up_cursor(struct server *server);
 void set_up_keyboard(struct server *server);
 
-typedef void (*action)(struct server *server, void *data);
-
-struct keybinding {
+struct key_binding {
     struct wl_list link;
     enum wlr_keyboard_modifier mods;
-    xkb_keysym_t key;
+    uint32_t key;
     action action;
     void *data;
 };
