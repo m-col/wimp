@@ -57,6 +57,7 @@ struct server {
     struct wl_list mouse_bindings;
     action on_mouse_motion;
     action on_mouse_scroll;
+    bool reverse_scrolling;
     enum cursor_mode cursor_mode;
     struct view *grabbed_view;
     double grab_x, grab_y;

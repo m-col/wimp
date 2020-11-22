@@ -182,9 +182,9 @@ void on_cursor_axis(struct wl_listener *listener, void *data) {
 		.dy = 0,
 	    };
 	    if (event->orientation == WLR_AXIS_ORIENTATION_VERTICAL) {
-		motion.dy = event->delta;
+		motion.dy = server->reverse_scrolling ? event->delta : - event->delta;
 	    } else {
-		motion.dx = event->delta;
+		motion.dx = server->reverse_scrolling ? event->delta : - event->delta;
 	    };
 	    server->on_mouse_scroll(server, &motion);
 	}

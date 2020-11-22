@@ -17,7 +17,6 @@ To do list:
  - xwayland
  - xdg-decoration protocol
  - primary-selection protocol
- - configurable keybindings
  - functions to shift focus
  - functions to shift desk view
  - screenshots protocol

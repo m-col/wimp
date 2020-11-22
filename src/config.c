@@ -215,14 +215,15 @@ static void set_defaults(struct server *server) {
     add_desk(server);
     server->current_desk =
 	wl_container_of(server->desks.next, server->current_desk, link);
-    server->zoom_min = 0.5;
-    server->zoom_max = 3;
 
     server->mod = WLR_MODIFIER_LOGO;
     wl_list_init(&server->key_bindings);
     wl_list_init(&server->mouse_bindings);
     server->on_mouse_motion = NULL;
     server->on_mouse_scroll = NULL;
+    server->zoom_min = 0.5;
+    server->zoom_max = 3;
+    server->reverse_scrolling = false;
 }
 
 
