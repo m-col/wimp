@@ -337,7 +337,6 @@ void on_key(struct wl_listener *listener, void *data) {
 		if (syms[i] == kb->key && modifiers == kb->mods) {
 		    kb->action(server, kb->data);
 		    handled = true;
-		} else if (modifiers == kb->mods) {
 		}
 	    }
 	}
