@@ -1,7 +1,7 @@
 OUT	= deskwm
 SOURCES	= $(wildcard src/*.c)
 OBJECTS	= $(SOURCES:.c=.o)
-CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic
+CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic -Wno-unused-parameter
 LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs wayland-server) \
 	    $(shell pkg-config --cflags --libs xkbcommon) \
