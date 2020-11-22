@@ -38,7 +38,7 @@ void set_desk(struct server *server, struct desk *desk) {
 }
 
 
-void next_desk(struct server *server) {
+void next_desk(struct server *server, void *data) {
     struct desk *desk;
     if (server->current_desk->index + 1 == num_desks) {
 	desk = wl_container_of(server->desks.next, desk, link);
@@ -49,7 +49,7 @@ void next_desk(struct server *server) {
 }
 
 
-void prev_desk(struct server *server) {
+void prev_desk(struct server *server, void *data) {
     struct desk *desk;
     if (server->current_desk->index == 0) {
 	desk = wl_container_of(server->desks.prev, desk, link);
@@ -60,7 +60,8 @@ void prev_desk(struct server *server) {
 }
 
 
-void reset_pan(struct desk *desk) {
+void reset_pan(struct server *server, void *data) {
+    struct desk *desk = server->current_desk;
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
 	view->x -= desk->panned_x;
@@ -71,14 +72,15 @@ void reset_pan(struct desk *desk) {
 }
 
 
-void save_pan(struct desk *desk) {
-    desk->panned_x = desk->panned_y = 0;
+void save_pan(struct server *server, void *data) {
+    server->current_desk->panned_x = server->current_desk->panned_y = 0;
 }
 
 
-void zoom_desk(struct desk *desk, int dir) {
+void zoom_desk(struct server *server, void *data) {
     /* dir > 0 ? zoom in : zoom out */
-    struct server *server = desk->server;
+    struct desk *desk = server->current_desk;
+    int dir = *(int*)data;
     double f = dir > 0 ? 1.015 : 1/1.015;
     if (
 	(f > 1 && desk->zoom >= server->zoom_max) ||

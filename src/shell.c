@@ -6,7 +6,7 @@
 #include "types.h"
 
 
-void close_current_window(struct server *server) {
+void close_current_window(struct server *server, void *data) {
     struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
     if (surface) {
 	struct wlr_xdg_surface *xdg_surface = surface->role_data;

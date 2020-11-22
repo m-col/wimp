@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <unistd.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_keyboard.h>
@@ -9,24 +10,114 @@
 #include "shell.h"
 #include "types.h"
 
+#define is_int(s) (strspn(s, "-0123456789") == strlen(s))
 
-void set_modifier(struct server *server, char *mod) {
+
+void shutdown(struct server *server, void *data) {
+    wl_display_terminate(server->display);
+}
+
+
+void exec_command(struct server *server, void *data) {
+    if (fork() == 0) {
+	//char *const command[] = {data};
+	//execvp(command[0], command);
+	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
+    }
+}
+
+
+enum wlr_keyboard_modifier modifier_by_name(char *mod) {
     if (strcasecmp(mod, "shift") == 0)
-	server->mod = WLR_MODIFIER_SHIFT;
-    else if (strcasecmp(mod, "caps") == 0)
-	server->mod = WLR_MODIFIER_CAPS;
-    else if (strcasecmp(mod, "ctrl") == 0)
-	server->mod = WLR_MODIFIER_CTRL;
-    else if (strcasecmp(mod, "alt") == 0)
-	server->mod = WLR_MODIFIER_ALT;
-    else if (strcasecmp(mod, "mod2") == 0)
-	server->mod = WLR_MODIFIER_MOD2;
-    else if (strcasecmp(mod, "mod3") == 0)
-	server->mod = WLR_MODIFIER_MOD3;
-    else if (strcasecmp(mod, "mod4") == 0)
-	server->mod = WLR_MODIFIER_LOGO;
-    else if (strcasecmp(mod, "mod5") == 0)
-	server->mod = WLR_MODIFIER_MOD5;
+	return WLR_MODIFIER_SHIFT;
+    if (strcasecmp(mod, "caps") == 0)
+	return WLR_MODIFIER_CAPS;
+    if (strcasecmp(mod, "ctrl") == 0)
+	return WLR_MODIFIER_CTRL;
+    if (strcasecmp(mod, "alt") == 0)
+	return WLR_MODIFIER_ALT;
+    if (strcasecmp(mod, "mod2") == 0)
+	return WLR_MODIFIER_MOD2;
+    if (strcasecmp(mod, "mod3") == 0)
+	return WLR_MODIFIER_MOD3;
+    if (strcasecmp(mod, "logo") == 0)
+	return WLR_MODIFIER_LOGO;
+    if (strcasecmp(mod, "mod5") == 0)
+	return WLR_MODIFIER_MOD5;
+    return 0;
+}
+
+
+void assign_action(char *name, char *data, struct keybinding *kb) {
+    kb->data = NULL;
+    kb->action = NULL;
+
+    if (strcasecmp(name, "shutdown") == 0)
+	kb->action = &shutdown;
+    else if (strcasecmp(name, "close_current_window") == 0)
+	kb->action = &close_current_window;
+    else if (strcasecmp(name, "next_desk") == 0)
+	kb->action = &next_desk;
+    else if (strcasecmp(name, "prev_desk") == 0)
+	kb->action = &prev_desk;
+    else if (strcasecmp(name, "reset_pan") == 0)
+	kb->action = &reset_pan;
+    else if (strcasecmp(name, "save_pan") == 0)
+	kb->action = &save_pan;
+    else if (strcasecmp(name, "zoom_desk") == 0) {
+	kb->action = &zoom_desk;
+	kb->data = calloc(1, sizeof(int));
+	*(int *)(kb->data) = atoi(data);
+    }
+    else if (strcasecmp(name, "exec") == 0) {
+	kb->action = &exec_command;
+	kb->data = calloc(strlen(data), sizeof(char));
+	strncpy(kb->data, data, strlen(data));
+    }
+}
+
+
+void add_binding(struct server *server, char *data, int line) {
+    struct keybinding *kb = calloc(1, sizeof(struct keybinding));
+    enum wlr_keyboard_modifier mod;
+    char *s = strtok(data, " \t\n\r");
+
+    // modifiers
+    kb->mods = 0;
+    for (int i = 0; i < 8; i++) {
+	mod = modifier_by_name(s);
+	if (mod == 0)
+	    break;
+	kb->mods |= mod;
+	s = strtok(NULL, " \t\n\r");
+    }
+
+    // key
+    kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
+    if (kb->key == XKB_KEY_NoSymbol) {
+	wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
+	free(kb);
+	return;
+    }
+
+    // action
+    s = strtok(NULL, " \t\n\r");
+    assign_action(s, strtok(NULL, ""), kb);
+    if (kb->action == NULL) {
+	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
+	free(kb);
+	return;
+    }
+
+    struct keybinding *kb_existing;
+    wl_list_for_each(kb_existing, &server->keybindings, link) {
+	if (kb_existing->key == kb->key && kb_existing->mods == kb->mods) {
+	    wlr_log(WLR_ERROR, "Config line %i: binding exists for key combo.", line);
+	    free(kb);
+	    return;
+	}
+    }
+    wl_list_insert(&server->keybindings, &kb->link);
 }
 
 
@@ -193,7 +284,7 @@ void on_cursor_axis(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_axis_listener);
     struct wlr_event_pointer_axis *event = data;
     if (server->cursor_mode == CURSOR_PAN) {
-	zoom_desk(server->current_desk, event->delta);
+	zoom_desk(server, &event->delta);
     } else {
 	wlr_seat_pointer_notify_axis(
 	    server->seat, event->time_msec, event->orientation, event->delta,
@@ -223,46 +314,6 @@ void on_modifier(struct wl_listener *listener, void *data) {
 }
 
 
-bool handle_keybinding(struct server *server, xkb_keysym_t sym) {
-    switch (sym) {
-
-    case XKB_KEY_Up:
-	if (fork() == 0) {
-	    execl("/usr/bin/thunar", "/usr/bin/thunar", (void *)NULL);
-	}
-	break;
-
-    case XKB_KEY_Escape:
-	wl_display_terminate(server->display);
-	break;
-
-    case XKB_KEY_Left:
-	prev_desk(server);
-	break;
-
-    case XKB_KEY_Right:
-	next_desk(server);
-	break;
-
-    case XKB_KEY_Q:
-	close_current_window(server);
-	break;
-
-    case XKB_KEY_r:
-	reset_pan(server->current_desk);
-	break;
-
-    case XKB_KEY_R:
-	save_pan(server->current_desk);
-	break;
-
-    default:
-	return false;
-    }
-    return true;
-}
-
-
 void on_key(struct wl_listener *listener, void *data) {
     struct keyboard *keyboard = wl_container_of(listener, keyboard, key_listener);
     struct server *server = keyboard->server;
@@ -278,9 +329,17 @@ void on_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+    struct keybinding *kb;
     if ((modifiers & server->mod) && event->state == WLR_KEY_PRESSED) {
+	modifiers &= ~server->mod;
 	for (int i = 0; i < nsyms; i++) {
-	    handled = handle_keybinding(server, syms[i]);
+	    wl_list_for_each(kb, &server->keybindings, link) {
+		if (syms[i] == kb->key && modifiers == kb->mods) {
+		    kb->action(server, kb->data);
+		    handled = true;
+		} else if (modifiers == kb->mods) {
+		}
+	    }
 	}
     }
 

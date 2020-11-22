@@ -2,8 +2,10 @@
 #define DESKWM_INPUT_H
 
 #include "types.h"
+#include "shell.h"
 
-void set_modifier(struct server *server, char *modifier);
+enum wlr_keyboard_modifier modifier_by_name(char *mod);
+void add_binding(struct server *server, char *data, int line);
 void process_cursor_move(struct server *server, uint32_t time, double zoom);
 void process_cursor_resize(struct server *server, uint32_t time, double zoom);
 bool view_at(
@@ -21,7 +23,6 @@ void on_cursor_button(struct wl_listener *listener, void *data);
 void on_cursor_axis(struct wl_listener *listener, void *data);
 void on_cursor_frame(struct wl_listener *listener, void *data);
 void on_modifier(struct wl_listener *listener, void *data);
-bool handle_keybinding(struct server *server, xkb_keysym_t sym);
 void on_key(struct wl_listener *listener, void *data);
 void on_new_keyboard(struct server *server, struct wlr_input_device *device);
 void on_new_input(struct wl_listener *listener, void *data);
@@ -29,5 +30,15 @@ void on_request_cursor(struct wl_listener *listener, void *data);
 void on_request_set_selection(struct wl_listener *listener, void *data);
 void set_up_cursor(struct server *server);
 void set_up_keyboard(struct server *server);
+
+typedef void (*action)(struct server *server, void *data);
+
+struct keybinding {
+    struct wl_list link;
+    enum wlr_keyboard_modifier mods;
+    xkb_keysym_t key;
+    action action;
+    void *data;
+};
 
 #endif

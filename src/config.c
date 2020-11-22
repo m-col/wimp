@@ -93,6 +93,7 @@ static void set_defaults(struct server *server) {
     server->zoom_max = 3;
 
     server->mod = WLR_MODIFIER_LOGO;
+    wl_list_init(&server->keybindings);
 }
 
 
@@ -120,7 +121,9 @@ void load_config(struct server *server, char *config) {
 
     char *s;
     char linebuf[1024];
+    int line = 0;
     while (fgets(linebuf, sizeof(linebuf), fd)) {
+	line++;
 	if (!(s = strtok(linebuf, " \t\n\r")) || s[0] == '#') {
 	    continue;
 	}
@@ -132,7 +135,7 @@ void load_config(struct server *server, char *config) {
 	    }
 	} else if (!strcasecmp(s, "set_modifier")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
-		set_modifier(server, s);
+		server->mod = modifier_by_name(s);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
@@ -142,6 +145,8 @@ void load_config(struct server *server, char *config) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
 		server->zoom_max = strtod(s, NULL);
 	    }
+	} else if (!strcasecmp(s, "bind")) {
+	    add_binding(server, strtok(NULL, ""), line);
 	}
     }
     fclose(fd);

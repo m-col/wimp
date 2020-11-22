@@ -5,11 +5,11 @@
 
 void add_desk(struct server *server);
 void remove_desk(struct desk *desk);
-void next_desk(struct server *server);
-void prev_desk(struct server *server);
-void reset_pan(struct desk *desk);
-void save_pan(struct desk *desk);
-void zoom_desk(struct desk *desk, int dir);
+void next_desk(struct server *server, void *data);
+void prev_desk(struct server *server, void *data);
+void reset_pan(struct server *server, void *data);
+void save_pan(struct server *server, void *data);
+void zoom_desk(struct server *server, void *data);
 
 struct wallpaper {
     struct wlr_texture *texture;
