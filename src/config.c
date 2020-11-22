@@ -135,7 +135,8 @@ void load_config(struct server *server, char *config) {
 	    }
 	} else if (!strcasecmp(s, "set_modifier")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
-		server->mod = modifier_by_name(s);
+		int mod = modifier_by_name(s);
+		server->mod = (mod ? mod : WLR_MODIFIER_LOGO);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
