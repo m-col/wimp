@@ -38,6 +38,7 @@ struct server {
     struct wl_list desks;
     int desk_count;
     struct desk *current_desk;
+    bool can_steal_focus;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

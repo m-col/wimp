@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     wlr_compositor_create(server.display, server.renderer);
     wlr_data_device_manager_create(server.display);
     wl_list_init(&server.desks);
+    server.can_steal_focus = false;
 
     // read config
     load_config(&server, config);

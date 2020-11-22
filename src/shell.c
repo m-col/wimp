@@ -44,7 +44,8 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 
 void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
-    focus_view(view, view->surface->surface);
+    if (view->server->can_steal_focus)
+	focus_view(view, view->surface->surface);
 }
 
 void on_unmap(struct wl_listener *listener, void *data) {

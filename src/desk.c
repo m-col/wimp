@@ -23,7 +23,9 @@ void set_desk(struct server *server, struct desk *desk) {
 	unmap_view(view);
     }
     server->current_desk = desk;
+    server->can_steal_focus = false;
     wl_list_for_each(view, &server->current_desk->views, link) {
 	map_view(view);
     }
+    server->can_steal_focus = true;
 }
