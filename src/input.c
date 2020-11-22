@@ -20,8 +20,6 @@ void shutdown(struct server *server, void *data) {
 
 void exec_command(struct server *server, void *data) {
     if (fork() == 0) {
-	//char *const command[] = {data};
-	//execvp(command[0], command);
 	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
     }
 }
