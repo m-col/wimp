@@ -36,6 +36,7 @@ struct server {
     struct wlr_xdg_shell *shell;
     struct wl_listener new_xdg_surface_listener;
     struct wl_list desks;
+    int desk_count;
     struct desk *current_desk;
 
     struct wlr_cursor *cursor;
@@ -84,9 +85,38 @@ struct keyboard {
     struct wl_listener key_listener;
 };
 
+struct wallpaper {
+    struct wlr_texture *texture;
+    int width, height;
+};
+
+struct desk {
+    struct wl_list link;
+    struct server *server;
+    struct wl_list views;
+    float background[4];
+    struct wallpaper *wallpaper;
+    double panned_x, panned_y;
+    int index;
+    double zoom;
+};
+
+struct binding {
+    struct wl_list link;
+    enum wlr_keyboard_modifier mods;
+    uint32_t key;
+    action action;
+    void *data;
+};
+
 struct motion {
     double dx;
     double dy;
+};
+
+enum mouse_keys {
+    MOTION,
+    SCROLL,
 };
 
 #endif

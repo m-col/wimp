@@ -5,156 +5,11 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
-#include "desk.h"
 #include "input.h"
 #include "shell.h"
 #include "types.h"
 
 #define is_int(s) (strspn(s, "-0123456789") == strlen(s))
-
-
-void shutdown(struct server *server, void *data) {
-    wl_display_terminate(server->display);
-}
-
-
-void exec_command(struct server *server, void *data) {
-    if (fork() == 0) {
-	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
-    }
-}
-
-
-enum wlr_keyboard_modifier modifier_by_name(char *mod) {
-    if (strcasecmp(mod, "shift") == 0)
-	return WLR_MODIFIER_SHIFT;
-    if (strcasecmp(mod, "caps") == 0)
-	return WLR_MODIFIER_CAPS;
-    if (strcasecmp(mod, "ctrl") == 0)
-	return WLR_MODIFIER_CTRL;
-    if (strcasecmp(mod, "alt") == 0)
-	return WLR_MODIFIER_ALT;
-    if (strcasecmp(mod, "mod2") == 0)
-	return WLR_MODIFIER_MOD2;
-    if (strcasecmp(mod, "mod3") == 0)
-	return WLR_MODIFIER_MOD3;
-    if (strcasecmp(mod, "logo") == 0)
-	return WLR_MODIFIER_LOGO;
-    if (strcasecmp(mod, "mod5") == 0)
-	return WLR_MODIFIER_MOD5;
-    return 0;
-}
-
-
-void assign_action(char *name, char *data, struct key_binding *kb) {
-    kb->data = NULL;
-    kb->action = NULL;
-
-    if (strcasecmp(name, "shutdown") == 0)
-	kb->action = &shutdown;
-    else if (strcasecmp(name, "close_current_window") == 0)
-	kb->action = &close_current_window;
-    else if (strcasecmp(name, "next_desk") == 0)
-	kb->action = &next_desk;
-    else if (strcasecmp(name, "prev_desk") == 0)
-	kb->action = &prev_desk;
-    else if (strcasecmp(name, "pan_desk") == 0)
-	kb->action = &pan_desk;
-    else if (strcasecmp(name, "reset_pan") == 0)
-	kb->action = &reset_pan;
-    else if (strcasecmp(name, "save_pan") == 0)
-	kb->action = &save_pan;
-    else if (strcasecmp(name, "zoom_in") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = 1;
-    }
-    else if (strcasecmp(name, "zoom_out") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = -1;
-    }
-    else if (strcasecmp(name, "zoom_out") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = -1;
-    }
-    else if (strcasecmp(name, "exec") == 0) {
-	kb->action = &exec_command;
-	kb->data = calloc(strlen(data), sizeof(char));
-	strncpy(kb->data, data, strlen(data));
-    }
-}
-
-
-enum mouse_keys {
-    MOTION,
-    SCROLL,
-};
-
-
-enum mouse_keys mouse_key_from_name(char *name) {
-    if (strcasecmp(name, "motion") == 0)
-	return MOTION;
-    else if (strcasecmp(name, "scroll") == 0)
-	return SCROLL;
-    return 0;
-}
-
-
-void add_binding(struct server *server, char *data, int line) {
-    struct key_binding *kb = calloc(1, sizeof(struct key_binding));
-    enum wlr_keyboard_modifier mod;
-    char *s = strtok(data, " \t\n\r");
-    bool is_mouse_binding = false;
-
-    // additional modifiers
-    kb->mods = 0;
-    for (int i = 0; i < 8; i++) {
-	mod = modifier_by_name(s);
-	if (mod == 0)
-	    break;
-	kb->mods |= mod;
-	s = strtok(NULL, " \t\n\r");
-    }
-
-    // key
-    kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
-    if (kb->key == XKB_KEY_NoSymbol) {
-	kb->key = mouse_key_from_name(s);
-	if (kb->key == 0) {
-	    wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
-	    free(kb);
-	    return;
-	}
-	is_mouse_binding = true;
-    }
-
-    // action
-    s = strtok(NULL, " \t\n\r");
-    assign_action(s, strtok(NULL, ""), kb);
-    if (kb->action == NULL) {
-	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
-	free(kb);
-	return;
-    }
-
-    struct key_binding *kb_existing;
-    struct wl_list *bindings;
-    if (is_mouse_binding) {
-	bindings = &server->mouse_bindings;
-    } else {
-	bindings = &server->key_bindings;
-    }
-    wl_list_for_each(kb_existing, bindings, link) {
-	if (kb_existing->key == kb->key && kb_existing->mods == kb->mods) {
-	    wlr_log(WLR_ERROR, "Config line %i: binding exists for key combo.", line);
-	    free(kb);
-	    return;
-	}
-    }
-    wl_list_insert(bindings, &kb->link);
-}
 
 
 void process_cursor_move(struct server *server, uint32_t time, double zoom) {
@@ -356,7 +211,7 @@ void on_modifier(struct wl_listener *listener, void *data) {
     );
 
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    struct key_binding *kb;
+    struct binding *kb;
     bool handled = false;
     if ((modifiers & server->mod)) {
 	modifiers &= ~server->mod;
@@ -396,7 +251,7 @@ void on_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    struct key_binding *kb;
+    struct binding *kb;
     if ((modifiers & server->mod) && event->state == WLR_KEY_PRESSED) {
 	modifiers &= ~server->mod;
 	for (int i = 0; i < nsyms; i++) {

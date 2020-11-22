@@ -2,9 +2,25 @@
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output_layout.h>
 
-#include "desk.h"
 #include "output.h"
 #include "types.h"
+
+
+struct output {
+    struct wl_list link;
+    struct server *server;
+    struct wlr_output *wlr_output;
+    struct wl_listener frame_listener;
+};
+
+
+struct render_data {
+    struct wlr_output *output;
+    struct wlr_renderer *renderer;
+    struct view *view;
+    struct timespec *when;
+    double zoom;
+};
 
 
 void render_surface(
