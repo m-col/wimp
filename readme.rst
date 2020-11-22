@@ -24,4 +24,3 @@ To do list:
  - handle fullscreening
  - pinch gestures for desk zooming
  - draw rect with mouse when zoomed out to set new view
- - handle TTY changing

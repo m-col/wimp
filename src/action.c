@@ -1,3 +1,7 @@
+#include <sys/vt.h>
+#include <wlr/backend.h>
+#include <wlr/backend/session.h>
+
 #include "desk.h"
 #include "types.h"
 
@@ -11,6 +15,13 @@ void exec_command(struct server *server, void *data) {
     if (fork() == 0) {
 	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
     }
+}
+
+
+void change_vt(struct server *server, void *data) {
+    unsigned vt = *(unsigned*)data;
+    struct wlr_session *session = wlr_backend_get_session(server->backend);
+    wlr_session_change_vt(session, vt);
 }
 
 

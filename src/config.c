@@ -137,8 +137,9 @@ void add_binding(struct server *server, char *data, int line) {
 	    return;
 	}
     }
-    wl_list_insert(bindings, &kb->link);
+    wl_list_insert(bindings->prev, &kb->link);
 }
+
 
 void assign_colour(char *hex, float dest[4]) {
     if (strlen(hex) != 7 || hex[0] != '#') {
@@ -224,6 +225,33 @@ static void set_defaults(struct server *server) {
     server->zoom_min = 0.5;
     server->zoom_max = 3;
     server->reverse_scrolling = false;
+    server->vt_switching = true;
+}
+
+
+static void setup_vt_switching(struct server *server) {
+    if (!server->vt_switching)
+	return;
+
+    uint32_t func_keys[] = {
+	XKB_KEY_F1,
+	XKB_KEY_F2,
+	XKB_KEY_F3,
+	XKB_KEY_F4,
+	XKB_KEY_F5,
+	XKB_KEY_F6,
+    };
+    struct binding *kb;
+
+    for (unsigned i = 0; i < 6; i++) {
+	kb = calloc(1, sizeof(struct binding));
+	kb->mods = WLR_MODIFIER_CTRL;
+	kb->key = func_keys[i];
+	kb->action = &change_vt;
+	kb->data = calloc(1, sizeof(unsigned));
+	*(unsigned *)(kb->data) = i + 1;
+	wl_list_insert(server->key_bindings.prev, &kb->link);
+    }
 }
 
 
@@ -281,7 +309,13 @@ void load_config(struct server *server, char *config) {
 	    }
 	} else if (!strcasecmp(s, "bind")) {
 	    add_binding(server, strtok(NULL, ""), line);
+	} else if (!strcasecmp(s, "vt_switching")) {
+	    s = strtok(NULL, " \t\n\r");
+	    if (!strcasecmp(s, "off"))
+		server->vt_switching = false;
 	}
     }
     fclose(fd);
+
+    setup_vt_switching(server);
 }

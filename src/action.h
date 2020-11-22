@@ -5,6 +5,7 @@
 
 void shutdown(struct server *server, void *data);
 void exec_command(struct server *server, void *data);
+void change_vt(struct server *server, void *data);
 void close_current_window(struct server *server, void *data);
 void next_desk(struct server *server, void *data);
 void prev_desk(struct server *server, void *data);

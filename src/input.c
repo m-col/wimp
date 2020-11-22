@@ -219,7 +219,6 @@ void on_modifier(struct wl_listener *listener, void *data) {
 	    if (modifiers == kb->mods) {
 		switch (kb->key) {
 		    case MOTION:
-			printf("MOTION\n");
 			server->on_mouse_motion = kb->action;
 			break;
 		    case SCROLL:
