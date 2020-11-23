@@ -16,21 +16,34 @@
 #include "types.h"
 
 
+static const char usage[] =
+    "usage: deskwm [options...]\n"
+    "    -h         show this help message\n"
+    "    -c <file>  specify config file\n"
+    "    -d         set logging to debug mode\n"
+    "    -i         set logging to info mode\n"
+;
+
+
 int main(int argc, char *argv[]) {
     wlr_log_init(WLR_ERROR, NULL);
 
     int opt;
     char *config = NULL;
-    while ((opt = getopt(argc, argv, "dic:")) != -1) {
+    while ((opt = getopt(argc, argv, "hcdi:")) != -1) {
         switch (opt) {
+	    case 'h':
+		printf(usage);
+		return EXIT_SUCCESS;
+		break;
+	    case 'c':
+		config = strdup(optarg);
+		break;
 	    case 'd':
 		wlr_log_init(WLR_DEBUG, NULL);
 		break;
 	    case 'i':
 		wlr_log_init(WLR_INFO, NULL);
-		break;
-	    case 'c':
-		config = strdup(optarg);
 		break;
         }
     }
