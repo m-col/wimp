@@ -19,7 +19,6 @@ To do list:
  - primary-selection protocol
  - functions to shift focus
  - functions to shift desk view
- - screenshots protocol
  - handle fullscreening
  - pinch gestures for desk zooming
  - draw rect with mouse when zoomed out to set new view
