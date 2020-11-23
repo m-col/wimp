@@ -16,7 +16,6 @@ This project is still new, and will not be useful.
 To do list:
  - xwayland
  - xdg-decoration protocol
- - primary-selection protocol
  - functions to shift focus
  - functions to shift desk view
  - handle fullscreening

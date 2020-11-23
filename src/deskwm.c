@@ -5,6 +5,8 @@
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -55,7 +57,12 @@ int main(int argc, char *argv[]) {
     server.renderer = wlr_backend_get_renderer(server.backend);
     wlr_renderer_init_wl_display(server.renderer, server.display);
     wlr_compositor_create(server.display, server.renderer);
+
+    // add some managers
+    wlr_screencopy_manager_v1_create(server.display);
     wlr_data_device_manager_create(server.display);
+    wlr_primary_selection_v1_device_manager_create(server.display);
+
     wl_list_init(&server.desks);
     server.can_steal_focus = false;
 
