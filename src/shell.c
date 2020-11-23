@@ -1,3 +1,4 @@
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/util/edges.h>
 
 #include "types.h"
@@ -133,4 +134,6 @@ void set_up_shell(struct server *server) {
     server->shell = wlr_xdg_shell_create(server->display);
     server->new_xdg_surface_listener.notify = on_new_xdg_surface;
     wl_signal_add(&server->shell->events.new_surface, &server->new_xdg_surface_listener);
+
+    wlr_screencopy_manager_v1_create(server->display);
 }
