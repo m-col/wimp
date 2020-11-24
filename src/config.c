@@ -233,6 +233,11 @@ static void set_defaults(struct server *server) {
 
     wl_list_init(&server->marks);
     server->mark_waiting = false;
+    assign_colour("#000000", server->mark_indicator.colour);
+    server->mark_indicator.box.width = 25;
+    server->mark_indicator.box.height = 25;
+    server->mark_indicator.box.x = 0;
+    server->mark_indicator.box.y = 0;
 }
 
 
@@ -316,6 +321,8 @@ void load_config(struct server *server, char *config) {
 	    }
 	} else if (!strcasecmp(s, "bind")) {
 	    add_binding(server, strtok(NULL, ""), line);
+	} else if (!strcasecmp(s, "mark_indicator")) {
+	    assign_colour(strtok(NULL, " \t\n\r"), server->mark_indicator.colour);
 	} else if (!strcasecmp(s, "vt_switching")) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "off"))

@@ -24,6 +24,11 @@ struct server;
 
 typedef void (*action)(struct server *server, void *data);
 
+struct mark_indicator {
+    float colour[4];
+    struct wlr_box box;
+};
+
 struct server {
     struct wl_display *display;
     struct wlr_backend *backend;
@@ -41,6 +46,7 @@ struct server {
     bool can_steal_focus;
     struct wl_list marks;
     bool mark_waiting;
+    struct mark_indicator mark_indicator;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

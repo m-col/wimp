@@ -70,8 +70,9 @@ void render_surface(
 
 void on_frame(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, frame_listener);
-    struct wlr_renderer *renderer = output->server->renderer;
-    struct desk *desk = output->server->current_desk;
+    struct server *server = output->server;
+    struct wlr_renderer *renderer = server->renderer;
+    struct desk *desk = server->current_desk;
 
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -101,6 +102,7 @@ void on_frame(struct wl_listener *listener, void *data) {
 	}
     }
 
+    // paint clients
     struct view *view;
     wl_list_for_each_reverse(view, &desk->views, link) {
 	struct render_data rdata = {
@@ -112,6 +114,16 @@ void on_frame(struct wl_listener *listener, void *data) {
 	};
 	wlr_xdg_surface_for_each_surface(
 	    view->surface, render_surface, &rdata
+	);
+    }
+
+    // paint mark indicator
+    if (server->mark_waiting) {
+	struct wlr_box indicator = server->mark_indicator.box;
+	indicator.y = height - indicator.height;
+	wlr_render_rect(
+	    renderer, &indicator, server->mark_indicator.colour,
+	    output->wlr_output->transform_matrix
 	);
     }
 
