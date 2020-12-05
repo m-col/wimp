@@ -50,10 +50,8 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->action = &prev_desk;
     else if (strcasecmp(name, "pan_desk") == 0)
 	kb->action = &pan_desk;
-    else if (strcasecmp(name, "reset_pan") == 0)
-	kb->action = &reset_pan;
-    else if (strcasecmp(name, "save_pan") == 0)
-	kb->action = &save_pan;
+    else if (strcasecmp(name, "reset_zoom") == 0)
+	kb->action = &reset_zoom;
     else if (strcasecmp(name, "zoom_in") == 0) {
 	kb->action = &zoom_desk;
 	kb->data = calloc(1, sizeof(int));

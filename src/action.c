@@ -1,6 +1,7 @@
 #include <sys/vt.h>
 #include <wlr/backend.h>
 #include <wlr/backend/session.h>
+#include <wlr/types/wlr_output_layout.h>
 
 #include "action.h"
 #include "desk.h"
@@ -74,20 +75,20 @@ void pan_desk(struct server *server, void *data) {
 }
 
 
-void reset_pan(struct server *server, void *data) {
+void reset_zoom(struct server *server, void *data) {
     struct desk *desk = server->current_desk;
+    double f = 1 / desk->zoom;
+    struct wlr_box *extents = wlr_output_layout_get_box(server->output_layout, NULL);
+    double fx = extents->width * (f - 1) / 2;
+    double fy = extents->height * (f - 1) / 2;
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
-	view->x -= desk->panned_x;
-	view->y -= desk->panned_y;
+	view->x -= fx;
+	view->y -= fy;
     }
-    desk->panned_x = desk->panned_y = 0;
+    desk->panned_x -= fx;
+    desk->panned_y -= fy;
     desk->zoom = 1;
-}
-
-
-void save_pan(struct server *server, void *data) {
-    server->current_desk->panned_x = server->current_desk->panned_y = 0;
 }
 
 
