@@ -50,10 +50,12 @@ void on_map(struct wl_listener *listener, void *data) {
 
 void on_unmap(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, unmap_listener);
-    wl_list_remove(&view->link);
-    wl_list_insert(view->server->current_desk->views.prev, &view->link);
-    struct view *next_view = wl_container_of(view->server->current_desk->views.next, view, link);
-    focus_view(next_view, next_view->surface->surface);
+    if (view->server->can_steal_focus) {
+	wl_list_remove(&view->link);
+	wl_list_insert(view->server->current_desk->views.prev, &view->link);
+	struct view *next_view = wl_container_of(view->server->current_desk->views.next, view, link);
+	focus_view(next_view, next_view->surface->surface);
+    }
 }
 
 
