@@ -2,6 +2,7 @@
 #include <wlr/backend.h>
 #include <wlr/backend/session.h>
 
+#include "action.h"
 #include "desk.h"
 #include "types.h"
 
@@ -111,6 +112,13 @@ void zoom_desk(struct server *server, void *data) {
     }
     desk->panned_x -= fx;
     desk->panned_y -= fy;
+}
+
+
+void zoom_desk_mouse(struct server *server, void *data) {
+    struct motion motion = *(struct motion*)data;
+    int dir = motion.dx + motion.dy;
+    zoom_desk(server, &dir);
 }
 
 

@@ -64,11 +64,8 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->data = calloc(1, sizeof(int));
 	*(int *)(kb->data) = -1;
     }
-    else if (strcasecmp(name, "zoom_out") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = -1;
-    }
+    else if (strcasecmp(name, "zoom_desk") == 0)
+	kb->action = &zoom_desk_mouse;
     else if (strcasecmp(name, "set_mark") == 0)
 	kb->action = &set_mark;
     else if (strcasecmp(name, "go_to_mark") == 0)
