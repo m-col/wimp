@@ -187,3 +187,14 @@ void actually_go_to_mark(struct server *server, const xkb_keysym_t sym) {
 	}
     }
 }
+
+
+void toggle_fullscreen(struct server *server, void *data) {
+    struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
+    if (!surface)
+	return;
+
+    struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
+    if (xdg_surface)
+	wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
+}

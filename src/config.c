@@ -73,6 +73,8 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->data = calloc(strlen(data), sizeof(char));
 	strncpy(kb->data, data, strlen(data));
     }
+    else if (strcasecmp(name, "toggle_fullscreen") == 0)
+	kb->action = &toggle_fullscreen;
 }
 
 
