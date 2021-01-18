@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     wlr_primary_selection_v1_device_manager_create(server.display);
 
     wl_list_init(&server.desks);
-    server.can_steal_focus = false;
+    server.can_steal_focus = true;
 
     // read config
     load_config(&server, config);
