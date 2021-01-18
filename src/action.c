@@ -16,6 +16,8 @@ void shutdown(struct server *server, void *data) {
 void exec_command(struct server *server, void *data) {
     if (fork() == 0) {
 	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
+    } else {
+	wlr_log(WLR_DEBUG, "Executing: %s", data);
     }
 }
 
