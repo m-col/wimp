@@ -243,12 +243,12 @@ static void setup_vt_switching(struct server *server) {
 	return;
 
     uint32_t func_keys[] = {
-	XKB_KEY_F1,
-	XKB_KEY_F2,
-	XKB_KEY_F3,
-	XKB_KEY_F4,
-	XKB_KEY_F5,
-	XKB_KEY_F6,
+	XKB_KEY_XF86Switch_VT_1,
+	XKB_KEY_XF86Switch_VT_2,
+	XKB_KEY_XF86Switch_VT_3,
+	XKB_KEY_XF86Switch_VT_4,
+	XKB_KEY_XF86Switch_VT_5,
+	XKB_KEY_XF86Switch_VT_6
     };
     struct binding *kb;
 
