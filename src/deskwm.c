@@ -13,6 +13,7 @@
 #include "config.h"
 #include "deskwm.h"
 #include "input.h"
+#include "log.h"
 #include "output.h"
 #include "shell.h"
 #include "types.h"
@@ -27,12 +28,13 @@ static const char usage[] =
 ;
 
 
-int main(int argc, char *argv[]) {
-    wlr_log_init(WLR_ERROR, NULL);
-
+int main(int argc, char *argv[])
+{
     int opt;
+    int log_level = WLR_ERROR;
     char *config = NULL;
-    while ((opt = getopt(argc, argv, "hcdi:")) != -1) {
+
+    while ((opt = getopt(argc, argv, "hcdi")) != -1) {
         switch (opt) {
 	    case 'h':
 		printf(usage);
@@ -42,13 +44,15 @@ int main(int argc, char *argv[]) {
 		config = strdup(optarg);
 		break;
 	    case 'd':
-		wlr_log_init(WLR_DEBUG, NULL);
+		log_level = WLR_DEBUG;
 		break;
 	    case 'i':
-		wlr_log_init(WLR_INFO, NULL);
+		log_level = WLR_INFO;
 		break;
         }
     }
+
+    init_log(log_level);
 
     // create
     struct server server;
