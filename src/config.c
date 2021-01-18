@@ -242,7 +242,15 @@ static void setup_vt_switching(struct server *server) {
     if (!server->vt_switching)
 	return;
 
+    /* Depending on what the user sets the mod key to, either func keys or
+     * direct VT key combo "keys" will be matched, so configure both. */
     uint32_t func_keys[] = {
+	XKB_KEY_F1,
+	XKB_KEY_F2,
+	XKB_KEY_F3,
+	XKB_KEY_F4,
+	XKB_KEY_F5,
+	XKB_KEY_F6,
 	XKB_KEY_XF86Switch_VT_1,
 	XKB_KEY_XF86Switch_VT_2,
 	XKB_KEY_XF86Switch_VT_3,
@@ -252,13 +260,13 @@ static void setup_vt_switching(struct server *server) {
     };
     struct binding *kb;
 
-    for (unsigned i = 0; i < 6; i++) {
+    for (unsigned i = 0; i < 12; i++) {
 	kb = calloc(1, sizeof(struct binding));
 	kb->mods = WLR_MODIFIER_CTRL;
 	kb->key = func_keys[i];
 	kb->action = &change_vt;
 	kb->data = calloc(1, sizeof(unsigned));
-	*(unsigned *)(kb->data) = i + 1;
+	*(unsigned *)(kb->data) = (i + 1) % 6;
 	wl_list_insert(server->key_bindings.prev, &kb->link);
     }
 }
