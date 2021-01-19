@@ -1,3 +1,4 @@
+#include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
 
 #include "types.h"
@@ -39,6 +40,22 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 	seat, view->surface->surface, keyboard->keycodes,
 	keyboard->num_keycodes, &keyboard->modifiers
     );
+}
+
+
+void fullscreen_xdg_surface(struct server *server, struct wlr_xdg_surface *xdg_surface) {
+
+    struct wlr_xdg_surface *prev_surface = server->current_desk->fullscreened;
+    if (prev_surface) {
+	wlr_xdg_toplevel_set_fullscreen(prev_surface, false);
+	if (prev_surface == xdg_surface) {
+	    server->current_desk->fullscreened = NULL;
+	    return;
+	}
+    }
+
+    wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
+    server->current_desk->fullscreened = xdg_surface;
 }
 
 
@@ -103,6 +120,13 @@ void on_request_resize(struct wl_listener *listener, void *data) {
 }
 
 
+void on_request_fullscreen(struct wl_listener *listener, void *data) {
+    struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
+    struct view *view = wl_container_of(listener, view, request_fullscreen_listener);
+    fullscreen_xdg_surface(view->server, event->surface);
+}
+
+
 void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, new_xdg_surface_listener);
     struct wlr_xdg_surface *surface = data;
@@ -126,6 +150,8 @@ void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     wl_signal_add(&toplevel->events.request_move, &view->request_move_listener);
     view->request_resize_listener.notify = on_request_resize;
     wl_signal_add(&toplevel->events.request_resize, &view->request_resize_listener);
+    view->request_fullscreen_listener.notify = on_request_fullscreen;
+    wl_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen_listener);
 
     wl_list_insert(&server->current_desk->views, &view->link);
 }

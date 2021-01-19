@@ -86,6 +86,7 @@ struct view {
     struct wl_listener destroy_listener;
     struct wl_listener request_move_listener;
     struct wl_listener request_resize_listener;
+    struct wl_listener request_fullscreen_listener;
     double x, y;
 };
 
@@ -111,6 +112,8 @@ struct desk {
     double panned_x, panned_y;
     int index;
     double zoom;
+    struct wlr_xdg_surface *fullscreened;
+    struct wlr_box fullscreened_saved_geo;
 };
 
 struct binding {

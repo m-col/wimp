@@ -13,6 +13,7 @@ void add_desk(struct server *server) {
     desk->wallpaper = NULL;
     desk->index = server->desk_count;
     desk->zoom = 1;
+    desk->fullscreened = NULL;
     server->desk_count++;
 }
 
