@@ -196,17 +196,6 @@ void toggle_fullscreen(struct server *server, void *data) {
     struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
     if (!surface)
 	return;
-
     struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
-    double x = xdg_surface->geometry.width / 2;
-    double y = xdg_surface->geometry.height / 2;
-
-    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
-    if (output == NULL) {
-	double lx, ly;
-	wlr_output_layout_closest_point(server->output_layout, NULL, x, y, &lx, &ly);
-	output = wlr_output_layout_output_at(server->output_layout, lx, ly);
-    }
-
-    fullscreen_xdg_surface(server, xdg_surface, output);
+    fullscreen_xdg_surface(server, xdg_surface, NULL);
 }

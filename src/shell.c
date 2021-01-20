@@ -64,6 +64,14 @@ void fullscreen_xdg_surface(
     if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
 	return;
 
+    if (!output) {
+	double x = xdg_surface->geometry.width / 2;
+	double y = xdg_surface->geometry.height / 2;
+	double lx, ly;
+	wlr_output_layout_closest_point(server->output_layout, NULL, x, y, &lx, &ly);
+	output = wlr_output_layout_output_at(server->output_layout, lx, ly);
+    }
+
     server->current_desk->fullscreened = xdg_surface;
     server->current_desk->fullscreened_saved_geo.width = xdg_surface->geometry.width;
     server->current_desk->fullscreened_saved_geo.height = xdg_surface->geometry.height;
