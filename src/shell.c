@@ -44,16 +44,17 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 
 
 void fullscreen_xdg_surface(
-    struct server *server, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
+    struct view *view, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
 ) {
+    struct server *server = view->server;
+    struct wlr_box *saved_geo = &server->current_desk->fullscreened_saved_geo;
+
     struct wlr_xdg_surface *prev_surface = server->current_desk->fullscreened;
     if (prev_surface) {
 	wlr_xdg_toplevel_set_fullscreen(prev_surface, false);
-	wlr_xdg_toplevel_set_size(
-	    prev_surface,
-	    server->current_desk->fullscreened_saved_geo.width,
-	    server->current_desk->fullscreened_saved_geo.height
-	);
+	wlr_xdg_toplevel_set_size(prev_surface, saved_geo->width, saved_geo->height);
+	view->x = saved_geo->x;
+	view->y = saved_geo->y;
     }
 
     if (prev_surface == xdg_surface) {
@@ -73,8 +74,11 @@ void fullscreen_xdg_surface(
     }
 
     server->current_desk->fullscreened = xdg_surface;
-    server->current_desk->fullscreened_saved_geo.width = xdg_surface->geometry.width;
-    server->current_desk->fullscreened_saved_geo.height = xdg_surface->geometry.height;
+    saved_geo->x = view->x;
+    saved_geo->y = view->y;
+    view->x = view->y = 0;
+    saved_geo->width = xdg_surface->geometry.width;
+    saved_geo->height = xdg_surface->geometry.height;
     wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
     wlr_xdg_toplevel_set_size(xdg_surface, output->width, output->height);
 }
@@ -144,7 +148,7 @@ void on_request_resize(struct wl_listener *listener, void *data) {
 void on_request_fullscreen(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
     struct view *view = wl_container_of(listener, view, request_fullscreen_listener);
-    fullscreen_xdg_surface(view->server, event->surface, event->output);
+    fullscreen_xdg_surface(view, event->surface, event->output);
 }
 
 

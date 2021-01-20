@@ -197,5 +197,6 @@ void toggle_fullscreen(struct server *server, void *data) {
     if (!surface)
 	return;
     struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
-    fullscreen_xdg_surface(server, xdg_surface, NULL);
+    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
+    fullscreen_xdg_surface(view, xdg_surface, NULL);
 }
