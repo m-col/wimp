@@ -163,10 +163,10 @@ static void load_wallpaper(
 ) {
     cairo_surface_t *image = cairo_image_surface_create_from_png(path);
 
-    if (!image)
-	goto fail;
-    if (cairo_surface_status(image) != CAIRO_STATUS_SUCCESS)
-	goto fail;
+    if (!image || cairo_surface_status(image) != CAIRO_STATUS_SUCCESS) {
+	wlr_log(WLR_INFO, "Could not load image: %s", path);
+	return;
+    }
 
     struct wallpaper *wallpaper = calloc(1, sizeof(struct wallpaper));
     wallpaper->width = cairo_image_surface_get_width(image);
@@ -189,10 +189,6 @@ static void load_wallpaper(
     cairo_destroy(cr);
     cairo_surface_destroy(image);
     cairo_surface_destroy(canvas);
-    return;
-
-fail:
-    wlr_log(WLR_INFO, "Could not load image: %s", path);
 }
 
 
