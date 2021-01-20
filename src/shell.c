@@ -43,27 +43,32 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 }
 
 
-void fullscreen_xdg_surface(struct server *server, struct wlr_xdg_surface *xdg_surface) {
-    struct wlr_box geo;
+void fullscreen_xdg_surface(
+    struct server *server, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
+) {
     struct wlr_xdg_surface *prev_surface = server->current_desk->fullscreened;
-
     if (prev_surface) {
 	wlr_xdg_toplevel_set_fullscreen(prev_surface, false);
-	geo = server->current_desk->fullscreened_saved_geo;
-	xdg_surface->toplevel->server_pending.width = geo.width;
-	xdg_surface->toplevel->server_pending.height = geo.height;
-	if (prev_surface == xdg_surface) {
-	    server->current_desk->fullscreened = NULL;
-	    return;
-	}
+	wlr_xdg_toplevel_set_size(
+	    prev_surface,
+	    server->current_desk->fullscreened_saved_geo.width,
+	    server->current_desk->fullscreened_saved_geo.height
+	);
     }
 
-    wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
+    if (prev_surface == xdg_surface) {
+	server->current_desk->fullscreened = NULL;
+	return;
+    }
+
+    if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+	return;
+
     server->current_desk->fullscreened = xdg_surface;
     server->current_desk->fullscreened_saved_geo.width = xdg_surface->geometry.width;
     server->current_desk->fullscreened_saved_geo.height = xdg_surface->geometry.height;
-    xdg_surface->toplevel->server_pending.width = 1000;
-    xdg_surface->toplevel->server_pending.height = 1000;
+    wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
+    wlr_xdg_toplevel_set_size(xdg_surface, output->width, output->height);
 }
 
 
@@ -131,7 +136,7 @@ void on_request_resize(struct wl_listener *listener, void *data) {
 void on_request_fullscreen(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
     struct view *view = wl_container_of(listener, view, request_fullscreen_listener);
-    fullscreen_xdg_surface(view->server, event->surface);
+    fullscreen_xdg_surface(view->server, event->surface, event->output);
 }
 
 
