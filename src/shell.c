@@ -44,10 +44,14 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 
 
 void fullscreen_xdg_surface(struct server *server, struct wlr_xdg_surface *xdg_surface) {
-
+    struct wlr_box geo;
     struct wlr_xdg_surface *prev_surface = server->current_desk->fullscreened;
+
     if (prev_surface) {
 	wlr_xdg_toplevel_set_fullscreen(prev_surface, false);
+	geo = server->current_desk->fullscreened_saved_geo;
+	xdg_surface->toplevel->server_pending.width = geo.width;
+	xdg_surface->toplevel->server_pending.height = geo.height;
 	if (prev_surface == xdg_surface) {
 	    server->current_desk->fullscreened = NULL;
 	    return;
@@ -56,6 +60,10 @@ void fullscreen_xdg_surface(struct server *server, struct wlr_xdg_surface *xdg_s
 
     wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
     server->current_desk->fullscreened = xdg_surface;
+    server->current_desk->fullscreened_saved_geo.width = xdg_surface->geometry.width;
+    server->current_desk->fullscreened_saved_geo.height = xdg_surface->geometry.height;
+    xdg_surface->toplevel->server_pending.width = 1000;
+    xdg_surface->toplevel->server_pending.height = 1000;
 }
 
 
