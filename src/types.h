@@ -141,4 +141,12 @@ struct mark {
     double zoom, x, y;
 };
 
+enum direction {
+    NONE,
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT,
+};
+
 #endif

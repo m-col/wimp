@@ -8,6 +8,8 @@
 #include "shell.h"
 #include "types.h"
 
+#define DIST(x, y) ((x) * (x) + (y) * (y))
+
 
 void shutdown(struct server *server, void *data) {
     wl_display_terminate(server->display);
@@ -38,6 +40,72 @@ void close_current_window(struct server *server, void *data) {
 	    xdg_toplevel_send_close(xdg_surface->toplevel->resource);
 	}
     }
+}
+
+
+void focus_in_direction(struct server *server, void *data) {
+    struct view *current = wl_container_of(server->current_desk->views.next, current, link);
+    enum direction dir = *(enum direction*)data;
+
+    double x = current->x + current->surface->geometry.width / 2;
+    double y = current->y + current->surface->geometry.height / 2;
+    double c = y - x;  // y = x + c    / slope
+    double n = y + x;  // y = n - x    \ slope
+
+    struct view *next = NULL;
+    struct view *view;
+    double vx, vy, vdist, dist;
+
+    switch (dir) {
+	case RIGHT:
+	    wl_list_for_each(view, &server->current_desk->views, link) {
+		vx = view->x + view->surface->geometry.width / 2;
+		vy = view->y + view->surface->geometry.height / 2;
+		vdist = DIST(x - vx, y - vy);
+		if (vy - vx < c && vy + vx > n && (!next || vdist < dist)) {
+		    next = view;
+		    dist = vdist;
+		}
+	    }
+	    break;
+	case LEFT:
+	    wl_list_for_each(view, &server->current_desk->views, link) {
+		vx = view->x + view->surface->geometry.width / 2;
+		vy = view->y + view->surface->geometry.height / 2;
+		vdist = DIST(x - vx, y - vy);
+		if (vy - vx > c && vy + vx < n && (!next || vdist < dist)) {
+		    next = view;
+		    dist = vdist;
+		}
+	    }
+	    break;
+	case DOWN:
+	    wl_list_for_each(view, &server->current_desk->views, link) {
+		vx = view->x + view->surface->geometry.width / 2;
+		vy = view->y + view->surface->geometry.height / 2;
+		vdist = DIST(x - vx, y - vy);
+		if (vy - vx > c && vy + vx > n && (!next || vdist < dist)) {
+		    next = view;
+		    dist = vdist;
+		}
+	    }
+	    break;
+	case UP:
+	    wl_list_for_each(view, &server->current_desk->views, link) {
+		vx = view->x + view->surface->geometry.width / 2;
+		vy = view->y + view->surface->geometry.height / 2;
+		vdist = DIST(x - vx, y - vy);
+		if (vy - vx < c && vy + vx < n && (!next || vdist < dist)) {
+		    next = view;
+		    dist = vdist;
+		}
+	    }
+	    break;
+	case NONE:
+	    return;
+    }
+    if (next)
+	focus_view(next, next->surface->surface);
 }
 
 

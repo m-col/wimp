@@ -36,6 +36,19 @@ enum wlr_keyboard_modifier modifier_by_name(char *mod) {
 }
 
 
+enum direction direction_from_name(char *name) {
+    if (strcasecmp(name, "up") == 0)
+	return UP;
+    if (strcasecmp(name, "right") == 0)
+	return RIGHT;
+    if (strcasecmp(name, "down") == 0)
+	return DOWN;
+    if (strcasecmp(name, "left") == 0)
+	return LEFT;
+    return NONE;
+}
+
+
 void assign_action(char *name, char *data, struct binding *kb) {
     kb->data = NULL;
     kb->action = NULL;
@@ -44,6 +57,11 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->action = &shutdown;
     else if (strcasecmp(name, "close_current_window") == 0)
 	kb->action = &close_current_window;
+    else if (strcasecmp(name, "focus") == 0) {
+	kb->action = &focus_in_direction;
+	kb->data = calloc(1, sizeof(enum direction));
+	*(enum direction *)(kb->data) = direction_from_name(data);
+    }
     else if (strcasecmp(name, "next_desk") == 0)
 	kb->action = &next_desk;
     else if (strcasecmp(name, "prev_desk") == 0)
@@ -117,7 +135,7 @@ void add_binding(struct server *server, char *data, int line) {
 
     // action
     s = strtok(NULL, " \t\n\r");
-    assign_action(s, strtok(NULL, ""), kb);
+    assign_action(s, strtok(NULL, "\n\r"), kb);
     if (kb->action == NULL) {
 	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
 	free(kb);
