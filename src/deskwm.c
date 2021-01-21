@@ -11,8 +11,9 @@
 #include <wlr/util/log.h>
 
 #include "config.h"
+#include "cursor.h"
 #include "deskwm.h"
-#include "input.h"
+#include "keyboard.h"
 #include "log.h"
 #include "output.h"
 #include "shell.h"

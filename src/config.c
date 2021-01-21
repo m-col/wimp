@@ -9,7 +9,6 @@
 #include "action.h"
 #include "config.h"
 #include "desk.h"
-#include "input.h"
 #include "types.h"
 
 #define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
