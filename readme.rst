@@ -14,8 +14,12 @@ WORK IN PROGRESS.
 This project is still new, and will not be useful.
 
 To do list:
+ - border decorations
+ - make configuration much nicer and remove all the strcmps
+ - read default configuration as string
+    - then add action to read config
  - xwayland
- - xdg-decoration protocol
  - functions to shift desk view
  - pinch gestures for desk zooming
  - draw rect with mouse when zoomed out to set new view
+ - xdg-decoration protocol?
