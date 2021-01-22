@@ -46,6 +46,7 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 void fullscreen_xdg_surface(
     struct view *view, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
 ) {
+    /* output can be NULL, in which case it is calculated using the surface's position */
     struct server *server = view->server;
     struct wlr_box *saved_geo = &server->current_desk->fullscreened_saved_geo;
 
@@ -66,8 +67,8 @@ void fullscreen_xdg_surface(
 	return;
 
     if (!output) {
-	double x = xdg_surface->geometry.width / 2;
-	double y = xdg_surface->geometry.height / 2;
+	double x = view->x + xdg_surface->geometry.width / 2;
+	double y = view->y + xdg_surface->geometry.height / 2;
 	double lx, ly;
 	wlr_output_layout_closest_point(server->output_layout, NULL, x, y, &lx, &ly);
 	output = wlr_output_layout_output_at(server->output_layout, lx, ly);
