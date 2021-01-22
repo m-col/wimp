@@ -19,6 +19,7 @@ To do list:
  - read default configuration as string
     - then add action to read config
  - fix issue where Shift-using key bindings require pre-shifted key in config
+ - pan desk when focussing window in direction that isn't in view
  - xwayland
  - functions to shift desk view
  - pinch gestures for desk zooming
