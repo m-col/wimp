@@ -44,66 +44,37 @@ void close_current_window(struct server *server, void *data) {
 
 
 void focus_in_direction(struct server *server, void *data) {
+    if (wl_list_empty(&server->current_desk->views))
+	return;
+
     struct view *current = wl_container_of(server->current_desk->views.next, current, link);
     enum direction dir = *(enum direction*)data;
-
-    double x = current->x + current->surface->geometry.width / 2;
-    double y = current->y + current->surface->geometry.height / 2;
-    double c = y - x;  // y = x + c    / slope
-    double n = y + x;  // y = n - x    \ slope
 
     struct view *next = NULL;
     struct view *view;
     double vx, vy, vdist, dist;
+    double x = current->x + current->surface->geometry.width / 2;
+    double y = current->y + current->surface->geometry.height / 2;
+    double c = y - x;  // y = x + c    / slope
+    double n = y + x;  // y = n - x    \ slope
+    bool above_c = dir & (DOWN | LEFT);
+    bool above_n = dir & (DOWN | RIGHT);
 
-    switch (dir) {
-	case RIGHT:
-	    wl_list_for_each(view, &server->current_desk->views, link) {
-		vx = view->x + view->surface->geometry.width / 2;
-		vy = view->y + view->surface->geometry.height / 2;
-		vdist = DIST(x - vx, y - vy);
-		if (vy - vx < c && vy + vx > n && (!next || vdist < dist)) {
-		    next = view;
-		    dist = vdist;
-		}
-	    }
-	    break;
-	case LEFT:
-	    wl_list_for_each(view, &server->current_desk->views, link) {
-		vx = view->x + view->surface->geometry.width / 2;
-		vy = view->y + view->surface->geometry.height / 2;
-		vdist = DIST(x - vx, y - vy);
-		if (vy - vx > c && vy + vx < n && (!next || vdist < dist)) {
-		    next = view;
-		    dist = vdist;
-		}
-	    }
-	    break;
-	case DOWN:
-	    wl_list_for_each(view, &server->current_desk->views, link) {
-		vx = view->x + view->surface->geometry.width / 2;
-		vy = view->y + view->surface->geometry.height / 2;
-		vdist = DIST(x - vx, y - vy);
-		if (vy - vx > c && vy + vx > n && (!next || vdist < dist)) {
-		    next = view;
-		    dist = vdist;
-		}
-	    }
-	    break;
-	case UP:
-	    wl_list_for_each(view, &server->current_desk->views, link) {
-		vx = view->x + view->surface->geometry.width / 2;
-		vy = view->y + view->surface->geometry.height / 2;
-		vdist = DIST(x - vx, y - vy);
-		if (vy - vx < c && vy + vx < n && (!next || vdist < dist)) {
-		    next = view;
-		    dist = vdist;
-		}
-	    }
-	    break;
-	case NONE:
-	    return;
+    wl_list_for_each(view, &server->current_desk->views, link) {
+	vx = view->x + view->surface->geometry.width / 2;
+	vy = view->y + view->surface->geometry.height / 2;
+	vdist = DIST(x - vx, y - vy);
+	if (
+	    (above_c ^ (vy - vx < c)) &&
+	    (above_n ^ (vy + vx < n)) &&
+	    (!next || vdist < dist) &&
+	    view != current
+	) {
+	    next = view;
+	    dist = vdist;
+	}
     }
+
     if (next)
 	focus_view(next, next->surface->surface);
 }
