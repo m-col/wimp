@@ -92,6 +92,11 @@ void assign_action(char *name, char *data, struct binding *kb) {
     }
     else if (strcasecmp(name, "toggle_fullscreen") == 0)
 	kb->action = &toggle_fullscreen;
+    else if (strcasecmp(name, "halfimize") == 0) {
+	kb->action = &halfimize;
+	kb->data = calloc(1, sizeof(enum direction));
+	*(enum direction *)(kb->data) = direction_from_name(data);
+    }
 }
 
 
@@ -121,7 +126,10 @@ void add_binding(struct server *server, char *data, int line) {
     }
 
     // key
-    kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
+    kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_NO_FLAGS);
+    if (kb->key == XKB_KEY_NoSymbol)
+	kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
+
     if (kb->key == XKB_KEY_NoSymbol) {
 	kb->key = mouse_key_from_name(s);
 	if (kb->key == 0) {

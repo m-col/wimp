@@ -18,6 +18,7 @@ To do list:
  - make configuration much nicer and remove all the strcmps
  - read default configuration as string
     - then add action to read config
+ - fix issue where Shift-using key bindings require pre-shifted key in config
  - xwayland
  - functions to shift desk view
  - pinch gestures for desk zooming

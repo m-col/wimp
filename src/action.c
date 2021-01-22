@@ -268,3 +268,54 @@ void toggle_fullscreen(struct server *server, void *data) {
     struct view *view = wl_container_of(server->current_desk->views.next, view, link);
     fullscreen_xdg_surface(view, xdg_surface, NULL);
 }
+
+
+void halfimize(struct server *server, void *data) {
+    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
+    if (!view)
+	return;
+
+    if  (server->current_desk->fullscreened == view->surface)
+	fullscreen_xdg_surface(view, view->surface, NULL);
+
+    enum direction dir = *(enum direction*)data;
+    double vx = view->x + view->surface->geometry.width / 2;
+    double vy = view->y + view->surface->geometry.height / 2;
+    double x, y, width, height;
+    wlr_output_layout_closest_point(server->output_layout, NULL, vx, vy, &x, &y);
+    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
+
+    switch (dir) {
+	case RIGHT:
+	    x = output->width / 2;
+	    y = 0;
+	    width = output->width / 2;
+	    height = output->height;
+	    break;
+	case LEFT:
+	    x = 0;
+	    y = 0;
+	    width = output->width / 2;
+	    height = output->height;
+	    break;
+	case UP:
+	    x = 0;
+	    y = 0;
+	    width = output->width;
+	    height = output->height / 2;
+	    break;
+	case DOWN:
+	    x = 0;
+	    y = output->height / 2;
+	    width = output->width;
+	    height = output->height / 2;
+	    break;
+	case NONE:
+	    return;
+    }
+
+    double zoom = server->current_desk->zoom;
+    view->x = (x - view->surface->geometry.x) / zoom;
+    view->y = (y - view->surface->geometry.y) / zoom;
+    wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
+}
