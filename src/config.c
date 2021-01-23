@@ -338,6 +338,14 @@ void parse_config(struct server *server, FILE *stream) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "off"))
 		server->vt_switching = false;
+	    else if (!strcasecmp(s, "on"))
+		server->vt_switching = true;
+	} else if (!strcasecmp(s, "scroll_direction")) {
+	    s = strtok(NULL, " \t\n\r");
+	    if (!strcasecmp(s, "natural"))
+		server->reverse_scrolling = false;
+	    else if (!strcasecmp(s, "reverse"))
+		server->reverse_scrolling = true;
 	}
     }
 }
@@ -345,6 +353,15 @@ void parse_config(struct server *server, FILE *stream) {
 
 void load_config(struct server *server) {
     FILE *stream;
+
+    // remove existing keybindings
+    struct binding *kb, *tmp;
+    wl_list_for_each_safe(kb, tmp, &server->mouse_bindings, link) {
+	free_binding(kb);
+    }
+    wl_list_for_each_safe(kb, tmp, &server->key_bindings, link) {
+	free_binding(kb);
+    }
 
     // load defaults
     char *buffer = NULL;
@@ -359,6 +376,7 @@ void load_config(struct server *server) {
     // load custom configuration file
     if (server->config_file) {
 	stream = fopen(server->config_file, "r");
+	parse_config(server, stream);
 	fclose(stream);
     }
 
