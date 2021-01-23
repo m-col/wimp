@@ -13,7 +13,7 @@
 #include "config.h"
 #include "cursor.h"
 #include "desk.h"
-#include "deskwm.h"
+#include "main.h"
 #include "keyboard.h"
 #include "log.h"
 #include "output.h"
