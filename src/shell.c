@@ -81,7 +81,8 @@ void fullscreen_xdg_surface(
     saved_geo->width = xdg_surface->geometry.width;
     saved_geo->height = xdg_surface->geometry.height;
     wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
-    wlr_xdg_toplevel_set_size(xdg_surface, output->width, output->height);
+    double zoom = server->current_desk->zoom;
+    wlr_xdg_toplevel_set_size(xdg_surface, output->width / zoom, output->height / zoom);
 }
 
 
