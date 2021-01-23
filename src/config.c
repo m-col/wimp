@@ -13,8 +13,6 @@
 
 #define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
 
-#define LEN(array) (int)(sizeof(array) / sizeof(*(array)))
-
 
 static const char *DEFAULT_CONFIG =  "\n\
 zoom_min 0.5\n\
@@ -26,11 +24,12 @@ bind Ctrl Escape shutdown\n\
 scroll_direction natural\n\
 ";
 
-
-static const struct {
+struct value_map {
     const char *name;
-    enum wlr_keyboard_modifier mod;
-} modifier_by_name_map[] = {
+    int value;
+};
+
+static struct value_map mods[] = {
     { "shift", WLR_MODIFIER_SHIFT },
     { "caps", WLR_MODIFIER_CAPS },
     { "ctrl", WLR_MODIFIER_CTRL },
@@ -41,49 +40,27 @@ static const struct {
     { "mod5", WLR_MODIFIER_MOD5 },
 };
 
-
-enum wlr_keyboard_modifier modifier_by_name(const char *name) {
-    for (int i = 0; i < LEN(modifier_by_name_map); i++) {
-	if (strcasecmp(modifier_by_name_map[i].name, name) == 0)
-	    return modifier_by_name_map[i].mod;
-    }
-    return 0;
-}
-
-
-static const struct {
-    const char *name;
-    enum direction dir;
-} direction_by_name_map[] = {
+static struct value_map dirs[] = {
     { "up", UP },
     { "right", RIGHT },
     { "down", DOWN },
     { "left", LEFT },
 };
 
-
-enum direction direction_by_name(char *name) {
-    for (int i = 0; i < LEN(direction_by_name_map); i++) {
-	if (strcasecmp(direction_by_name_map[i].name, name) == 0)
-	    return direction_by_name_map[i].dir;
-    }
-    return 0;
-}
-
-
-static const struct {
-    const char *name;
-    enum mouse_keys key;
-} mouse_key_by_name_map[] = {
+static struct value_map mouse_keys[] = {
     { "motion", MOTION },
     { "scroll", SCROLL },
 };
 
 
-enum mouse_keys mouse_key_by_name(char *name) {
-    for (int i = 0; i < LEN(mouse_key_by_name_map); i++) {
-	if (strcasecmp(mouse_key_by_name_map[i].name, name) == 0)
-	    return mouse_key_by_name_map[i].key;
+/* To get the length of these arrays we need to calculate that before passing
+ * them to the getter so the macro hides this. */
+#define get(arr, name) _get(arr, sizeof(arr) / sizeof(arr[0]), name)
+
+int _get(struct value_map *values, int len, const char *name) {
+    for (int i = 0; i < len; i++) {
+	if (strcasecmp(values[i].name, name) == 0)
+	    return values[i].value;
     }
     return 0;
 }
@@ -100,7 +77,7 @@ void assign_action(char *name, char *data, struct binding *kb) {
     else if (strcasecmp(name, "focus") == 0) {
 	kb->action = &focus_in_direction;
 	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = direction_by_name(data);
+	*(enum direction *)(kb->data) = get(dirs, data);
     }
     else if (strcasecmp(name, "next_desk") == 0)
 	kb->action = &next_desk;
@@ -136,7 +113,7 @@ void assign_action(char *name, char *data, struct binding *kb) {
     else if (strcasecmp(name, "halfimize") == 0) {
 	kb->action = &halfimize;
 	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = direction_by_name(data);
+	*(enum direction *)(kb->data) = get(dirs, data);
     }
     else if (strcasecmp(name, "reload_config") == 0)
 	kb->action = &reload_config;
@@ -160,7 +137,7 @@ void add_binding(struct server *server, char *data, int line) {
     // additional modifiers
     kb->mods = 0;
     for (int i = 0; i < 8; i++) {
-	mod = modifier_by_name(s);
+	mod = get(mods, s);
 	if (mod == 0)
 	    break;
 	kb->mods |= mod;
@@ -173,7 +150,7 @@ void add_binding(struct server *server, char *data, int line) {
 	kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
 
     if (kb->key == XKB_KEY_NoSymbol) {
-	kb->key = mouse_key_by_name(s);
+	kb->key = get(mouse_keys, s);
 	if (kb->key == 0) {
 	    wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
 	    free(kb);
@@ -337,7 +314,7 @@ void parse_config(struct server *server, FILE *stream) {
 	    }
 	} else if (!strcasecmp(s, "set_modifier")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
-		int mod = modifier_by_name(s);
+		enum wlr_keyboard_modifier mod = get(mods, s);
 		if (mod)
 		    server->mod = mod;
 		else
