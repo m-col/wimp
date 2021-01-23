@@ -31,7 +31,7 @@ void change_vt(struct server *server, void *data) {
 }
 
 
-void close_current_window(struct server *server, void *data) {
+void close_window(struct server *server, void *data) {
     struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
     if (surface) {
 	struct wlr_xdg_surface *xdg_surface = surface->role_data;
@@ -135,11 +135,10 @@ void reset_zoom(struct server *server, void *data) {
 }
 
 
-void zoom_desk(struct server *server, void *data) {
-    /* dir > 0 ? zoom in : zoom out */
+void zoom(struct server *server, void *data) {
+    /* Passed value (data) is the percentage step (+ve or -ve) */
     struct desk *desk = server->current_desk;
-    int dir = *(int*)data;
-    double f = dir > 0 ? 1.015 : 1/1.015;
+    double f = 1 + (*(double*)data / 100);
     if (
 	(f > 1 && desk->zoom >= server->zoom_max) ||
 	(f < 1 && desk->zoom <= server->zoom_min)
@@ -159,10 +158,10 @@ void zoom_desk(struct server *server, void *data) {
 }
 
 
-void zoom_desk_mouse(struct server *server, void *data) {
+void zoom_mouse(struct server *server, void *data) {
     struct motion motion = *(struct motion*)data;
-    int dir = motion.dx + motion.dy;
-    zoom_desk(server, &dir);
+    double dz = motion.dx + motion.dy;
+    zoom(server, &dz);
 }
 
 

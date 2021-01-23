@@ -11,7 +11,7 @@
 #include "desk.h"
 #include "types.h"
 
-#define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
+#define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
 
 
 static const char *DEFAULT_CONFIG =  "\n\
@@ -24,10 +24,12 @@ bind Ctrl Escape shutdown\n\
 scroll_direction natural\n\
 ";
 
+
 struct value_map {
     const char *name;
     int value;
 };
+
 
 static struct value_map mods[] = {
     { "shift", WLR_MODIFIER_SHIFT },
@@ -40,12 +42,14 @@ static struct value_map mods[] = {
     { "mod5", WLR_MODIFIER_MOD5 },
 };
 
+
 static struct value_map dirs[] = {
     { "up", UP },
     { "right", RIGHT },
     { "down", DOWN },
     { "left", LEFT },
 };
+
 
 static struct value_map mouse_keys[] = {
     { "motion", MOTION },
@@ -66,57 +70,61 @@ int _get(struct value_map *values, int len, const char *name) {
 }
 
 
-void assign_action(char *name, char *data, struct binding *kb) {
-    kb->data = NULL;
-    kb->action = NULL;
+void dir_handler(struct binding *kb, char *data) {
+    kb->data = calloc(1, sizeof(enum direction));
+    *(enum direction *)(kb->data) = get(dirs, data);
+}
 
-    if (strcasecmp(name, "shutdown") == 0)
-	kb->action = &shutdown;
-    else if (strcasecmp(name, "close_current_window") == 0)
-	kb->action = &close_current_window;
-    else if (strcasecmp(name, "focus") == 0) {
-	kb->action = &focus_in_direction;
-	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = get(dirs, data);
-    }
-    else if (strcasecmp(name, "next_desk") == 0)
-	kb->action = &next_desk;
-    else if (strcasecmp(name, "prev_desk") == 0)
-	kb->action = &prev_desk;
-    else if (strcasecmp(name, "pan_desk") == 0)
-	kb->action = &pan_desk;
-    else if (strcasecmp(name, "reset_zoom") == 0)
-	kb->action = &reset_zoom;
-    else if (strcasecmp(name, "zoom_in") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = 1;
-    }
-    else if (strcasecmp(name, "zoom_out") == 0) {
-	kb->action = &zoom_desk;
-	kb->data = calloc(1, sizeof(int));
-	*(int *)(kb->data) = -1;
-    }
-    else if (strcasecmp(name, "zoom_desk") == 0)
-	kb->action = &zoom_desk_mouse;
-    else if (strcasecmp(name, "set_mark") == 0)
-	kb->action = &set_mark;
-    else if (strcasecmp(name, "go_to_mark") == 0)
-	kb->action = &go_to_mark;
-    else if (strcasecmp(name, "exec") == 0) {
-	kb->action = &exec_command;
+
+void str_handler(struct binding *kb, char *data) {
+    if (is_number(data)) {
+	kb->data = calloc(1, sizeof(double));
+	*(double *)(kb->data) = strtod(data, NULL);
+    } else {
 	kb->data = calloc(strlen(data), sizeof(char));
 	strncpy(kb->data, data, strlen(data));
     }
-    else if (strcasecmp(name, "toggle_fullscreen") == 0)
-	kb->action = &toggle_fullscreen;
-    else if (strcasecmp(name, "halfimize") == 0) {
-	kb->action = &halfimize;
-	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = get(dirs, data);
+}
+
+
+static struct {
+    const char *name;
+    action action;
+    void (*data_handler)(struct binding *kb, char *data);
+} action_map[] = {
+    { "shutdown", &shutdown, NULL },
+    { "exec", &exec_command, &str_handler },
+    { "close_window", &close_window, NULL },
+    { "focus", &focus_in_direction, &dir_handler },
+    { "next_desk", &next_desk, NULL },
+    { "prev_desk", &prev_desk, NULL },
+    { "pan_desk", &pan_desk, NULL },
+    { "reset_zoom", &reset_zoom, NULL },
+    { "zoom", &zoom, &str_handler },
+    { "zoom_mouse", &zoom_mouse, NULL },
+    { "set_mark", &set_mark, NULL },
+    { "go_to_mark", &go_to_mark, NULL },
+    { "toggle_fullscreen", &toggle_fullscreen, NULL },
+    { "halfimize", &halfimize, NULL },
+    { "reload_config", &reload_config, NULL },
+};
+
+static int num_actions = sizeof(action_map) / sizeof(action_map[0]);
+
+
+bool assign_action(char *name, char *data, struct binding *kb) {
+    kb->action = NULL;
+    kb->data = NULL;
+
+    for (int i = 0; i < num_actions; i++) {
+	if (strcmp(action_map[i].name, name) == 0) {
+	    kb->action = action_map[i].action;
+	    if (action_map[i].data_handler != NULL)
+		action_map[i].data_handler(kb, data);
+	    return true;
+	}
     }
-    else if (strcasecmp(name, "reload_config") == 0)
-	kb->action = &reload_config;
+    return false;
 }
 
 
@@ -161,8 +169,7 @@ void add_binding(struct server *server, char *data, int line) {
 
     // action
     s = strtok(NULL, " \t\n\r");
-    assign_action(s, strtok(NULL, "\n\r"), kb);
-    if (kb->action == NULL) {
+    if (!assign_action(s, strtok(NULL, "\n\r"), kb)) {
 	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
 	free(kb);
 	return;
@@ -321,11 +328,11 @@ void parse_config(struct server *server, FILE *stream) {
 		    wlr_log(WLR_ERROR, "Config line %i: invalid modifier name '%s'.", line, s);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
+	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
 		server->zoom_min = strtod(s, NULL);
 	    }
 	} else if (!strcasecmp(s, "zoom_max")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_decimal(s)) {
+	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
 		server->zoom_max = strtod(s, NULL);
 	    }
 	} else if (!strcasecmp(s, "bind")) {
