@@ -23,7 +23,7 @@ struct render_data {
 };
 
 
-void render_surface(
+static void render_surface(
     struct wlr_surface *surface, int sx, int sy, void *data
 ) {
     struct render_data *rdata = data;
@@ -68,7 +68,7 @@ void render_surface(
 }
 
 
-void on_frame(struct wl_listener *listener, void *data) {
+static void on_frame(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, frame_listener);
     struct server *server = output->server;
     struct wlr_renderer *renderer = server->renderer;
@@ -133,7 +133,7 @@ void on_frame(struct wl_listener *listener, void *data) {
 }
 
 
-void on_new_output(struct wl_listener *listener, void *data) {
+static void on_new_output(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, new_output_listener);
     struct wlr_output *wlr_output = data;
 

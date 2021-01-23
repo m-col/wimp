@@ -27,7 +27,7 @@ scroll_direction natural\n\
 
 struct value_map {
     const char *name;
-    int value;
+    const int value;
 };
 
 
@@ -61,7 +61,7 @@ static struct value_map mouse_keys[] = {
  * them to the getter so the macro hides this. */
 #define get(arr, name) _get(arr, sizeof(arr) / sizeof(arr[0]), name)
 
-int _get(struct value_map *values, int len, const char *name) {
+static int _get(struct value_map *values, const int len, const char *name) {
     for (int i = 0; i < len; i++) {
 	if (strcasecmp(values[i].name, name) == 0)
 	    return values[i].value;
@@ -70,13 +70,13 @@ int _get(struct value_map *values, int len, const char *name) {
 }
 
 
-void dir_handler(struct binding *kb, char *data) {
+static void dir_handler(struct binding *kb, const char *data) {
     kb->data = calloc(1, sizeof(enum direction));
     *(enum direction *)(kb->data) = get(dirs, data);
 }
 
 
-void str_handler(struct binding *kb, char *data) {
+static void str_handler(struct binding *kb, const char *data) {
     if (is_number(data)) {
 	kb->data = calloc(1, sizeof(double));
 	*(double *)(kb->data) = strtod(data, NULL);
@@ -89,8 +89,8 @@ void str_handler(struct binding *kb, char *data) {
 
 static struct {
     const char *name;
-    action action;
-    void (*data_handler)(struct binding *kb, char *data);
+    const action action;
+    void (*data_handler)(struct binding *kb, const char *data);
 } action_map[] = {
     { "shutdown", &shutdown, NULL },
     { "exec", &exec_command, &str_handler },
@@ -109,10 +109,10 @@ static struct {
     { "reload_config", &reload_config, NULL },
 };
 
-static int num_actions = sizeof(action_map) / sizeof(action_map[0]);
+static const int num_actions = sizeof(action_map) / sizeof(action_map[0]);
 
 
-bool assign_action(char *name, char *data, struct binding *kb) {
+static bool assign_action(const char *name, const char *data, struct binding *kb) {
     kb->action = NULL;
     kb->data = NULL;
 
@@ -128,7 +128,7 @@ bool assign_action(char *name, char *data, struct binding *kb) {
 }
 
 
-void free_binding(struct binding *kb) {
+static void free_binding(struct binding *kb) {
     if (kb->data)
 	free(kb->data);
     wl_list_remove(&kb->link);
@@ -136,7 +136,7 @@ void free_binding(struct binding *kb) {
 }
 
 
-void add_binding(struct server *server, char *data, int line) {
+static void add_binding(struct server *server, char *data, const int line) {
     struct binding *kb = calloc(1, sizeof(struct binding));
     enum wlr_keyboard_modifier mod;
     char *s = strtok(data, " \t\n\r");
@@ -303,7 +303,7 @@ static void setup_vt_switching(struct server *server) {
 }
 
 
-void parse_config(struct server *server, FILE *stream) {
+static void parse_config(struct server *server, FILE *stream) {
     char *s;
     char linebuf[1024];
     int line = 0;

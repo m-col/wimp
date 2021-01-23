@@ -9,13 +9,13 @@
 #include "types.h"
 
 
-void process_cursor_move(struct server *server, uint32_t time, double zoom) {
+static void process_cursor_move(struct server *server, uint32_t time, double zoom) {
     server->grabbed_view->x = (server->cursor->x - server->grab_x) / zoom;
     server->grabbed_view->y = (server->cursor->y - server->grab_y) / zoom;
 }
 
 
-void process_cursor_resize(struct server *server, uint32_t time, double zoom) {
+static void process_cursor_resize(struct server *server, uint32_t time, double zoom) {
     struct view *view = server->grabbed_view;
     int x = server->grab_geobox.x;
     int width = server->grab_geobox.width;
@@ -44,7 +44,7 @@ void process_cursor_resize(struct server *server, uint32_t time, double zoom) {
 }
 
 
-bool view_at(
+static bool view_at(
     struct view *view, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy
 ) {
@@ -66,7 +66,7 @@ bool view_at(
 }
 
 
-struct view *desktop_view_at(
+static struct view *desktop_view_at(
     struct server *server, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy
 ) {
@@ -80,7 +80,7 @@ struct view *desktop_view_at(
 }
 
 
-void process_cursor_motion(struct server *server, uint32_t time, double dx, double dy) {
+static void process_cursor_motion(struct server *server, uint32_t time, double dx, double dy) {
     double sx, sy;
     struct wlr_seat *seat;
     struct wlr_surface *surface;
@@ -132,7 +132,7 @@ void process_cursor_motion(struct server *server, uint32_t time, double dx, doub
 }
 
 
-void on_cursor_motion(struct wl_listener *listener, void *data){
+static void on_cursor_motion(struct wl_listener *listener, void *data){
     struct server *server = wl_container_of(listener, server, cursor_motion_listener);
     struct wlr_event_pointer_motion *event = data;
     wlr_cursor_move(server->cursor, event->device, event->delta_x, event->delta_y);
@@ -140,7 +140,7 @@ void on_cursor_motion(struct wl_listener *listener, void *data){
 }
 
 
-void on_cursor_motion_absolute(struct wl_listener *listener, void *data) {
+static void on_cursor_motion_absolute(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server,
 	cursor_motion_absolute_listener);
     struct wlr_event_pointer_motion_absolute *event = data;
@@ -149,7 +149,7 @@ void on_cursor_motion_absolute(struct wl_listener *listener, void *data) {
 }
 
 
-void on_cursor_button(struct wl_listener *listener, void *data) {
+static void on_cursor_button(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_button_listener);
     struct wlr_event_pointer_button *event = data;
     wlr_seat_pointer_notify_button(
@@ -169,7 +169,7 @@ void on_cursor_button(struct wl_listener *listener, void *data) {
 }
 
 
-void on_cursor_axis(struct wl_listener *listener, void *data) {
+static void on_cursor_axis(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_axis_listener);
     struct wlr_event_pointer_axis *event = data;
     if (server->cursor_mode == CURSOR_MOD) {
@@ -194,7 +194,7 @@ void on_cursor_axis(struct wl_listener *listener, void *data) {
 }
 
 
-void on_cursor_frame(struct wl_listener *listener, void *data) {
+static void on_cursor_frame(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, cursor_frame_listener);
     wlr_seat_pointer_notify_frame(server->seat);
 }

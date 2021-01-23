@@ -9,7 +9,7 @@
 #include "types.h"
 
 
-void on_modifier(struct wl_listener *listener, void *data) {
+static void on_modifier(struct wl_listener *listener, void *data) {
     struct keyboard *keyboard = wl_container_of(listener, keyboard, modifier_listener);
     struct server *server = keyboard->server;
     wlr_seat_keyboard_notify_modifiers(
@@ -41,7 +41,7 @@ void on_modifier(struct wl_listener *listener, void *data) {
 }
 
 
-void on_key(struct wl_listener *listener, void *data) {
+static void on_key(struct wl_listener *listener, void *data) {
     struct keyboard *keyboard = wl_container_of(listener, keyboard, key_listener);
     struct server *server = keyboard->server;
     struct wlr_event_keyboard_key *event = data;
@@ -89,7 +89,7 @@ void on_key(struct wl_listener *listener, void *data) {
 }
 
 
-void on_new_keyboard(struct server *server, struct wlr_input_device *device) {
+static void on_new_keyboard(struct server *server, struct wlr_input_device *device) {
     struct keyboard *keyboard = calloc(1, sizeof(struct keyboard));
     keyboard->server = server;
     keyboard->device = device;
@@ -114,7 +114,7 @@ void on_new_keyboard(struct server *server, struct wlr_input_device *device) {
 }
 
 
-void on_request_set_selection(struct wl_listener *listener, void *data) {
+static void on_request_set_selection(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(
 	listener, server, request_set_selection_listener);
     struct wlr_seat_request_set_selection_event *event = data;
@@ -122,7 +122,7 @@ void on_request_set_selection(struct wl_listener *listener, void *data) {
 }
 
 
-void on_request_cursor(struct wl_listener *listener, void *data) {
+static void on_request_cursor(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, request_cursor_listener);
     struct wlr_seat_pointer_request_set_cursor_event *event = data;
     struct wlr_seat_client *focused_client =
@@ -136,7 +136,7 @@ void on_request_cursor(struct wl_listener *listener, void *data) {
 }
 
 
-void on_new_input(struct wl_listener *listener, void *data) {
+static void on_new_input(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, new_input_listener);
 
     struct wlr_input_device *device = data;

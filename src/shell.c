@@ -86,13 +86,13 @@ void fullscreen_xdg_surface(
 }
 
 
-void on_map(struct wl_listener *listener, void *data) {
+static void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
     if (view->server->can_steal_focus)
 	focus_view(view, view->surface->surface);
 }
 
-void on_unmap(struct wl_listener *listener, void *data) {
+static void on_unmap(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, unmap_listener);
     if (view->server->can_steal_focus) {
 	wl_list_remove(&view->link);
@@ -103,14 +103,14 @@ void on_unmap(struct wl_listener *listener, void *data) {
 }
 
 
-void on_surface_destroy(struct wl_listener *listener, void *data) {
+static void on_surface_destroy(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, destroy_listener);
     wl_list_remove(&view->link);
     free(view);
 }
 
 
-void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edges) {
+static void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edges) {
     struct server *server = view->server;
     struct wlr_surface *focused_surface =
 	server->seat->pointer_state.focused_surface;
@@ -134,27 +134,27 @@ void process_move_resize(struct view *view, enum cursor_mode mode, uint32_t edge
 }
 
 
-void on_request_move(struct wl_listener *listener, void *data) {
+static void on_request_move(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, request_move_listener);
     process_move_resize(view, CURSOR_MOVE, 0);
 }
 
 
-void on_request_resize(struct wl_listener *listener, void *data) {
+static void on_request_resize(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_resize_event *event = data;
     struct view *view = wl_container_of(listener, view, request_resize_listener);
     process_move_resize(view, CURSOR_RESIZE, event->edges);
 }
 
 
-void on_request_fullscreen(struct wl_listener *listener, void *data) {
+static void on_request_fullscreen(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
     struct view *view = wl_container_of(listener, view, request_fullscreen_listener);
     fullscreen_xdg_surface(view, event->surface, event->output);
 }
 
 
-void on_new_xdg_surface(struct wl_listener *listener, void *data) {
+static void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     struct server *server = wl_container_of(listener, server, new_xdg_surface_listener);
     struct wlr_xdg_surface *surface = data;
     if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {

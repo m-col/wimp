@@ -3,18 +3,18 @@
 #include <wlr/util/log.h>
 
 
-enum wlr_log_importance log_importance;
+static enum wlr_log_importance log_importance;
 
 
-const char *verbosity_headers[] = {
-	[WLR_SILENT] = "",
-	[WLR_ERROR] = "[ERROR]",
-	[WLR_INFO] = "[INFO]",
-	[WLR_DEBUG] = "[DEBUG]",
+static const char *verbosity_headers[] = {
+    [WLR_SILENT] = "",
+    [WLR_ERROR] = "[ERROR]",
+    [WLR_INFO] = "[INFO]",
+    [WLR_DEBUG] = "[DEBUG]",
 };
 
 
-void log_stdout(enum wlr_log_importance verbosity, const char *fmt, va_list args) {
+static void log_stdout(enum wlr_log_importance verbosity, const char *fmt, va_list args) {
     if (verbosity > log_importance) {
 	return;
     }
