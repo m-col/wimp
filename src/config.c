@@ -298,24 +298,7 @@ static void setup_vt_switching(struct server *server) {
 }
 
 
-void load_defaults(struct server *server) {
-    char *buffer = NULL;
-    size_t size = 0;
-    FILE *stream = open_memstream(&buffer, &size);
-    fprintf(stream, DEFAULT_CONFIG);
-    rewind(stream);
-    load_config(server, stream);
-    free(buffer);
-}
-
-
-void load_config(struct server *server, FILE *stream) {
-    if (stream == NULL) {
-	if (server->config_file == NULL) {
-	    return;
-	}
-	stream = fopen(server->config_file, "r");
-    }
+void parse_config(struct server *server, FILE *stream) {
     char *s;
     char linebuf[1024];
     int line = 0;
@@ -357,7 +340,27 @@ void load_config(struct server *server, FILE *stream) {
 		server->vt_switching = false;
 	}
     }
+}
+
+
+void load_config(struct server *server) {
+    FILE *stream;
+
+    // load defaults
+    char *buffer = NULL;
+    size_t size = 0;
+    stream = open_memstream(&buffer, &size);
+    fprintf(stream, DEFAULT_CONFIG);
+    rewind(stream);
+    parse_config(server, stream);
+    free(buffer);
     fclose(stream);
+
+    // load custom configuration file
+    if (server->config_file) {
+	stream = fopen(server->config_file, "r");
+	fclose(stream);
+    }
 
     setup_vt_switching(server);
 }

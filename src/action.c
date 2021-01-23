@@ -294,6 +294,5 @@ void halfimize(struct server *server, void *data) {
 
 
 void reload_config(struct server *server, void *data) {
-    load_defaults(server);
-    load_config(server, NULL);
+    load_config(server);
 }

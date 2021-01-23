@@ -87,9 +87,8 @@ int main(int argc, char *argv[])
     server.current_desk = wl_container_of(server.desks.next, server.current_desk, link);
 
     // configure
-    load_defaults(&server);
     locate_config(&server);
-    load_config(&server, NULL);
+    load_config(&server);
     set_up_outputs(&server);
     set_up_shell(&server);
     set_up_cursor(&server);
