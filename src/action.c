@@ -242,9 +242,10 @@ void toggle_fullscreen(struct server *server, void *data) {
 
 
 void halfimize(struct server *server, void *data) {
-    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
-    if (!view)
+    if (wl_list_empty(&server->current_desk->views))
 	return;
+
+    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
 
     if  (server->current_desk->fullscreened == view->surface)
 	fullscreen_xdg_surface(view, view->surface, NULL);

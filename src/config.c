@@ -105,7 +105,7 @@ static struct {
     { "set_mark", &set_mark, NULL },
     { "go_to_mark", &go_to_mark, NULL },
     { "toggle_fullscreen", &toggle_fullscreen, NULL },
-    { "halfimize", &halfimize, NULL },
+    { "halfimize", &halfimize, &dir_handler },
     { "reload_config", &reload_config, NULL },
 };
 
