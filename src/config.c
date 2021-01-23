@@ -13,6 +13,8 @@
 
 #define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
 
+#define LEN(array) (int)(sizeof(array) / sizeof(*(array)))
+
 
 static const char *DEFAULT_CONFIG =  "\n\
 zoom_min 0.5\n\
@@ -25,37 +27,65 @@ scroll_direction natural\n\
 ";
 
 
-enum wlr_keyboard_modifier modifier_by_name(char *mod) {
-    if (strcasecmp(mod, "shift") == 0)
-	return WLR_MODIFIER_SHIFT;
-    if (strcasecmp(mod, "caps") == 0)
-	return WLR_MODIFIER_CAPS;
-    if (strcasecmp(mod, "ctrl") == 0)
-	return WLR_MODIFIER_CTRL;
-    if (strcasecmp(mod, "alt") == 0)
-	return WLR_MODIFIER_ALT;
-    if (strcasecmp(mod, "mod2") == 0)
-	return WLR_MODIFIER_MOD2;
-    if (strcasecmp(mod, "mod3") == 0)
-	return WLR_MODIFIER_MOD3;
-    if (strcasecmp(mod, "logo") == 0)
-	return WLR_MODIFIER_LOGO;
-    if (strcasecmp(mod, "mod5") == 0)
-	return WLR_MODIFIER_MOD5;
+static const struct {
+    const char *name;
+    enum wlr_keyboard_modifier mod;
+} modifier_by_name_map[] = {
+    { "shift", WLR_MODIFIER_SHIFT },
+    { "caps", WLR_MODIFIER_CAPS },
+    { "ctrl", WLR_MODIFIER_CTRL },
+    { "alt", WLR_MODIFIER_ALT },
+    { "mod2", WLR_MODIFIER_MOD2 },
+    { "mod3", WLR_MODIFIER_MOD3 },
+    { "logo", WLR_MODIFIER_LOGO },
+    { "mod5", WLR_MODIFIER_MOD5 },
+};
+
+
+enum wlr_keyboard_modifier modifier_by_name(const char *name) {
+    for (int i = 0; i < LEN(modifier_by_name_map); i++) {
+	if (strcasecmp(modifier_by_name_map[i].name, name) == 0)
+	    return modifier_by_name_map[i].mod;
+    }
     return 0;
 }
 
 
-enum direction direction_from_name(char *name) {
-    if (strcasecmp(name, "up") == 0)
-	return UP;
-    if (strcasecmp(name, "right") == 0)
-	return RIGHT;
-    if (strcasecmp(name, "down") == 0)
-	return DOWN;
-    if (strcasecmp(name, "left") == 0)
-	return LEFT;
-    return NONE;
+static const struct {
+    const char *name;
+    enum direction dir;
+} direction_by_name_map[] = {
+    { "up", UP },
+    { "right", RIGHT },
+    { "down", DOWN },
+    { "left", LEFT },
+};
+
+
+enum direction direction_by_name(char *name) {
+    for (int i = 0; i < LEN(direction_by_name_map); i++) {
+	if (strcasecmp(direction_by_name_map[i].name, name) == 0)
+	    return direction_by_name_map[i].dir;
+    }
+    return 0;
+}
+
+
+static const struct {
+    const char *name;
+    enum mouse_keys key;
+} mouse_key_by_name_map[] = {
+    { "motion", MOTION },
+    { "scroll", SCROLL },
+};
+
+
+enum mouse_keys mouse_key_by_name(char *name) {
+    for (int i = 0; i < LEN(mouse_key_by_name_map); i++) {
+	if (strcasecmp(mouse_key_by_name_map[i].name, name) == 0)
+	    return mouse_key_by_name_map[i].key;
+    }
+    return 0;
 }
 
 
@@ -70,7 +100,7 @@ void assign_action(char *name, char *data, struct binding *kb) {
     else if (strcasecmp(name, "focus") == 0) {
 	kb->action = &focus_in_direction;
 	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = direction_from_name(data);
+	*(enum direction *)(kb->data) = direction_by_name(data);
     }
     else if (strcasecmp(name, "next_desk") == 0)
 	kb->action = &next_desk;
@@ -106,19 +136,10 @@ void assign_action(char *name, char *data, struct binding *kb) {
     else if (strcasecmp(name, "halfimize") == 0) {
 	kb->action = &halfimize;
 	kb->data = calloc(1, sizeof(enum direction));
-	*(enum direction *)(kb->data) = direction_from_name(data);
+	*(enum direction *)(kb->data) = direction_by_name(data);
     }
     else if (strcasecmp(name, "reload_config") == 0)
 	kb->action = &reload_config;
-}
-
-
-enum mouse_keys mouse_key_from_name(char *name) {
-    if (strcasecmp(name, "motion") == 0)
-	return MOTION;
-    else if (strcasecmp(name, "scroll") == 0)
-	return SCROLL;
-    return 0;
 }
 
 
@@ -152,7 +173,7 @@ void add_binding(struct server *server, char *data, int line) {
 	kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
 
     if (kb->key == XKB_KEY_NoSymbol) {
-	kb->key = mouse_key_from_name(s);
+	kb->key = mouse_key_by_name(s);
 	if (kb->key == 0) {
 	    wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
 	    free(kb);
