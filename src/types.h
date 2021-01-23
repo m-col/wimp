@@ -33,6 +33,7 @@ struct server {
     struct wl_display *display;
     struct wlr_backend *backend;
     struct wlr_renderer *renderer;
+    char *config_file;
 
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;

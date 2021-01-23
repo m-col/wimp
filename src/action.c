@@ -4,6 +4,7 @@
 #include <wlr/types/wlr_output_layout.h>
 
 #include "action.h"
+#include "config.h"
 #include "desk.h"
 #include "shell.h"
 #include "types.h"
@@ -289,4 +290,10 @@ void halfimize(struct server *server, void *data) {
     view->x = (x - view->surface->geometry.x) / zoom;
     view->y = (y - view->surface->geometry.y) / zoom;
     wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
+}
+
+
+void reload_config(struct server *server, void *data) {
+    load_defaults(server);
+    load_config(server, NULL);
 }

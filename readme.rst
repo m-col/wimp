@@ -16,8 +16,6 @@ This project is still new, and will not be useful.
 To do list:
  - border decorations
  - make configuration much nicer and remove all the strcmps
- - read default configuration as string
-    - then add action to read config
  - fix issue where Shift-using key bindings require pre-shifted key in config
  - pan desk when focussing window in direction that isn't in view
  - xwayland

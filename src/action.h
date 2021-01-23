@@ -20,5 +20,6 @@ void go_to_mark(struct server *server, void *data);
 void actually_go_to_mark(struct server *server, const xkb_keysym_t sym);
 void toggle_fullscreen(struct server *server, void *data);
 void halfimize(struct server *server, void *data);
+void reload_config(struct server *server, void *data);
 
 #endif

@@ -14,6 +14,17 @@
 #define is_decimal(s) (strspn(s, "0123456789.") == strlen(s))
 
 
+static const char *DEFAULT_CONFIG =  "\n\
+zoom_min 0.5\n\
+zoom_max 3\n\
+mark_indicator #000000\n\
+vt_switching on\n\
+set_modifier Logo\n\
+bind Ctrl Escape shutdown\n\
+scroll_direction natural\n\
+";
+
+
 enum wlr_keyboard_modifier modifier_by_name(char *mod) {
     if (strcasecmp(mod, "shift") == 0)
 	return WLR_MODIFIER_SHIFT;
@@ -97,6 +108,8 @@ void assign_action(char *name, char *data, struct binding *kb) {
 	kb->data = calloc(1, sizeof(enum direction));
 	*(enum direction *)(kb->data) = direction_from_name(data);
     }
+    else if (strcasecmp(name, "reload_config") == 0)
+	kb->action = &reload_config;
 }
 
 
@@ -106,6 +119,14 @@ enum mouse_keys mouse_key_from_name(char *name) {
     else if (strcasecmp(name, "scroll") == 0)
 	return SCROLL;
     return 0;
+}
+
+
+void free_binding(struct binding *kb) {
+    if (kb->data)
+	free(kb->data);
+    wl_list_remove(&kb->link);
+    free(kb);
 }
 
 
@@ -149,18 +170,16 @@ void add_binding(struct server *server, char *data, int line) {
 	return;
     }
 
-    struct binding *kb_existing;
+    struct binding *kb_existing, *tmp;
     struct wl_list *bindings;
     if (is_mouse_binding) {
 	bindings = &server->mouse_bindings;
     } else {
 	bindings = &server->key_bindings;
     }
-    wl_list_for_each(kb_existing, bindings, link) {
+    wl_list_for_each_safe(kb_existing, tmp, bindings, link) {
 	if (kb_existing->key == kb->key && kb_existing->mods == kb->mods) {
-	    wlr_log(WLR_ERROR, "Config line %i: binding exists for key combo.", line);
-	    free(kb);
-	    return;
+	    free_binding(kb_existing);
 	}
     }
     wl_list_insert(bindings->prev, &kb->link);
@@ -234,31 +253,6 @@ static void set_wallpaper(struct server *server, char *wallpaper) {
 }
 
 
-static void set_defaults(struct server *server) {
-    add_desk(server);
-    server->current_desk =
-	wl_container_of(server->desks.next, server->current_desk, link);
-
-    server->mod = WLR_MODIFIER_LOGO;
-    wl_list_init(&server->key_bindings);
-    wl_list_init(&server->mouse_bindings);
-    server->on_mouse_motion = NULL;
-    server->on_mouse_scroll = NULL;
-    server->zoom_min = 0.5;
-    server->zoom_max = 3;
-    server->reverse_scrolling = false;
-    server->vt_switching = true;
-
-    wl_list_init(&server->marks);
-    server->mark_waiting = false;
-    assign_colour("#000000", server->mark_indicator.colour);
-    server->mark_indicator.box.width = 25;
-    server->mark_indicator.box.height = 25;
-    server->mark_indicator.box.x = 0;
-    server->mark_indicator.box.y = 0;
-}
-
-
 static void setup_vt_switching(struct server *server) {
     if (!server->vt_switching)
 	return;
@@ -304,32 +298,29 @@ static void setup_vt_switching(struct server *server) {
 }
 
 
-void load_config(struct server *server, char *config) {
-    set_defaults(server);
+void load_defaults(struct server *server) {
+    char *buffer = NULL;
+    size_t size = 0;
+    FILE *stream = open_memstream(&buffer, &size);
+    fprintf(stream, DEFAULT_CONFIG);
+    rewind(stream);
+    load_config(server, stream);
+    free(buffer);
+}
 
-    if (config == NULL) {
-	char *xdg_config_home = getenv("XDG_CONFIG_HOME");
-	if (xdg_config_home && *xdg_config_home) {
-	    config = "$XDG_CONFIG_HOME/.config/deskwm.conf";
-	} else {
-	    config = "$HOME/.config/deskwm.conf";
+
+void load_config(struct server *server, FILE *stream) {
+    if (stream == NULL) {
+	if (server->config_file == NULL) {
+	    return;
 	}
-    };
-    wordexp_t p;
-    wordexp(config, &p, WRDE_NOCMD | WRDE_UNDEF);
-
-    if (access(p.we_wordv[0], R_OK) == -1) {
-	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", p.we_wordv[0]);
-	wordfree(&p);
-	return;
+	stream = fopen(server->config_file, "r");
     }
-    FILE *fd = fopen(p.we_wordv[0], "r");
-    wordfree(&p);
-
     char *s;
     char linebuf[1024];
     int line = 0;
-    while (fgets(linebuf, sizeof(linebuf), fd)) {
+
+    while (fgets(linebuf, sizeof(linebuf), stream)) {
 	line++;
 	if (!(s = strtok(linebuf, " \t\n\r")) || s[0] == '#') {
 	    continue;
@@ -366,7 +357,34 @@ void load_config(struct server *server, char *config) {
 		server->vt_switching = false;
 	}
     }
-    fclose(fd);
+    fclose(stream);
 
     setup_vt_switching(server);
+}
+
+
+void locate_config(struct server *server)
+{
+    char *config;
+    char *xdg_config;
+
+    if (server->config_file == NULL) {
+	xdg_config = getenv("XDG_CONFIG_HOME");
+	config = (xdg_config && *xdg_config) ?
+	    "$XDG_CONFIG_HOME/.config/deskwm.conf" : "$HOME/.config/deskwm.conf";
+	server->config_file = strdup(config);
+    };
+
+    wordexp_t p;
+    wordexp(server->config_file, &p, WRDE_NOCMD | WRDE_UNDEF);
+    free(server->config_file);
+
+    if (access(p.we_wordv[0], R_OK) == -1) {
+	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", p.we_wordv[0]);
+	server->config_file = NULL;
+    } else {
+	server->config_file = strdup(p.we_wordv[0]);
+    }
+
+    wordfree(&p);
 }
