@@ -1,4 +1,4 @@
-OUT	= deskwm
+OUT	= wimp
 SOURCES	= $(wildcard src/*.c)
 OBJECTS	= $(SOURCES:.c=.o)
 CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic -Wno-unused-parameter

@@ -1,17 +1,14 @@
-   █           █                 
-   █           █                 
-████ ████ ████ █  █ █   █ █████  
-█  █ █  █ █    █  █ █   █ █ █ █  
-█  █ ████ ████ ███  █ █ █ █ █ █  
-█  █ █       █ █  █ █ █ █ █   █  
-████ ████ ████ █  █ █████ █   █  
+
+ ██      ██  ██  ████████    ██████
+ ██  ██  ██      ██  ██  ██  ██    ██
+ ██  ██  ██  ██  ██  ██  ██  ██    ██
+ ██  ██  ██  ██  ██  ██  ██  ██████
+   ████████  ██  ██      ██  ██
+             ██              ██
+             ██
 
 
-A Wayland compositor that takes the desktop metaphor quite literally.
-
-WORK IN PROGRESS.
-
-This project is still new, and will not be useful.
+A WIP Wayland compositor that takes the desktop metaphor quite literally.
 
 To do list:
  - make configuration much nicer and remove all the strcmps

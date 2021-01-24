@@ -23,7 +23,7 @@
 
 
 static const char usage[] =
-    "usage: deskwm [options...]\n"
+    "usage: " THIS " [options...]\n"
     "    -h         show this help message\n"
     "    -c <file>  specify config file\n"
     "    -d         set logging to debug mode\n"

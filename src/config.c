@@ -12,6 +12,8 @@
 #include "types.h"
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
+#define CONFIG_HOME "$HOME/.config/" THIS ".conf"
+#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/" THIS ".conf"
 
 
 static const char *DEFAULT_CONFIG =  "\n\
@@ -436,8 +438,7 @@ void locate_config(struct server *server)
 
     if (server->config_file == NULL) {
 	xdg_config = getenv("XDG_CONFIG_HOME");
-	config = (xdg_config && *xdg_config) ?
-	    "$XDG_CONFIG_HOME/.config/deskwm.conf" : "$HOME/.config/deskwm.conf";
+	config = (xdg_config && *xdg_config) ? CONFIG_HOME_XDG : CONFIG_HOME;
 	server->config_file = strdup(config);
     };
 

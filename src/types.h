@@ -15,6 +15,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#define THIS "wimp"
+
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
     CURSOR_MOD,

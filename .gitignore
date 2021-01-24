@@ -1,4 +1,4 @@
-deskwm
+wimp
 src/*.o
 *-protocol.c
 *-protocol.h
