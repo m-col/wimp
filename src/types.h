@@ -137,6 +137,7 @@ struct binding {
 struct motion {
     double dx;
     double dy;
+    bool is_percentage;
 };
 
 enum mouse_keys {

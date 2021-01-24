@@ -116,6 +116,7 @@ static void process_cursor_motion(struct server *server, uint32_t time, double d
 		struct motion motion = {
 		    .dx = dx,
 		    .dy = dy,
+		    .is_percentage = false,
 		};
 		server->on_mouse_motion(server, &motion);
 	    }
@@ -177,11 +178,12 @@ static void on_cursor_axis(struct wl_listener *listener, void *data) {
 	    struct motion motion = {
 		.dx = 0,
 		.dy = 0,
+		.is_percentage = false,
 	    };
 	    if (event->orientation == WLR_AXIS_ORIENTATION_VERTICAL) {
-		motion.dy = server->reverse_scrolling ? event->delta : - event->delta;
+		motion.dy = server->reverse_scrolling ? - event->delta : event->delta;
 	    } else {
-		motion.dx = server->reverse_scrolling ? event->delta : - event->delta;
+		motion.dx = server->reverse_scrolling ? - event->delta : event->delta;
 	    };
 	    server->on_mouse_scroll(server, &motion);
 	}

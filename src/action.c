@@ -108,10 +108,16 @@ void pan_desk(struct server *server, void *data) {
     struct motion motion = *(struct motion*)data;
     double dx = motion.dx;
     double dy = motion.dy;
+    if (motion.is_percentage) {
+	struct wlr_box *extents =
+	    wlr_output_layout_get_box(server->output_layout, NULL);
+	dx = extents->width * (dx / 100);
+	dy = extents->height * (dy / 100);
+    }
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
-	view->x += dx;
-	view->y += dy;
+	view->x -= dx;
+	view->y -= dy;
     }
     desk->panned_x += dx;
     desk->panned_y += dy;

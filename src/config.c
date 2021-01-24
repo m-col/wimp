@@ -70,13 +70,13 @@ static int _get(struct value_map *values, const int len, const char *name) {
 }
 
 
-static void dir_handler(struct binding *kb, const char *data) {
+static void dir_handler(struct binding *kb, char *data) {
     kb->data = calloc(1, sizeof(enum direction));
     *(enum direction *)(kb->data) = get(dirs, data);
 }
 
 
-static void str_handler(struct binding *kb, const char *data) {
+static void str_handler(struct binding *kb, char *data) {
     if (is_number(data)) {
 	kb->data = calloc(1, sizeof(double));
 	*(double *)(kb->data) = strtod(data, NULL);
@@ -87,10 +87,39 @@ static void str_handler(struct binding *kb, const char *data) {
 }
 
 
+static void motion_handler(struct binding *kb, char *data) {
+    kb->data = calloc(1, sizeof(struct motion));
+    char *s;
+    if (!data)
+	goto fail;
+
+    s = strtok(data, " \t\n\r");
+    if (!is_number(s) || !data)
+	goto fail;
+    int x = atoi(s);
+
+    s = strtok(NULL, " \t\n\r");
+    if (!is_number(s))
+	goto fail;
+    int y = atoi(s);
+
+    struct motion motion = {
+	.dx = x,
+	.dy = y,
+	.is_percentage = true,
+    };
+    *(struct motion *)(kb->data) = motion;
+    return;
+
+fail:
+    free(kb->data);
+}
+
+
 static struct {
     const char *name;
     const action action;
-    void (*data_handler)(struct binding *kb, const char *data);
+    void (*data_handler)(struct binding *kb, char *data);
 } action_map[] = {
     { "shutdown", &shutdown, NULL },
     { "exec", &exec_command, &str_handler },
@@ -98,7 +127,8 @@ static struct {
     { "focus", &focus_in_direction, &dir_handler },
     { "next_desk", &next_desk, NULL },
     { "prev_desk", &prev_desk, NULL },
-    { "pan_desk", &pan_desk, NULL },
+    { "pan_desk", &pan_desk, &motion_handler },
+    { "pan_desk_mouse", &pan_desk, NULL },
     { "reset_zoom", &reset_zoom, NULL },
     { "zoom", &zoom, &str_handler },
     { "zoom_mouse", &zoom_mouse, NULL },
@@ -112,7 +142,7 @@ static struct {
 static const int num_actions = sizeof(action_map) / sizeof(action_map[0]);
 
 
-static bool assign_action(const char *name, const char *data, struct binding *kb) {
+static bool assign_action(const char *name, char *data, struct binding *kb) {
     kb->action = NULL;
     kb->data = NULL;
 

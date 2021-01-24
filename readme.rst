@@ -18,6 +18,5 @@ To do list:
  - fix issue where Shift-using key bindings require pre-shifted key in config
  - pan desk when focussing window in direction that isn't in view
  - xwayland
- - functions to shift desk view
  - pinch gestures for desk zooming
  - draw rect with mouse when zoomed out to set new view
