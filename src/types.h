@@ -145,8 +145,8 @@ struct motion {
 };
 
 enum mouse_keys {
-    MOTION,
-    SCROLL,
+    MOTION = 1,
+    SCROLL = 2,
 };
 
 struct mark {
