@@ -32,4 +32,8 @@ void set_desk(struct server *server, struct desk *desk) {
 	map_view(view);
     }
     server->can_steal_focus = true;
+    if (!wl_list_empty(&desk->views)) {
+	view = wl_container_of(desk->views.next, view, link);
+	focus_view(view, view->surface->surface);
+    }
 }
