@@ -136,6 +136,7 @@ static void process_move_resize(struct view *view, enum cursor_mode mode, uint32
 
 static void on_request_move(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, request_move_listener);
+    wlr_xdg_toplevel_set_tiled(view->surface, false);
     process_move_resize(view, CURSOR_MOVE, 0);
 }
 
@@ -143,6 +144,7 @@ static void on_request_move(struct wl_listener *listener, void *data) {
 static void on_request_resize(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_resize_event *event = data;
     struct view *view = wl_container_of(listener, view, request_resize_listener);
+    wlr_xdg_toplevel_set_tiled(view->surface, false);
     process_move_resize(view, CURSOR_RESIZE, event->edges);
 }
 

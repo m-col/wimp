@@ -287,9 +287,10 @@ void halfimize(struct server *server, void *data) {
     }
 
     double zoom = server->current_desk->zoom;
-    view->x = (x - view->surface->geometry.x) / zoom;
-    view->y = (y - view->surface->geometry.y) / zoom;
+    view->x = x / zoom;
+    view->y = y / zoom;
     wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
+    wlr_xdg_toplevel_set_tiled(view->surface, true);
 }
 
 
