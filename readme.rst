@@ -9,11 +9,8 @@
              ██
 
 
-A WIP Wayland compositor that takes the desktop metaphor quite literally.
+A desktop with limitless bounds. Picture GIMP but for windows. WIMP, if you will.
 
-To do list:
- - make configuration much nicer and remove all the strcmps
- - fix issue where Shift-using key bindings require pre-shifted key in config
- - xwayland
- - pinch gestures for desk zooming
- - draw rect with mouse when zoomed out to set new view
+A Wayland compositor based on wlroots.
+
+This software is a work in progress.
