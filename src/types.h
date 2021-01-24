@@ -24,16 +24,14 @@ enum cursor_mode {
     CURSOR_RESIZE,
 };
 
-struct server;
-
-typedef void (*action)(struct server *server, void *data);
+typedef void (*action)(void *data);
 
 struct mark_indicator {
     float colour[4];
     struct wlr_box box;
 };
 
-struct server {
+struct wimp {
     struct wl_display *display;
     struct wlr_backend *backend;
     struct wlr_renderer *renderer;
@@ -86,9 +84,10 @@ struct server {
     bool vt_switching;
 };
 
+extern struct wimp wimp;
+
 struct view {
     struct wl_list link;
-    struct server *server;
     struct wlr_xdg_surface *surface;
     struct wl_listener map_listener;
     struct wl_listener unmap_listener;
@@ -101,7 +100,6 @@ struct view {
 
 struct keyboard {
     struct wl_list link;
-    struct server *server;
     struct wlr_input_device *device;
     struct wl_listener modifier_listener;
     struct wl_listener key_listener;
@@ -114,7 +112,6 @@ struct wallpaper {
 
 struct desk {
     struct wl_list link;
-    struct server *server;
     struct wl_list views;
     float background[4];
     float border_normal[4];

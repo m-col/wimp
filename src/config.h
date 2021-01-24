@@ -4,7 +4,7 @@
 #include "types.h"
 
 void assign_colour(char *hex, float dest[4]);
-void load_config(struct server *server);
-void locate_config(struct server *server);
+void load_config();
+void locate_config();
 
 #endif

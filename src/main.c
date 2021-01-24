@@ -22,6 +22,19 @@
 #include "types.h"
 
 
+struct wimp wimp = {
+    .mark_waiting = false,
+    .on_mouse_motion = NULL,
+    .on_mouse_scroll = NULL,
+    .can_steal_focus = true,
+    .desk_count = 0,
+    .mark_indicator.box.width = 25,
+    .mark_indicator.box.height = 25,
+    .mark_indicator.box.x = 0,
+    .mark_indicator.box.y = 0,
+};
+
+
 static const char usage[] =
     "usage: " THIS " [options...]\n"
     "    -h         show this help message\n"
@@ -35,8 +48,7 @@ int main(int argc, char *argv[])
 {
     int opt;
     int log_level = WLR_ERROR;
-    struct server server;
-    server.config_file = NULL;
+    wimp.config_file = NULL;
 
     while ((opt = getopt(argc, argv, "hc:di")) != -1) {
         switch (opt) {
@@ -45,7 +57,7 @@ int main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 		break;
 	    case 'c':
-		server.config_file = strdup(optarg);
+		wimp.config_file = strdup(optarg);
 		break;
 	    case 'd':
 		log_level = WLR_DEBUG;
@@ -59,62 +71,53 @@ int main(int argc, char *argv[])
     init_log(log_level);
 
     // create
-    server.display = wl_display_create();
-    server.backend = wlr_backend_autocreate(server.display, NULL);
-    server.renderer = wlr_backend_get_renderer(server.backend);
-    wlr_renderer_init_wl_display(server.renderer, server.display);
-    wlr_compositor_create(server.display, server.renderer);
+    wimp.display = wl_display_create();
+    wimp.backend = wlr_backend_autocreate(wimp.display, NULL);
+    wimp.renderer = wlr_backend_get_renderer(wimp.backend);
+    wlr_renderer_init_wl_display(wimp.renderer, wimp.display);
+    wlr_compositor_create(wimp.display, wimp.renderer);
 
     // add some managers
-    wlr_screencopy_manager_v1_create(server.display);
-    wlr_data_device_manager_create(server.display);
-    wlr_primary_selection_v1_device_manager_create(server.display);
+    wlr_screencopy_manager_v1_create(wimp.display);
+    wlr_data_device_manager_create(wimp.display);
+    wlr_primary_selection_v1_device_manager_create(wimp.display);
 
     // initialise
-    wl_list_init(&server.desks);
-    wl_list_init(&server.key_bindings);
-    wl_list_init(&server.mouse_bindings);
-    wl_list_init(&server.marks);
-    server.mark_waiting = false;
-    server.on_mouse_motion = NULL;
-    server.on_mouse_scroll = NULL;
-    server.can_steal_focus = true;
-    server.mark_indicator.box.width = 25;
-    server.mark_indicator.box.height = 25;
-    server.mark_indicator.box.x = 0;
-    server.mark_indicator.box.y = 0;
-    server.desk_count = 0;
-    add_desk(&server);
-    server.current_desk = wl_container_of(server.desks.next, server.current_desk, link);
+    wl_list_init(&wimp.desks);
+    wl_list_init(&wimp.key_bindings);
+    wl_list_init(&wimp.mouse_bindings);
+    wl_list_init(&wimp.marks);
+    add_desk();
+    wimp.current_desk = wl_container_of(wimp.desks.next, wimp.current_desk, link);
 
     // configure
-    locate_config(&server);
-    load_config(&server);
-    set_up_outputs(&server);
-    set_up_shell(&server);
-    set_up_cursor(&server);
-    set_up_keyboard(&server);
-    set_up_decorations(&server);
+    locate_config();
+    load_config();
+    set_up_outputs();
+    set_up_shell();
+    set_up_cursor();
+    set_up_keyboard();
+    set_up_decorations();
 
     // start
-    const char *socket = wl_display_add_socket_auto(server.display);
+    const char *socket = wl_display_add_socket_auto(wimp.display);
     if (!socket) {
-	wlr_backend_destroy(server.backend);
-	wl_display_destroy(server.display);
+	wlr_backend_destroy(wimp.backend);
+	wl_display_destroy(wimp.display);
 	return EXIT_FAILURE;
     }
-    if (!wlr_backend_start(server.backend)) {
-	wlr_backend_destroy(server.backend);
-	wl_display_destroy(server.display);
+    if (!wlr_backend_start(wimp.backend)) {
+	wlr_backend_destroy(wimp.backend);
+	wl_display_destroy(wimp.display);
 	return 1;
     }
     setenv("WAYLAND_DISPLAY", socket, true);
     wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s", socket);
-    wl_display_run(server.display);
+    wl_display_run(wimp.display);
 
     // stop
-    wl_display_destroy_clients(server.display);
-    wlr_backend_destroy(server.backend);
-    wl_display_destroy(server.display);
+    wl_display_destroy_clients(wimp.display);
+    wlr_backend_destroy(wimp.backend);
+    wl_display_destroy(wimp.display);
     return EXIT_SUCCESS;
 }

@@ -10,12 +10,12 @@
 #include "types.h"
 
 
-void shutdown(struct server *server, void *data) {
-    wl_display_terminate(server->display);
+void shutdown(void *data) {
+    wl_display_terminate(wimp.display);
 }
 
 
-void exec_command(struct server *server, void *data) {
+void exec_command(void *data) {
     if (fork() == 0) {
 	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
     } else {
@@ -24,15 +24,15 @@ void exec_command(struct server *server, void *data) {
 }
 
 
-void change_vt(struct server *server, void *data) {
+void change_vt(void *data) {
     unsigned vt = *(unsigned*)data;
-    struct wlr_session *session = wlr_backend_get_session(server->backend);
+    struct wlr_session *session = wlr_backend_get_session(wimp.backend);
     wlr_session_change_vt(session, vt);
 }
 
 
-void close_window(struct server *server, void *data) {
-    struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
+void close_window(void *data) {
+    struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
     if (surface) {
 	struct wlr_xdg_surface *xdg_surface = surface->role_data;
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
@@ -42,11 +42,11 @@ void close_window(struct server *server, void *data) {
 }
 
 
-void focus_in_direction(struct server *server, void *data) {
-    if (wl_list_empty(&server->current_desk->views))
+void focus_in_direction(void *data) {
+    if (wl_list_empty(&wimp.current_desk->views))
 	return;
 
-    struct view *current = wl_container_of(server->current_desk->views.next, current, link);
+    struct view *current = wl_container_of(wimp.current_desk->views.next, current, link);
     enum direction dir = *(enum direction*)data;
 
     struct view *next = NULL;
@@ -59,7 +59,7 @@ void focus_in_direction(struct server *server, void *data) {
     bool above_c = dir & (DOWN | LEFT);
     bool above_n = dir & (DOWN | RIGHT);
 
-    wl_list_for_each(view, &server->current_desk->views, link) {
+    wl_list_for_each(view, &wimp.current_desk->views, link) {
 	vx = view->x + view->surface->geometry.width / 2;
 	vy = view->y + view->surface->geometry.height / 2;
 	dx = x - vx;
@@ -83,36 +83,36 @@ void focus_in_direction(struct server *server, void *data) {
 }
 
 
-void next_desk(struct server *server, void *data) {
+void next_desk(void *data) {
     struct desk *desk;
-    if (server->current_desk->index + 1 == server->desk_count) {
-	desk = wl_container_of(server->desks.next, desk, link);
+    if (wimp.current_desk->index + 1 == wimp.desk_count) {
+	desk = wl_container_of(wimp.desks.next, desk, link);
     } else {
-	desk = wl_container_of(server->current_desk->link.next, desk, link);
+	desk = wl_container_of(wimp.current_desk->link.next, desk, link);
     }
-    set_desk(server, desk);
+    set_desk(desk);
 }
 
 
-void prev_desk(struct server *server, void *data) {
+void prev_desk(void *data) {
     struct desk *desk;
-    if (server->current_desk->index == 0) {
-	desk = wl_container_of(server->desks.prev, desk, link);
+    if (wimp.current_desk->index == 0) {
+	desk = wl_container_of(wimp.desks.prev, desk, link);
     } else {
-	desk = wl_container_of(server->current_desk->link.prev, desk, link);
+	desk = wl_container_of(wimp.current_desk->link.prev, desk, link);
     }
-    set_desk(server, desk);
+    set_desk(desk);
 }
 
 
-void pan_desk(struct server *server, void *data) {
-    struct desk *desk = server->current_desk;
+void pan_desk(void *data) {
+    struct desk *desk = wimp.current_desk;
     struct motion motion = *(struct motion*)data;
     double dx = motion.dx;
     double dy = motion.dy;
     if (motion.is_percentage) {
 	struct wlr_box *extents =
-	    wlr_output_layout_get_box(server->output_layout, NULL);
+	    wlr_output_layout_get_box(wimp.output_layout, NULL);
 	dx = extents->width * (dx / 100);
 	dy = extents->height * (dy / 100);
     }
@@ -126,10 +126,10 @@ void pan_desk(struct server *server, void *data) {
 }
 
 
-void reset_zoom(struct server *server, void *data) {
-    struct desk *desk = server->current_desk;
+void reset_zoom(void *data) {
+    struct desk *desk = wimp.current_desk;
     double f = 1 / desk->zoom;
-    struct wlr_box *extents = wlr_output_layout_get_box(server->output_layout, NULL);
+    struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
     double fx = extents->width * (f - 1) / 2;
     double fy = extents->height * (f - 1) / 2;
     struct view *view;
@@ -143,19 +143,19 @@ void reset_zoom(struct server *server, void *data) {
 }
 
 
-void zoom(struct server *server, void *data) {
+void zoom(void *data) {
     /* Passed value (data) is the percentage step (+ve or -ve) */
-    struct desk *desk = server->current_desk;
+    struct desk *desk = wimp.current_desk;
     double f = 1 + (*(double*)data / 100);
     if (
-	(f > 1 && desk->zoom >= server->zoom_max) ||
-	(f < 1 && desk->zoom <= server->zoom_min)
+	(f > 1 && desk->zoom >= wimp.zoom_max) ||
+	(f < 1 && desk->zoom <= wimp.zoom_min)
     ) {
 	return;
     }
     desk->zoom *= f;
-    double fx = server->cursor->x * (f - 1) / desk->zoom;
-    double fy = server->cursor->y * (f - 1) / desk->zoom;
+    double fx = wimp.cursor->x * (f - 1) / desk->zoom;
+    double fy = wimp.cursor->y * (f - 1) / desk->zoom;
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
 	view->x -= fx;
@@ -166,38 +166,38 @@ void zoom(struct server *server, void *data) {
 }
 
 
-void zoom_mouse(struct server *server, void *data) {
+void zoom_mouse(void *data) {
     struct motion motion = *(struct motion*)data;
     double dz = motion.dx + motion.dy;
-    zoom(server, &dz);
+    zoom(&dz);
 }
 
 
-void set_mark(struct server *server, void *data) {
+void set_mark(void *data) {
     struct mark *mark = calloc(1, sizeof(struct mark));
-    struct desk *desk = server->current_desk;
+    struct desk *desk = wimp.current_desk;
     mark->desk = desk;
     mark->x = desk->panned_x;
     mark->y = desk->panned_y;
     mark->zoom = desk->zoom;
     mark->key = 0;
-    server->mark_waiting = true;
-    wl_list_insert(&server->marks, &mark->link);
+    wimp.mark_waiting = true;
+    wl_list_insert(&wimp.marks, &mark->link);
 }
 
 
-void actually_set_mark(struct server *server, const xkb_keysym_t sym) {
+void actually_set_mark(const xkb_keysym_t sym) {
     struct mark *mark;
     struct mark *existing = NULL;
 
     if (sym == XKB_KEY_Escape) {
-	mark = wl_container_of(server->marks.next, mark, link);
+	mark = wl_container_of(wimp.marks.next, mark, link);
 	wl_list_remove(&mark->link);
 	free(mark);
 	return;
     }
 
-    wl_list_for_each(mark, &server->marks, link) {
+    wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
 	    existing = mark;
 	    break;
@@ -208,62 +208,63 @@ void actually_set_mark(struct server *server, const xkb_keysym_t sym) {
 	free(existing);
     }
 
-    mark = wl_container_of(server->marks.next, mark, link);
+    mark = wl_container_of(wimp.marks.next, mark, link);
     mark->key = sym;
 }
 
 
-void go_to_mark(struct server *server, void *data) {
-    server->mark_waiting = true;
+void go_to_mark(void *data) {
+    wimp.mark_waiting = true;
 }
 
 
-void actually_go_to_mark(struct server *server, const xkb_keysym_t sym) {
+void actually_go_to_mark(const xkb_keysym_t sym) {
     struct mark *mark;
 
     if (sym == XKB_KEY_Escape)
 	return;
 
-    wl_list_for_each(mark, &server->marks, link) {
+    wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
 	    struct motion motion = {
 		.dx = mark->x - mark->desk->panned_x,
 		.dy = mark->y - mark->desk->panned_y,
 	    };
 	    mark->desk->zoom = mark->zoom;
-	    set_desk(server, mark->desk);
-	    pan_desk(server, &motion);
+	    set_desk(mark->desk);
+	    pan_desk(&motion);
 	    return;
 	}
     }
 }
 
 
-void toggle_fullscreen(struct server *server, void *data) {
-    struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
+void toggle_fullscreen(void *data) {
+    struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
     if (!surface)
 	return;
     struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
-    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
+    struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     fullscreen_xdg_surface(view, xdg_surface, NULL);
 }
 
 
-void halfimize(struct server *server, void *data) {
-    if (wl_list_empty(&server->current_desk->views))
+void halfimize(void *data) {
+    if (wl_list_empty(&wimp.current_desk->views))
 	return;
 
-    struct view *view = wl_container_of(server->current_desk->views.next, view, link);
+    struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
 
-    if  (server->current_desk->fullscreened == view->surface)
+    if (wimp.current_desk->fullscreened == view->surface) {
 	fullscreen_xdg_surface(view, view->surface, NULL);
+    }
 
     enum direction dir = *(enum direction*)data;
     double vx = view->x + view->surface->geometry.width / 2;
     double vy = view->y + view->surface->geometry.height / 2;
     double x, y, width, height;
-    wlr_output_layout_closest_point(server->output_layout, NULL, vx, vy, &x, &y);
-    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
+    wlr_output_layout_closest_point(wimp.output_layout, NULL, vx, vy, &x, &y);
+    struct wlr_output *output = wlr_output_layout_output_at(wimp.output_layout, x, y);
 
     switch (dir) {
 	case RIGHT:
@@ -294,7 +295,7 @@ void halfimize(struct server *server, void *data) {
 	    return;
     }
 
-    double zoom = server->current_desk->zoom;
+    double zoom = wimp.current_desk->zoom;
     view->x = x / zoom;
     view->y = y / zoom;
     wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
@@ -302,6 +303,6 @@ void halfimize(struct server *server, void *data) {
 }
 
 
-void reload_config(struct server *server, void *data) {
-    load_config(server);
+void reload_config(void *data) {
+    load_config();
 }

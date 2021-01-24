@@ -46,20 +46,20 @@ static void on_new_decoration(struct wl_listener *listener, void *data) {
 }
 
 
-void set_up_decorations(struct server *server) {
+void set_up_decorations() {
     // xdg_decoration
-    server->decoration_manager = wlr_xdg_decoration_manager_v1_create(server->display);
+    wimp.decoration_manager = wlr_xdg_decoration_manager_v1_create(wimp.display);
 
-    server->decoration_listener.notify = on_new_decoration;
+    wimp.decoration_listener.notify = on_new_decoration;
     wl_signal_add(
-        &server->decoration_manager->events.new_toplevel_decoration,
-        &server->decoration_listener
+        &wimp.decoration_manager->events.new_toplevel_decoration,
+        &wimp.decoration_listener
     );
 
     // server_decoration
-    server->server_decoration_manager = wlr_server_decoration_manager_create(server->display);
+    wimp.server_decoration_manager = wlr_server_decoration_manager_create(wimp.display);
     wlr_server_decoration_manager_set_default_mode(
-	server->server_decoration_manager,
+	wimp.server_decoration_manager,
 	WLR_SERVER_DECORATION_MANAGER_MODE_SERVER
     );
 }

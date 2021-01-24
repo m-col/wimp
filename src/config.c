@@ -168,7 +168,7 @@ static void free_binding(struct binding *kb) {
 }
 
 
-static void add_binding(struct server *server, char *data, const int line) {
+static void add_binding(char *data, const int line) {
     struct binding *kb = calloc(1, sizeof(struct binding));
     enum wlr_keyboard_modifier mod;
     char *s = strtok(data, " \t\n\r");
@@ -210,9 +210,9 @@ static void add_binding(struct server *server, char *data, const int line) {
     struct binding *kb_existing, *tmp;
     struct wl_list *bindings;
     if (is_mouse_binding) {
-	bindings = &server->mouse_bindings;
+	bindings = &wimp.mouse_bindings;
     } else {
-	bindings = &server->key_bindings;
+	bindings = &wimp.key_bindings;
     }
     wl_list_for_each_safe(kb_existing, tmp, bindings, link) {
 	if (kb_existing->key == kb->key && kb_existing->mods == kb->mods) {
@@ -239,9 +239,7 @@ void assign_colour(char *hex, float dest[4]) {
 }
 
 
-static void load_wallpaper(
-    struct server *server, struct desk *desk, char *path
-) {
+static void load_wallpaper(struct desk *desk, char *path) {
     cairo_surface_t *image = cairo_image_surface_create_from_png(path);
 
     if (!image || cairo_surface_status(image) != CAIRO_STATUS_SUCCESS) {
@@ -263,7 +261,7 @@ static void load_wallpaper(
     cairo_paint(cr);
 
     wallpaper->texture = wlr_texture_from_pixels(
-	server->renderer, WL_SHM_FORMAT_ARGB8888, stride, wallpaper->width,
+	wimp.renderer, WL_SHM_FORMAT_ARGB8888, stride, wallpaper->width,
 	wallpaper->height, cairo_image_surface_get_data(canvas)
     );
     desk->wallpaper = wallpaper;
@@ -273,8 +271,8 @@ static void load_wallpaper(
 }
 
 
-static void set_wallpaper(struct server *server, char *wallpaper) {
-    struct desk *desk = wl_container_of(server->desks.prev, desk, link);
+static void set_wallpaper(char *wallpaper) {
+    struct desk *desk = wl_container_of(wimp.desks.prev, desk, link);
 
     // wallpaper is a colour
     if (strlen(wallpaper) == 7 && wallpaper[0] == '#') {
@@ -285,14 +283,15 @@ static void set_wallpaper(struct server *server, char *wallpaper) {
     // wallpaper is a path to an image
     wordexp_t p;
     wordexp(wallpaper, &p, WRDE_NOCMD | WRDE_UNDEF);
-    load_wallpaper(server, desk, p.we_wordv[0]);
+    load_wallpaper(desk, p.we_wordv[0]);
     wordfree(&p);
 }
 
 
-static void setup_vt_switching(struct server *server) {
-    if (!server->vt_switching)
+static void setup_vt_switching() {
+    if (!wimp.vt_switching) {
 	return;
+    }
 
     /* If the configured mod key is alt then we have to bind the VT key combos
      * otherwise they interfere with the alt. With other mods we don't get this
@@ -314,7 +313,7 @@ static void setup_vt_switching(struct server *server) {
 	XKB_KEY_XF86Switch_VT_6
     };
     uint32_t *keys;
-    if (server->mod == WLR_MODIFIER_ALT) {
+    if (wimp.mod == WLR_MODIFIER_ALT) {
 	keys = switch_keys;
     } else {
 	keys = func_keys;
@@ -330,12 +329,12 @@ static void setup_vt_switching(struct server *server) {
 	kb->action = &change_vt;
 	kb->data = calloc(1, sizeof(unsigned));
 	*(unsigned *)(kb->data) = i + 1;
-	wl_list_insert(server->key_bindings.prev, &kb->link);
+	wl_list_insert(wimp.key_bindings.prev, &kb->link);
     }
 }
 
 
-static void parse_config(struct server *server, FILE *stream) {
+static void parse_config(FILE *stream) {
     char *s;
     char linebuf[1024];
     int line = 0;
@@ -346,40 +345,40 @@ static void parse_config(struct server *server, FILE *stream) {
 	    continue;
 	}
 	if (!strcasecmp(s, "add_desk")) {
-	    add_desk(server);
+	    add_desk();
 	} else if (!strcasecmp(s, "background")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
-		set_wallpaper(server, s);
+		set_wallpaper(s);
 	    }
 	} else if (!strcasecmp(s, "set_modifier")) {
 	    if ((s = strtok(NULL, " \t\n\r"))) {
 		enum wlr_keyboard_modifier mod = get(mods, s);
 		if (mod)
-		    server->mod = mod;
+		    wimp.mod = mod;
 		else
 		    wlr_log(WLR_ERROR, "Config line %i: invalid modifier name '%s'.", line, s);
 	    }
 	} else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		server->zoom_min = strtod(s, NULL);
+		wimp.zoom_min = strtod(s, NULL);
 	    }
 	} else if (!strcasecmp(s, "zoom_max")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		server->zoom_max = strtod(s, NULL);
+		wimp.zoom_max = strtod(s, NULL);
 	    }
 	} else if (!strcasecmp(s, "bind")) {
-	    add_binding(server, strtok(NULL, ""), line);
+	    add_binding(strtok(NULL, ""), line);
 	} else if (!strcasecmp(s, "mark_indicator")) {
-	    assign_colour(strtok(NULL, " \t\n\r"), server->mark_indicator.colour);
+	    assign_colour(strtok(NULL, " \t\n\r"), wimp.mark_indicator.colour);
 	} else if (!strcasecmp(s, "vt_switching")) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "off"))
-		server->vt_switching = false;
+		wimp.vt_switching = false;
 	    else if (!strcasecmp(s, "on"))
-		server->vt_switching = true;
+		wimp.vt_switching = true;
 	} else if (!strcasecmp(s, "borders")) {
 	    s = strtok(NULL, " \t\n\r");
-	    struct desk *desk = wl_container_of(server->desks.prev, desk, link);
+	    struct desk *desk = wl_container_of(wimp.desks.prev, desk, link);
 	    if (!strcasecmp(s, "normal"))
 		assign_colour(strtok(NULL, " \t\n\r"), desk->border_normal);
 	    else if (!strcasecmp(s, "focus"))
@@ -390,23 +389,23 @@ static void parse_config(struct server *server, FILE *stream) {
 	} else if (!strcasecmp(s, "scroll_direction")) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "natural"))
-		server->reverse_scrolling = false;
+		wimp.reverse_scrolling = false;
 	    else if (!strcasecmp(s, "reverse"))
-		server->reverse_scrolling = true;
+		wimp.reverse_scrolling = true;
 	}
     }
 }
 
 
-void load_config(struct server *server) {
+void load_config() {
     FILE *stream;
 
     // remove existing keybindings
     struct binding *kb, *tmp;
-    wl_list_for_each_safe(kb, tmp, &server->mouse_bindings, link) {
+    wl_list_for_each_safe(kb, tmp, &wimp.mouse_bindings, link) {
 	free_binding(kb);
     }
-    wl_list_for_each_safe(kb, tmp, &server->key_bindings, link) {
+    wl_list_for_each_safe(kb, tmp, &wimp.key_bindings, link) {
 	free_binding(kb);
     }
 
@@ -416,41 +415,41 @@ void load_config(struct server *server) {
     stream = open_memstream(&buffer, &size);
     fprintf(stream, DEFAULT_CONFIG);
     rewind(stream);
-    parse_config(server, stream);
+    parse_config(stream);
     free(buffer);
     fclose(stream);
 
     // load custom configuration file
-    if (server->config_file) {
-	stream = fopen(server->config_file, "r");
-	parse_config(server, stream);
+    if (wimp.config_file) {
+	stream = fopen(wimp.config_file, "r");
+	parse_config(stream);
 	fclose(stream);
     }
 
-    setup_vt_switching(server);
+    setup_vt_switching();
 }
 
 
-void locate_config(struct server *server)
+void locate_config()
 {
     char *config;
     char *xdg_config;
 
-    if (server->config_file == NULL) {
+    if (wimp.config_file == NULL) {
 	xdg_config = getenv("XDG_CONFIG_HOME");
 	config = (xdg_config && *xdg_config) ? CONFIG_HOME_XDG : CONFIG_HOME;
-	server->config_file = strdup(config);
+	wimp.config_file = strdup(config);
     };
 
     wordexp_t p;
-    wordexp(server->config_file, &p, WRDE_NOCMD | WRDE_UNDEF);
-    free(server->config_file);
+    wordexp(wimp.config_file, &p, WRDE_NOCMD | WRDE_UNDEF);
+    free(wimp.config_file);
 
     if (access(p.we_wordv[0], R_OK) == -1) {
 	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", p.we_wordv[0]);
-	server->config_file = NULL;
+	wimp.config_file = NULL;
     } else {
-	server->config_file = strdup(p.we_wordv[0]);
+	wimp.config_file = strdup(p.we_wordv[0]);
     }
 
     wordfree(&p);

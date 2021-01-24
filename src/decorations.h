@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-void set_up_decorations(struct server *server);
+void set_up_decorations();
 
 #endif

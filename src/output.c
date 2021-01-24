@@ -8,7 +8,6 @@
 
 struct output {
     struct wl_list link;
-    struct server *server;
     struct wlr_output *wlr_output;
     struct wl_listener frame_listener;
 };
@@ -30,7 +29,6 @@ static void render_surface(
     struct render_data *rdata = data;
     struct view *view = rdata->view;
     struct wlr_output *output = rdata->output;
-    struct server *server = view->server;
 
     struct wlr_texture *texture = wlr_surface_get_texture(surface);
     if (texture == NULL) {
@@ -39,7 +37,7 @@ static void render_surface(
 
     double x = 0, y = 0;
     struct wlr_output_layout_output *ol;
-    wl_list_for_each(ol, &server->output_layout->outputs, link) {
+    wl_list_for_each(ol, &wimp.output_layout->outputs, link) {
 	if (ol->output == output) {
 	    x = - (double)ol->x;
 	    y = - (double)ol->y;
@@ -50,7 +48,7 @@ static void render_surface(
     y = (y + view->y + sy) * output->scale * rdata->zoom;
     int width = surface->current.width * output->scale * rdata->zoom;
     int height = surface->current.height * output->scale * rdata->zoom;
-    int border_width = server->current_desk->border_width;
+    int border_width = wimp.current_desk->border_width;
 
     if (view->surface->surface == surface) {
 	struct wlr_box borders = {
@@ -62,7 +60,7 @@ static void render_surface(
 	wlr_render_rect(
 	    rdata->renderer,
 	    &borders,
-	    rdata->is_focussed ? server->current_desk->border_focus : server->current_desk->border_normal,
+	    rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal,
 	    output->transform_matrix
 	);
     }
@@ -86,9 +84,8 @@ static void render_surface(
 
 static void on_frame(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, frame_listener);
-    struct server *server = output->server;
-    struct wlr_renderer *renderer = server->renderer;
-    struct desk *desk = server->current_desk;
+    struct wlr_renderer *renderer = wimp.renderer;
+    struct desk *desk = wimp.current_desk;
 
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -120,7 +117,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
     // paint clients
     struct view *view;
-    struct view *focussed = wl_container_of(server->current_desk->views.next, focussed, link);
+    struct view *focussed = wl_container_of(wimp.current_desk->views.next, focussed, link);
     wl_list_for_each_reverse(view, &desk->views, link) {
 	struct render_data rdata = {
 	    .output = output->wlr_output,
@@ -136,11 +133,11 @@ static void on_frame(struct wl_listener *listener, void *data) {
     }
 
     // paint mark indicator
-    if (server->mark_waiting) {
-	struct wlr_box indicator = server->mark_indicator.box;
+    if (wimp.mark_waiting) {
+	struct wlr_box indicator = wimp.mark_indicator.box;
 	indicator.y = height - indicator.height;
 	wlr_render_rect(
-	    renderer, &indicator, server->mark_indicator.colour,
+	    renderer, &indicator, wimp.mark_indicator.colour,
 	    output->wlr_output->transform_matrix
 	);
     }
@@ -152,7 +149,6 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
 
 static void on_new_output(struct wl_listener *listener, void *data) {
-    struct server *server = wl_container_of(listener, server, new_output_listener);
     struct wlr_output *wlr_output = data;
 
     if (!wl_list_empty(&wlr_output->modes)) {
@@ -166,17 +162,16 @@ static void on_new_output(struct wl_listener *listener, void *data) {
 
     struct output *output = calloc(1, sizeof(struct output));
     output->wlr_output = wlr_output;
-    output->server = server;
     output->frame_listener.notify = on_frame;
     wl_signal_add(&wlr_output->events.frame, &output->frame_listener);
-    wl_list_insert(&server->outputs, &output->link);
-    wlr_output_layout_add_auto(server->output_layout, wlr_output);
+    wl_list_insert(&wimp.outputs, &output->link);
+    wlr_output_layout_add_auto(wimp.output_layout, wlr_output);
 }
 
 
-void set_up_outputs(struct server *server) {
-    server->output_layout = wlr_output_layout_create();
-    wl_list_init(&server->outputs);
-    server->new_output_listener.notify = on_new_output;
-    wl_signal_add(&server->backend->events.new_output, &server->new_output_listener);
+void set_up_outputs() {
+    wimp.output_layout = wlr_output_layout_create();
+    wl_list_init(&wimp.outputs);
+    wimp.new_output_listener.notify = on_new_output;
+    wl_signal_add(&wimp.backend->events.new_output, &wimp.new_output_listener);
 }
