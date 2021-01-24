@@ -7,6 +7,9 @@ LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs xkbcommon) \
 	    $(shell pkg-config --cflags --libs cairo)
 
+PREFIX    ?= /usr/local
+BINPREFIX ?= $(PREFIX)/bin
+
 ${OUT}: xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
 	@$(CC) -o ${OUT} $(OBJECTS) $(LDFLAGS)
 
@@ -24,6 +27,13 @@ xdg-shell-protocol.c: xdg-shell-protocol.h
 
 clean:
 	rm -f ${OUT} xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
+
+install:
+	mkdir -p "$(DESTDIR)$(BINPREFIX)"
+	cp -pf "$(OUT)" "$(DESTDIR)$(BINPREFIX)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(BINPREFIX)/$(OUT)"
 
 .DEFAULT_GOAL=${OUT}
 .PHONY: clean
