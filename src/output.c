@@ -20,6 +20,7 @@ struct render_data {
     struct view *view;
     struct timespec *when;
     double zoom;
+    bool is_focussed;
 };
 
 
@@ -45,25 +46,40 @@ static void render_surface(
 	    break;
 	}
     }
-    x += view->x + sx;
-    y += view->y + sy;
+    x = (x + view->x + sx) * output->scale * rdata->zoom;
+    y = (y + view->y + sy) * output->scale * rdata->zoom;
+    int width = surface->current.width * output->scale * rdata->zoom;
+    int height = surface->current.height * output->scale * rdata->zoom;
+    int border_width = server->current_desk->border_width;
 
-    // scale for HiDPI
+    if (view->surface->surface == surface) {
+	struct wlr_box borders = {
+	    .x = x - border_width,
+	    .y = y - border_width,
+	    .width = width + border_width * 2,
+	    .height = height + border_width * 2,
+	};
+	wlr_render_rect(
+	    rdata->renderer,
+	    &borders,
+	    rdata->is_focussed ? server->current_desk->border_focus : server->current_desk->border_normal,
+	    output->transform_matrix
+	);
+    }
+
     struct wlr_box box = {
-	.x = x * output->scale * rdata->zoom,
-	.y = y * output->scale * rdata->zoom,
-	.width = surface->current.width * output->scale * rdata->zoom,
-	.height = surface->current.height * output->scale * rdata->zoom,
+	.x = x,
+	.y = y,
+	.width = width,
+	.height = height,
     };
-
-    // this is where any rendering magic might happen
     float matrix[9];
     enum wl_output_transform transform =
 	wlr_output_transform_invert(surface->current.transform);
     wlr_matrix_project_box(matrix, &box, transform, 0,
 	output->transform_matrix);
-
     wlr_render_texture_with_matrix(rdata->renderer, texture, matrix, 1);
+
     wlr_surface_send_frame_done(surface, rdata->when);
 }
 
@@ -104,6 +120,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
     // paint clients
     struct view *view;
+    struct view *focussed = wl_container_of(server->current_desk->views.next, focussed, link);
     wl_list_for_each_reverse(view, &desk->views, link) {
 	struct render_data rdata = {
 	    .output = output->wlr_output,
@@ -111,6 +128,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	    .renderer = renderer,
 	    .when = &now,
 	    .zoom = zoom,
+	    .is_focussed = (view == focussed),
 	};
 	wlr_xdg_surface_for_each_surface(
 	    view->surface, render_surface, &rdata

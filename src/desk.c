@@ -10,6 +10,9 @@ void add_desk(struct server *server) {
     desk->server = server;
     wl_list_init(&desk->views);
     assign_colour("#5D479D", desk->background);
+    assign_colour("#3e3e73", desk->border_normal);
+    assign_colour("#998dd1", desk->border_focus);
+    desk->border_width = 4;
     desk->wallpaper = NULL;
     desk->index = server->desk_count;
     desk->zoom = 1;

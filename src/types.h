@@ -115,6 +115,9 @@ struct desk {
     struct server *server;
     struct wl_list views;
     float background[4];
+    float border_normal[4];
+    float border_focus[4];
+    int border_width;
     struct wallpaper *wallpaper;
     double panned_x, panned_y;
     int index;

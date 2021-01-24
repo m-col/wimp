@@ -345,6 +345,16 @@ static void parse_config(struct server *server, FILE *stream) {
 		server->vt_switching = false;
 	    else if (!strcasecmp(s, "on"))
 		server->vt_switching = true;
+	} else if (!strcasecmp(s, "borders")) {
+	    s = strtok(NULL, " \t\n\r");
+	    struct desk *desk = wl_container_of(server->desks.prev, desk, link);
+	    if (!strcasecmp(s, "normal"))
+		assign_colour(strtok(NULL, " \t\n\r"), desk->border_normal);
+	    else if (!strcasecmp(s, "focus"))
+		assign_colour(strtok(NULL, " \t\n\r"), desk->border_focus);
+	    else if (!strcasecmp(s, "width"))
+		if ((s = strtok(NULL, " \t\n\r")) && is_number(s))
+		    desk->border_width = strtod(s, NULL);
 	} else if (!strcasecmp(s, "scroll_direction")) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "natural"))
