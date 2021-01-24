@@ -76,8 +76,10 @@ void focus_in_direction(struct server *server, void *data) {
 	}
     }
 
-    if (next)
+    if (next) {
+	pan_to_view(next);
 	focus_view(next, next->surface->surface);
+    }
 }
 
 

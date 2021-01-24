@@ -1,6 +1,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
 
+#include "action.h"
 #include "types.h"
 
 
@@ -40,6 +41,34 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 	seat, view->surface->surface, keyboard->keycodes,
 	keyboard->num_keycodes, &keyboard->modifiers
     );
+}
+
+
+void pan_to_view(struct view *view) {
+    struct server *server = view->server;
+    int border_width = server->current_desk->border_width;
+    double x = view->x - border_width;
+    double y = view->y - border_width;
+    double width = view->surface->geometry.width + border_width * 2;
+    double height = view->surface->geometry.height + border_width * 2;
+    struct wlr_box *extents = wlr_output_layout_get_box(server->output_layout, NULL);
+    struct motion motion = {
+	.dx = 0,
+	.dy = 0,
+	.is_percentage = false,
+    };
+
+    if (x < 0) {
+	motion.dx = x;
+    } else if (x + width > extents->width) {
+	motion.dx = x + width - extents->width;
+    }
+    if (y < 0) {
+	motion.dy = y;
+    } else if (y + height > extents->height) {
+	motion.dy = y + height - extents->height;
+    }
+    pan_desk(server, &motion);
 }
 
 
