@@ -10,6 +10,7 @@
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -48,6 +49,9 @@ struct server {
     struct wl_list marks;
     bool mark_waiting;
     struct mark_indicator mark_indicator;
+
+    struct wlr_xdg_decoration_manager_v1 *decoration_manager;
+    struct wl_listener decoration_listener;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

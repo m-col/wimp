@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "cursor.h"
+#include "decorations.h"
 #include "desk.h"
 #include "main.h"
 #include "keyboard.h"
@@ -93,6 +94,7 @@ int main(int argc, char *argv[])
     set_up_shell(&server);
     set_up_cursor(&server);
     set_up_keyboard(&server);
+    set_up_decorations(&server);
 
     // start
     const char *socket = wl_display_add_socket_auto(server.display);
