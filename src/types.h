@@ -10,6 +10,7 @@
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
@@ -52,6 +53,7 @@ struct server {
 
     struct wlr_xdg_decoration_manager_v1 *decoration_manager;
     struct wl_listener decoration_listener;
+    struct wlr_server_decoration_manager *server_decoration_manager;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

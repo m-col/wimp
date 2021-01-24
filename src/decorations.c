@@ -1,6 +1,13 @@
 #include "decorations.h"
 
 
+struct decoration {
+    struct wlr_xdg_toplevel_decoration_v1 *wlr_xdg_decoration;
+    struct wl_listener destroy_listener;
+    struct wl_listener request_mode_listener;
+};
+
+
 static void on_destroy(struct wl_listener *listener, void *data) {
     struct decoration *deco = wl_container_of(listener, deco, destroy_listener);
     wl_list_remove(&deco->destroy_listener.link);
@@ -40,11 +47,19 @@ static void on_new_decoration(struct wl_listener *listener, void *data) {
 
 
 void set_up_decorations(struct server *server) {
+    // xdg_decoration
     server->decoration_manager = wlr_xdg_decoration_manager_v1_create(server->display);
 
     server->decoration_listener.notify = on_new_decoration;
     wl_signal_add(
         &server->decoration_manager->events.new_toplevel_decoration,
         &server->decoration_listener
+    );
+
+    // server_decoration
+    server->server_decoration_manager = wlr_server_decoration_manager_create(server->display);
+    wlr_server_decoration_manager_set_default_mode(
+	server->server_decoration_manager,
+	WLR_SERVER_DECORATION_MANAGER_MODE_SERVER
     );
 }
