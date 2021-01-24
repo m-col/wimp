@@ -36,7 +36,7 @@ struct wimp wimp = {
 
 
 static const char usage[] =
-    "usage: " THIS " [options...]\n"
+    "usage: wimp [options...]\n"
     "    -h         show this help message\n"
     "    -c <file>  specify config file\n"
     "    -d         set logging to debug mode\n"

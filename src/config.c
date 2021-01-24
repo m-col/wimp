@@ -12,8 +12,8 @@
 #include "types.h"
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
-#define CONFIG_HOME "$HOME/.config/" THIS ".conf"
-#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/" THIS ".conf"
+#define CONFIG_HOME "$HOME/.config/wimp.conf"
+#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/wimp.conf"
 
 
 static const char *DEFAULT_CONFIG =  "\n\
@@ -90,19 +90,18 @@ static void str_handler(struct binding *kb, char *data) {
 
 
 static void motion_handler(struct binding *kb, char *data) {
-    kb->data = calloc(1, sizeof(struct motion));
     char *s;
     if (!data)
-	goto fail;
+	return;
 
     s = strtok(data, " \t\n\r");
     if (!is_number(s) || !data)
-	goto fail;
+	return;
     int x = atoi(s);
 
     s = strtok(NULL, " \t\n\r");
     if (!is_number(s))
-	goto fail;
+	return;
     int y = atoi(s);
 
     struct motion motion = {
@@ -110,11 +109,8 @@ static void motion_handler(struct binding *kb, char *data) {
 	.dy = y,
 	.is_percentage = true,
     };
+    kb->data = calloc(1, sizeof(struct motion));
     *(struct motion *)(kb->data) = motion;
-    return;
-
-fail:
-    free(kb->data);
 }
 
 
