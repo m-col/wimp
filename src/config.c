@@ -122,6 +122,7 @@ static struct {
     { "shutdown", &shutdown, NULL },
     { "exec", &exec_command, &str_handler },
     { "close_window", &close_window, NULL },
+    { "move_window", &move_window, NULL },
     { "focus", &focus_in_direction, &dir_handler },
     { "next_desk", &next_desk, NULL },
     { "prev_desk", &prev_desk, NULL },

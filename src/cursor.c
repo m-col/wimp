@@ -44,7 +44,7 @@ static void process_cursor_resize(uint32_t time, double zoom) {
 }
 
 
-static bool view_at(
+static bool _view_at(
     struct view *view, double lx, double ly, struct wlr_surface **surface,
     double *sx, double *sy
 ) {
@@ -66,14 +66,14 @@ static bool view_at(
 }
 
 
-static struct view *desktop_view_at(
-    double lx, double ly, struct wlr_surface **surface, double *sx, double *sy, double zoom
+struct view *view_at(
+    double lx, double ly, struct wlr_surface **surface, double *sx, double *sy
 ) {
     struct view *view;
-    lx /= zoom;
-    ly /= zoom;
+    lx /= wimp.current_desk->zoom;
+    ly /= wimp.current_desk->zoom;
     wl_list_for_each(view, &wimp.current_desk->views, link) {
-	if (view_at(view, lx, ly, surface, sx, sy)) {
+	if (_view_at(view, lx, ly, surface, sx, sy)) {
 	    return view;
 	}
     }
@@ -94,7 +94,7 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 	case CURSOR_PASSTHROUGH:
 	    seat = wimp.seat;
 	    surface = NULL;
-	    view = desktop_view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy, zoom);
+	    view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
 	    if (!view) {
 		wlr_xcursor_manager_set_cursor_image(wimp.cursor_manager, "left_ptr", wimp.cursor);
 	    }
@@ -154,8 +154,8 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
     } else {
 	double sx, sy;
 	struct wlr_surface *surface;
-	struct view *view = desktop_view_at(
-	    wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy, wimp.current_desk->zoom
+	struct view *view = view_at(
+	    wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy
 	);
 	focus_view(view, surface);
     }

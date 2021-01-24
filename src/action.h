@@ -7,6 +7,7 @@ void shutdown(void *data);
 void exec_command(void *data);
 void change_vt(void *data);
 void close_window(void *data);
+void move_window(void *data);
 void focus_in_direction(void *data);
 void next_desk(void *data);
 void prev_desk(void *data);

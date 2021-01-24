@@ -5,6 +5,7 @@
 
 #include "action.h"
 #include "config.h"
+#include "cursor.h"
 #include "desk.h"
 #include "shell.h"
 #include "types.h"
@@ -39,6 +40,21 @@ void close_window(void *data) {
 	    xdg_toplevel_send_close(xdg_surface->toplevel->resource);
 	}
     }
+}
+
+
+void move_window(void *data) {
+    struct wlr_surface *surface;
+    double sx, sy;
+    struct view *view = view_at(
+	wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy
+    );
+    if (!view) {
+	return;
+    }
+    struct motion motion = *(struct motion*)data;
+    view->x += motion.dx;
+    view->y += motion.dy;
 }
 
 
