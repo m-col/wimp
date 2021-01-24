@@ -168,7 +168,7 @@ void zoom(void *data) {
 
 void zoom_mouse(void *data) {
     struct motion motion = *(struct motion*)data;
-    double dz = motion.dx + motion.dy;
+    double dz = - motion.dx - motion.dy;
     zoom(&dz);
 }
 
