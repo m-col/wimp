@@ -44,6 +44,55 @@ static const char usage[] =
 ;
 
 
+static void free_stuff() {
+    struct binding *kb, *tkb;
+    wl_list_for_each_safe(kb, tkb, &wimp.mouse_bindings, link) {
+	wl_list_remove(&kb->link);
+	if (kb->data) {
+	    free(kb->data);
+	}
+	free(kb);
+    };
+    wl_list_for_each_safe(kb, tkb, &wimp.key_bindings, link) {
+	wl_list_remove(&kb->link);
+	if (kb->data) {
+	    free(kb->data);
+	}
+	free(kb);
+    };
+
+    struct desk *desk, *tdesk;
+    struct view *view, *tview;
+    wl_list_for_each_safe(desk, tdesk, &wimp.desks, link) {
+	wl_list_for_each_safe(view, tview, &desk->views, link) {
+	    wl_list_remove(&view->link);
+	    free(view);
+	};
+	wl_list_remove(&desk->link);
+	free(desk->wallpaper);
+	free(desk);
+    };
+
+    struct output *output, *toutput;
+    wl_list_for_each_safe(output, toutput, &wimp.outputs, link) {
+	wl_list_remove(&output->link);
+	free(output);
+    };
+
+    struct keyboard *keyboard, *tkeyboard;
+    wl_list_for_each_safe(keyboard, tkeyboard, &wimp.keyboards, link) {
+	wl_list_remove(&keyboard->link);
+	free(keyboard);
+    };
+
+    struct mark *mark, *tmark;
+    wl_list_for_each_safe(mark, tmark, &wimp.marks, link) {
+	wl_list_remove(&mark->link);
+	free(mark);
+    };
+}
+
+
 int main(int argc, char *argv[])
 {
     int opt;
@@ -117,6 +166,7 @@ int main(int argc, char *argv[])
 
     // stop
     wl_display_destroy_clients(wimp.display);
+    free_stuff();
     wlr_backend_destroy(wimp.backend);
     wl_display_destroy(wimp.display);
     return EXIT_SUCCESS;

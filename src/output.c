@@ -6,13 +6,6 @@
 #include "types.h"
 
 
-struct output {
-    struct wl_list link;
-    struct wlr_output *wlr_output;
-    struct wl_listener frame_listener;
-};
-
-
 struct render_data {
     struct wlr_output *output;
     struct wlr_renderer *renderer;

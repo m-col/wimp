@@ -97,6 +97,12 @@ struct view {
     double x, y;
 };
 
+struct output {
+    struct wl_list link;
+    struct wlr_output *wlr_output;
+    struct wl_listener frame_listener;
+};
+
 struct keyboard {
     struct wl_list link;
     struct wlr_input_device *device;
