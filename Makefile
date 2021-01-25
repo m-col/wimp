@@ -10,7 +10,7 @@ LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 PREFIX    ?= /usr/local
 BINPREFIX ?= $(PREFIX)/bin
 
-${OUT}: xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
+${OUT}: xdg-shell-protocol wlr-layer-shell-unstable-v1-protocol ${OBJECTS}
 	@$(CC) -o ${OUT} $(OBJECTS) $(LDFLAGS)
 
 %.o: %.c %.h
@@ -19,11 +19,13 @@ ${OUT}: xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
 WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
 
-xdg-shell-protocol.h:
-	@$(WAYLAND_SCANNER) server-header $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
+xdg-shell-protocol:
+	@$(WAYLAND_SCANNER) server-header $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@.h
+	@$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@.c
 
-xdg-shell-protocol.c: xdg-shell-protocol.h
-	@$(WAYLAND_SCANNER) private-code $(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
+wlr-layer-shell-unstable-v1-protocol:
+	@$(WAYLAND_SCANNER) server-header protocols/wlr-layer-shell-unstable-v1.xml $@.h
+	@$(WAYLAND_SCANNER) private-code protocols/wlr-layer-shell-unstable-v1.xml $@.c
 
 clean:
 	rm -f ${OUT} xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}

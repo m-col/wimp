@@ -54,6 +54,9 @@ struct wimp {
     struct wl_listener decoration_listener;
     struct wlr_server_decoration_manager *server_decoration_manager;
 
+    struct wlr_layer_shell_v1 *layer_shell;
+    struct wl_listener layer_shell_surface_listener;
+
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;
     struct wl_listener cursor_motion_listener;
@@ -99,8 +102,18 @@ struct view {
 
 struct output {
     struct wl_list link;
+    struct wl_list layer_views;
     struct wlr_output *wlr_output;
     struct wl_listener frame_listener;
+};
+
+struct layer_view {
+    struct wl_list link;
+    struct wlr_layer_surface_v1 *surface;
+    struct wl_listener map_listener;
+    struct wl_listener unmap_listener;
+    struct wl_listener destroy_listener;
+    struct output *output;
 };
 
 struct keyboard {

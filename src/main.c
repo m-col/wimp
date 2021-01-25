@@ -16,6 +16,7 @@
 #include "desk.h"
 #include "main.h"
 #include "keyboard.h"
+#include "layer_shell.h"
 #include "log.h"
 #include "output.h"
 #include "shell.h"
@@ -74,7 +75,12 @@ static void free_stuff() {
     };
 
     struct output *output, *toutput;
+    struct layer_view *lview, *tlview;
     wl_list_for_each_safe(output, toutput, &wimp.outputs, link) {
+	wl_list_for_each_safe(lview, tlview, &output->layer_views, link) {
+	    wl_list_remove(&lview->link);
+	    free(lview);
+	};
 	wl_list_remove(&output->link);
 	free(output);
     };
@@ -147,6 +153,7 @@ int main(int argc, char *argv[])
     set_up_cursor();
     set_up_keyboard();
     set_up_decorations();
+    set_up_layer_shell();
 
     // start
     const char *socket = wl_display_add_socket_auto(wimp.display);
