@@ -1,4 +1,5 @@
 #include <time.h>
+#include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -219,4 +220,5 @@ void set_up_outputs() {
     wl_signal_add(&wimp.backend->events.new_output, &wimp.new_output_listener);
 
     wlr_xdg_output_manager_v1_create(wimp.display, wimp.output_layout);
+    wlr_gamma_control_manager_v1_create(wimp.display);
 }
