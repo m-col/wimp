@@ -194,8 +194,9 @@ static void add_binding(char *data, const int line) {
 
     // key
     kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_NO_FLAGS);
-    if (kb->key == XKB_KEY_NoSymbol)
+    if (kb->key == XKB_KEY_NoSymbol) {
 	kb->key = xkb_keysym_from_name(s, XKB_KEYSYM_CASE_INSENSITIVE);
+    }
 
     if (kb->key == XKB_KEY_NoSymbol) {
 	kb->key = get(mouse_keys, s);
@@ -209,6 +210,10 @@ static void add_binding(char *data, const int line) {
 
     // action
     s = strtok(NULL, " \t\n\r");
+    if (!s) {
+	wlr_log(WLR_ERROR, "Config line %i: malformed option.", line);
+	return;
+    }
     if (!assign_action(s, strtok(NULL, "\n\r"), kb)) {
 	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
 	free(kb);
@@ -444,6 +449,8 @@ static void parse_config(FILE *stream) {
 		wimp.reverse_scrolling = false;
 	    else if (!strcasecmp(s, "reverse"))
 		wimp.reverse_scrolling = true;
+	} else {
+	    wlr_log(WLR_ERROR, "Config line %i: unknown option '%s'.", line, s);
 	}
     }
 }
