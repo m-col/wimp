@@ -146,7 +146,6 @@ int main(int argc, char *argv[])
     wl_list_init(&wimp.mouse_bindings);
     wl_list_init(&wimp.marks);
     add_desk();
-    wimp.current_desk = wl_container_of(wimp.desks.next, wimp.current_desk, link);
 
     // configure
     locate_config();

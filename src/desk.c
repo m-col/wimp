@@ -17,6 +17,10 @@ void add_desk() {
     desk->zoom = 1;
     desk->fullscreened = NULL;
     wimp.desk_count++;
+
+    if (!wimp.current_desk) {
+	wimp.current_desk = wl_container_of(wimp.desks.next, wimp.current_desk, link);
+    }
 }
 
 
