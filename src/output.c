@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "output.h"
 #include "types.h"
@@ -216,4 +217,6 @@ void set_up_outputs() {
     wl_list_init(&wimp.outputs);
     wimp.new_output_listener.notify = on_new_output;
     wl_signal_add(&wimp.backend->events.new_output, &wimp.new_output_listener);
+
+    wlr_xdg_output_manager_v1_create(wimp.display, wimp.output_layout);
 }
