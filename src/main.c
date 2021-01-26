@@ -46,6 +46,10 @@ static const char usage[] =
 
 
 static void free_stuff() {
+    free(wimp.config_directory);
+    free(wimp.config_file);
+    free(wimp.auto_start);
+
     struct binding *kb, *tkb;
     wl_list_for_each_safe(kb, tkb, &wimp.mouse_bindings, link) {
 	wl_list_remove(&kb->link);
@@ -169,6 +173,7 @@ int main(int argc, char *argv[])
     }
     setenv("WAYLAND_DISPLAY", socket, true);
     wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s", socket);
+    schedule_auto_start();
     wl_display_run(wimp.display);
 
     // stop

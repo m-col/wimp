@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wordexp.h>
+#include <wayland-server-core.h>
 #include <wlr/render/wlr_texture.h>
 #include <unistd.h>
 
@@ -12,8 +13,8 @@
 #include "types.h"
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
-#define CONFIG_HOME "$HOME/.config/wimp.conf"
-#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/wimp.conf"
+#define CONFIG_HOME "$HOME/.config/wimp/"
+#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/wimp/"
 
 
 static const char *DEFAULT_CONFIG =  "\n\
@@ -25,6 +26,16 @@ set_modifier Logo\n\
 bind Ctrl Escape shutdown\n\
 scroll_direction natural\n\
 ";
+
+
+static char *expand(char *path) {
+    wordexp_t p;
+    wordexp(path, &p, WRDE_NOCMD | WRDE_UNDEF);
+    free(path);
+    char *new = strdup(p.we_wordv[0]);
+    wordfree(&p);
+    return new;
+}
 
 
 struct value_map {
@@ -331,6 +342,48 @@ static void setup_vt_switching() {
 }
 
 
+struct source {
+    struct wl_event_source *wl_event_source;
+};
+
+
+static int _auto_start(void *data) {
+    struct source *source = data;
+    wl_event_source_remove(source->wl_event_source);
+    free(source);
+
+    char *script = wimp.auto_start;
+    if (fork() == 0) {
+	if (execl(script, script, (void *)NULL) == -1) {
+	    exit(EXIT_FAILURE);
+	}
+    } else {
+	wlr_log(WLR_DEBUG, "Running autostart script: %s", script);
+    }
+    free(wimp.auto_start);
+    return 0;
+}
+
+
+void schedule_auto_start() {
+    if (wimp.auto_start) {
+	wimp.auto_start = expand(wimp.auto_start);
+    } else {
+	wimp.auto_start = strndup(
+	    wimp.config_directory, strlen(wimp.config_directory) + strlen("autostart")
+	);
+	strcat(wimp.auto_start, "autostart");
+    }
+
+    if (is_executable(wimp.auto_start)) {
+	struct wl_event_loop *event_loop = wl_display_get_event_loop(wimp.display);
+	struct source *source = calloc(1, sizeof(struct source));
+	source->wl_event_source = wl_event_loop_add_timer(event_loop, _auto_start, source);
+	wl_event_source_timer_update(source->wl_event_source, 1);
+    }
+}
+
+
 static void parse_config(FILE *stream) {
     char *s;
     char linebuf[1024];
@@ -383,6 +436,8 @@ static void parse_config(FILE *stream) {
 	    else if (!strcasecmp(s, "width"))
 		if ((s = strtok(NULL, " \t\n\r")) && is_number(s))
 		    desk->border_width = strtod(s, NULL);
+	} else if (!strcasecmp(s, "auto_start")) {
+	    wimp.auto_start = strdup(strtok(NULL, " \t\n\r"));
 	} else if (!strcasecmp(s, "scroll_direction")) {
 	    s = strtok(NULL, " \t\n\r");
 	    if (!strcasecmp(s, "natural"))
@@ -416,38 +471,30 @@ void load_config() {
     free(buffer);
     fclose(stream);
 
-    // load custom configuration file
-    if (wimp.config_file) {
+    // load configuration file
+    if (is_readable(wimp.config_file)) {
 	stream = fopen(wimp.config_file, "r");
 	parse_config(stream);
 	fclose(stream);
+    } else {
+	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", wimp.config_file);
     }
 
     setup_vt_switching();
 }
 
 
-void locate_config()
-{
-    char *config;
-    char *xdg_config;
+void locate_config() {
+    char *xdg_config = getenv("XDG_CONFIG_HOME");
+    char *config_dir = (xdg_config && *xdg_config) ? CONFIG_HOME_XDG : CONFIG_HOME;
+    wimp.config_directory = strdup(config_dir);
+    wimp.config_directory = expand(wimp.config_directory);
+    config_dir = wimp.config_directory;
 
     if (wimp.config_file == NULL) {
-	xdg_config = getenv("XDG_CONFIG_HOME");
-	config = (xdg_config && *xdg_config) ? CONFIG_HOME_XDG : CONFIG_HOME;
-	wimp.config_file = strdup(config);
-    };
-
-    wordexp_t p;
-    wordexp(wimp.config_file, &p, WRDE_NOCMD | WRDE_UNDEF);
-    free(wimp.config_file);
-
-    if (access(p.we_wordv[0], R_OK) == -1) {
-	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", p.we_wordv[0]);
-	wimp.config_file = NULL;
+	wimp.config_file = strndup(config_dir, strlen(config_dir) + strlen("config"));
+	strcat(wimp.config_file, "config");
     } else {
-	wimp.config_file = strdup(p.we_wordv[0]);
-    }
-
-    wordfree(&p);
+	wimp.config_file = expand(wimp.config_file);
+    };
 }

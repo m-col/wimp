@@ -15,6 +15,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#define is_readable(p) (access(p, R_OK) != -1)
+#define is_executable(p) (access(p, R_OK | X_OK) != -1)
 
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
@@ -34,7 +36,10 @@ struct wimp {
     struct wl_display *display;
     struct wlr_backend *backend;
     struct wlr_renderer *renderer;
+
+    char *config_directory;
     char *config_file;
+    char *auto_start;
 
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;
