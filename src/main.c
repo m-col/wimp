@@ -45,7 +45,7 @@ static const char usage[] =
 ;
 
 
-static void free_stuff() {
+static void shutdown() {
     free(wimp.config_directory);
     free(wimp.config_file);
 
@@ -99,6 +99,9 @@ static void free_stuff() {
 	wl_list_remove(&mark->link);
 	free(mark);
     };
+
+    wlr_backend_destroy(wimp.backend);
+    wl_display_destroy(wimp.display);
 }
 
 
@@ -159,16 +162,9 @@ int main(int argc, char *argv[])
 
     // start
     const char *socket = wl_display_add_socket_auto(wimp.display);
-    if (!socket) {
-	wlr_backend_destroy(wimp.backend);
-	wl_display_destroy(wimp.display);
+    if (!socket || !wlr_backend_start(wimp.backend)) {
+	shutdown();
 	return EXIT_FAILURE;
-    }
-    if (!wlr_backend_start(wimp.backend)) {
-	free_stuff();
-	wlr_backend_destroy(wimp.backend);
-	wl_display_destroy(wimp.display);
-	return 1;
     }
     setenv("WAYLAND_DISPLAY", socket, true);
     wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s", socket);
@@ -177,8 +173,6 @@ int main(int argc, char *argv[])
 
     // stop
     wl_display_destroy_clients(wimp.display);
-    free_stuff();
-    wlr_backend_destroy(wimp.backend);
-    wl_display_destroy(wimp.display);
+    shutdown();
     return EXIT_SUCCESS;
 }
