@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
 	return EXIT_FAILURE;
     }
     if (!wlr_backend_start(wimp.backend)) {
+	free_stuff();
 	wlr_backend_destroy(wimp.backend);
 	wl_display_destroy(wimp.display);
 	return 1;
