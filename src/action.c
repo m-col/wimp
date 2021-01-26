@@ -18,7 +18,9 @@ void shutdown(void *data) {
 
 void exec_command(void *data) {
     if (fork() == 0) {
-	execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL);
+	if (execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL) == -1) {
+	    exit(EXIT_FAILURE);
+	}
     } else {
 	wlr_log(WLR_DEBUG, "Executing: %s", data);
     }
