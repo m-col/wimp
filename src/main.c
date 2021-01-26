@@ -48,7 +48,6 @@ static const char usage[] =
 static void free_stuff() {
     free(wimp.config_directory);
     free(wimp.config_file);
-    free(wimp.auto_start);
 
     struct binding *kb, *tkb;
     wl_list_for_each_safe(kb, tkb, &wimp.mouse_bindings, link) {
