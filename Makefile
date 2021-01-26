@@ -28,7 +28,7 @@ wlr-layer-shell-unstable-v1-protocol:
 	@$(WAYLAND_SCANNER) private-code protocols/wlr-layer-shell-unstable-v1.xml $@.c
 
 clean:
-	rm -f ${OUT} xdg-shell-protocol.h xdg-shell-protocol.c ${OBJECTS}
+	rm -f ${OUT} *-protocol.h *-protocol.c ${OBJECTS}
 
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
