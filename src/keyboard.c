@@ -40,21 +40,18 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 
 
 static void on_key(struct wl_listener *listener, void *data) {
-    struct keyboard *keyboard = wl_container_of(listener, keyboard, key_listener);
     struct wlr_event_keyboard_key *event = data;
-    struct wlr_seat *seat = wimp.seat;
-
-    const xkb_keysym_t *syms;
-    int nsyms = xkb_state_key_get_syms(
-	keyboard->device->keyboard->xkb_state,
-	event->keycode + 8,
-	&syms
-    );
 
     if (event->state == WLR_KEY_PRESSED) {
+	const xkb_keysym_t *syms;
+	xkb_keycode_t keycode = event->keycode + 8;
+	struct keyboard *keyboard = wl_container_of(listener, keyboard, key_listener);
+	struct wlr_keyboard *wlr_kb = keyboard->device->keyboard;
+
 	if (wimp.mark_waiting) {
-	    wimp.mark_waiting = false;
 	    struct mark *mark;
+	    wimp.mark_waiting = false;
+	    xkb_state_key_get_syms(wlr_kb->xkb_state, keycode, &syms);
 	    mark = wl_container_of(wimp.marks.next, mark, link);
 	    if (mark->key == 0) {
 		actually_set_mark(syms[0]);
@@ -67,6 +64,11 @@ static void on_key(struct wl_listener *listener, void *data) {
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
 	struct binding *kb;
 	if ((modifiers & wimp.mod)) {
+	    xkb_layout_index_t layout_index = xkb_state_key_get_layout(wlr_kb->xkb_state, keycode);
+	    int nsyms = xkb_keymap_key_get_syms_by_level(
+		wlr_kb->keymap, keycode, layout_index, 0, &syms
+	    );
+
 	    modifiers &= ~wimp.mod;
 	    for (int i = 0; i < nsyms; i++) {
 		wl_list_for_each(kb, &wimp.key_bindings, link) {
@@ -81,7 +83,7 @@ static void on_key(struct wl_listener *listener, void *data) {
 
     // forward to client
     wlr_seat_keyboard_notify_key(
-	seat, event->time_msec, event->keycode, event->state
+	wimp.seat, event->time_msec, event->keycode, event->state
     );
 }
 
