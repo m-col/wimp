@@ -17,7 +17,6 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
     struct binding *kb;
-    bool handled = false;
     if ((modifiers & wimp.mod)) {
 	modifiers &= ~wimp.mod;
 	wl_list_for_each(kb, &wimp.mouse_bindings, link) {
@@ -31,13 +30,12 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 			break;
 		}
 		wimp.cursor_mode = CURSOR_MOD;
-		handled = true;
+		return;
 	    }
 	}
     }
-    if (!handled) {
-	wimp.cursor_mode = CURSOR_PASSTHROUGH;
-    }
+
+    wimp.cursor_mode = CURSOR_PASSTHROUGH;
 }
 
 
@@ -46,12 +44,12 @@ static void on_key(struct wl_listener *listener, void *data) {
     struct wlr_event_keyboard_key *event = data;
     struct wlr_seat *seat = wimp.seat;
 
-    /* Translate libinput keycode -> xkbcommon */
-    uint32_t keycode = event->keycode + 8;
-    /* Get a list of keysyms based on the keymap for this keyboard */
     const xkb_keysym_t *syms;
     int nsyms = xkb_state_key_get_syms(
-	keyboard->device->keyboard->xkb_state, keycode, &syms);
+	keyboard->device->keyboard->xkb_state,
+	event->keycode + 8,
+	&syms
+    );
 
     if (event->state == WLR_KEY_PRESSED) {
 	if (wimp.mark_waiting) {
