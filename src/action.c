@@ -318,8 +318,11 @@ void halfimize(void *data) {
     }
 
     double zoom = wimp.current_desk->zoom;
-    view->x = x / zoom;
-    view->y = y / zoom;
+    int border_width = wimp.current_desk->border_width;
+    view->x = x / zoom + border_width;
+    view->y = y / zoom + border_width;
+    width -= border_width * 2;
+    height -= border_width * 2;
     wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
     wlr_xdg_toplevel_set_tiled(view->surface, true);
 }
