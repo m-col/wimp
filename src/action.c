@@ -48,11 +48,15 @@ void close_window(void *data) {
 void move_window(void *data) {
     struct wlr_surface *surface;
     double sx, sy;
-    struct view *view = view_at(
-	wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy
-    );
-    if (!view) {
-	return;
+    struct view *view;
+
+    if (wimp.grabbed_view) {
+	view = wimp.grabbed_view;
+    } else {
+	view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
+	if (!view) {
+	    return;
+	}
     }
     struct motion motion = *(struct motion*)data;
     view->x += motion.dx;

@@ -162,8 +162,12 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	    }
 	}
 	wimp.cursor_mode = CURSOR_PASSTHROUGH;
+	if (wimp.grabbed_view) {
+	    wimp.grabbed_view = NULL;
+	}
 
     } else if (wimp.cursor_mode == CURSOR_MOD) {
+	bool grab = true;
 	switch (event->button) {
 	    case BTN_LEFT:
 		wimp.on_mouse_motion = wimp.on_drag1;
@@ -174,8 +178,14 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	    case BTN_RIGHT:
 		wimp.on_mouse_motion = wimp.on_drag3;
 		break;
+	    default:
+		grab = false;
 	}
-
+	if (grab) {
+	    struct wlr_surface *surface;
+	    double sx, sy;
+	    wimp.grabbed_view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
+	}
 
     } else {
 	double sx, sy;
