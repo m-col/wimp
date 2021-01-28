@@ -106,6 +106,10 @@ static void shutdown() {
     };
 
     wlr_backend_destroy(wimp.backend);
+    wlr_output_layout_destroy(wimp.output_layout);
+    wlr_seat_destroy(wimp.seat);
+    wlr_xcursor_manager_destroy(wimp.cursor_manager);
+    wlr_cursor_destroy(wimp.cursor);
     wl_display_destroy(wimp.display);
 }
 
