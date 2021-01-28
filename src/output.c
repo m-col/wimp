@@ -32,17 +32,8 @@ static void render_surface(
 	return;
     }
 
-    double x = 0, y = 0;
-    struct wlr_output_layout_output *ol;
-    wl_list_for_each(ol, &wimp.output_layout->outputs, link) {
-	if (ol->output == output) {
-	    x = - (double)ol->x;
-	    y = - (double)ol->y;
-	    break;
-	}
-    }
-    x = (x + rdata->x + sx) * output->scale * rdata->zoom;
-    y = (y + rdata->y + sy) * output->scale * rdata->zoom;
+    int x = (rdata->x + sx) * output->scale * rdata->zoom;
+    int y = (rdata->y + sy) * output->scale * rdata->zoom;
     int width = surface->current.width * output->scale * rdata->zoom;
     int height = surface->current.height * output->scale * rdata->zoom;
 
@@ -68,11 +59,10 @@ static void render_surface(
 	.width = width,
 	.height = height,
     };
+
     float matrix[9];
-    enum wl_output_transform transform =
-	wlr_output_transform_invert(surface->current.transform);
-    wlr_matrix_project_box(matrix, &box, transform, 0,
-	output->transform_matrix);
+    enum wl_output_transform transform = wlr_output_transform_invert(surface->current.transform);
+    wlr_matrix_project_box(matrix, &box, transform, 0, output->transform_matrix);
     wlr_render_texture_with_matrix(rdata->renderer, texture, matrix, 1);
 
     wlr_surface_send_frame_done(surface, rdata->when);
@@ -108,6 +98,16 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	.y = 0,
     };
 
+    double ox, oy;
+    struct wlr_output_layout_output *ol;
+    wl_list_for_each(ol, &wimp.output_layout->outputs, link) {
+	if (ol->output == output->wlr_output) {
+	    ox = (double)ol->x;
+	    oy = (double)ol->y;
+	    break;
+	}
+    }
+
     // paint wallpaper
     struct wallpaper *wallpaper = desk->wallpaper;
     if (wallpaper != NULL) {
@@ -139,9 +139,17 @@ static void on_frame(struct wl_listener *listener, void *data) {
     // paint clients
     struct view *view;
     struct view *focussed = wl_container_of(wimp.current_desk->views.next, focussed, link);
+    int border_width = wimp.current_desk->border_width;
     wl_list_for_each_reverse(view, &desk->views, link) {
-	rdata.x = view->x;
-	rdata.y = view->y;
+	if (
+		(view->x + view->surface->geometry.width + border_width < 0) ||
+		(view->y + view->surface->geometry.height + border_width < 0) ||
+		(view->x - border_width > width) || (view->y - border_width > height)
+	) {
+	    continue;
+	}
+	rdata.x = view->x + ox;
+	rdata.y = view->y + oy;
 	rdata.is_focussed = (view == focussed);
 	rdata.bordered = view->surface->surface;
 	wlr_xdg_surface_for_each_surface(view->surface, render_surface, &rdata);
