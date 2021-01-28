@@ -112,7 +112,7 @@ struct view {
 
 struct output {
     struct wl_list link;
-    struct wl_list layer_views;
+    struct wl_list layer_views[4];
     struct wlr_output *wlr_output;
     struct wl_listener frame_listener;
 };

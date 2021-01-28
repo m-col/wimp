@@ -125,19 +125,15 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
     // paint background and bottom layers
     struct layer_view *lview;
-    wl_list_for_each(lview, &output->layer_views, link) {
-	if (lview->surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND) {
-	    wlr_surface_for_each_surface(
-		lview->surface->surface, render_surface, &rdata
-	    );
-	}
+    wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND], link) {
+	wlr_surface_for_each_surface(
+	    lview->surface->surface, render_surface, &rdata
+	);
     }
-    wl_list_for_each(lview, &output->layer_views, link) {
-	if (lview->surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
-	    wlr_surface_for_each_surface(
-		lview->surface->surface, render_surface, &rdata
-	    );
-	}
+    wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM], link) {
+	wlr_surface_for_each_surface(
+	    lview->surface->surface, render_surface, &rdata
+	);
     }
 
     // paint clients
@@ -157,19 +153,15 @@ static void on_frame(struct wl_listener *listener, void *data) {
     rdata.y = 0;
 
     // paint top and overlay layers
-    wl_list_for_each(lview, &output->layer_views, link) {
-	if (lview->surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
-	    wlr_surface_for_each_surface(
-		lview->surface->surface, render_surface, &rdata
-	    );
-	}
+    wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_TOP], link) {
+	wlr_surface_for_each_surface(
+	    lview->surface->surface, render_surface, &rdata
+	);
     }
-    wl_list_for_each(lview, &output->layer_views, link) {
-	if (lview->surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY) {
-	    wlr_surface_for_each_surface(
-		lview->surface->surface, render_surface, &rdata
-	    );
-	}
+    wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY], link) {
+	wlr_surface_for_each_surface(
+	    lview->surface->surface, render_surface, &rdata
+	);
     }
 
     // paint mark indicator
@@ -209,7 +201,10 @@ static void on_new_output(struct wl_listener *listener, void *data) {
     wl_list_insert(&wimp.outputs, &output->link);
     wlr_output_layout_add_auto(wimp.output_layout, wlr_output);
 
-    wl_list_init(&output->layer_views);
+    wl_list_init(&output->layer_views[0]);
+    wl_list_init(&output->layer_views[1]);
+    wl_list_init(&output->layer_views[2]);
+    wl_list_init(&output->layer_views[3]);
 }
 
 

@@ -83,10 +83,12 @@ static void shutdown() {
     struct output *output, *toutput;
     struct layer_view *lview, *tlview;
     wl_list_for_each_safe(output, toutput, &wimp.outputs, link) {
-	wl_list_for_each_safe(lview, tlview, &output->layer_views, link) {
-	    wl_list_remove(&lview->link);
-	    free(lview);
-	};
+	for (int i = 0; i < 4; i++ ) {
+	    wl_list_for_each_safe(lview, tlview, &output->layer_views[i], link) {
+		wl_list_remove(&lview->link);
+		free(lview);
+	    };
+	}
 	wl_list_remove(&output->link);
 	free(output);
     };

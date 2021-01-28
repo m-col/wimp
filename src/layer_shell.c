@@ -8,14 +8,16 @@ static void layer(struct output *output) {
     struct wlr_layer_surface_v1 *surface;
     struct wlr_layer_surface_v1_state *state;
 
-    if (wl_list_empty(&output->layer_views)) {
-	return;
-    }
+    for (int i = 0; i<4; i++) {
+	if (wl_list_empty(&output->layer_views[i])) {
+	    continue;
+	}
 
-    wl_list_for_each(lview, &output->layer_views, link) {
-	surface = lview->surface;
-	state = &surface->current;
-	wlr_layer_surface_v1_configure(surface, state->desired_width, state->desired_height);
+	wl_list_for_each(lview, &output->layer_views[i], link) {
+	    surface = lview->surface;
+	    state = &surface->current;
+	    wlr_layer_surface_v1_configure(surface, state->desired_width, state->desired_height);
+	}
     }
 }
 
@@ -61,7 +63,7 @@ static void on_new_surface(struct wl_listener *listener, void *data) {
     wl_signal_add(&surface->events.map, &lview->map_listener);
     wl_signal_add(&surface->events.unmap, &lview->unmap_listener);
     wl_signal_add(&surface->events.destroy, &lview->destroy_listener);
-    
+
     if (!surface->output) {
 	surface->output = wlr_output_layout_output_at(
 	    wimp.output_layout, wimp.cursor->x, wimp.cursor->y
@@ -69,7 +71,7 @@ static void on_new_surface(struct wl_listener *listener, void *data) {
     }
     struct output *output = surface->output->data;
     lview->output = output;
-    wl_list_insert(&output->layer_views, &lview->link);
+    wl_list_insert(&output->layer_views[surface->client_pending.layer], &lview->link);
 
     layer(lview->output);
 }
