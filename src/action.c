@@ -139,8 +139,8 @@ void pan_desk(void *data) {
 	view->x -= dx;
 	view->y -= dy;
     }
-    desk->panned_x += dx;
-    desk->panned_y += dy;
+    desk->panned_x -= dx;
+    desk->panned_y -= dy;
 }
 
 
