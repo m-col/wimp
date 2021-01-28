@@ -45,36 +45,25 @@ static void process_cursor_resize(uint32_t time, double zoom) {
 }
 
 
-static bool _view_at(
-    struct view *view, double lx, double ly, struct wlr_surface **surface,
-    double *sx, double *sy
-) {
-    double view_sx = lx - view->x;
-    double view_sy = ly - view->y;
-
-    double _sx, _sy;
-    struct wlr_surface *_surface = NULL;
-    _surface = wlr_xdg_surface_surface_at(
-	view->surface, view_sx, view_sy, &_sx, &_sy
-    );
-    if (_surface != NULL) {
-	*sx = _sx;
-	*sy = _sy;
-	*surface = _surface;
-	return true;
-    }
-    return false;
-}
-
-
 struct view *view_at(
     double lx, double ly, struct wlr_surface **surface, double *sx, double *sy
 ) {
     struct view *view;
     lx /= wimp.current_desk->zoom;
     ly /= wimp.current_desk->zoom;
+    double _sx, _sy;
+
     wl_list_for_each(view, &wimp.current_desk->views, link) {
-	if (_view_at(view, lx, ly, surface, sx, sy)) {
+	double view_sx = lx - view->x;
+	double view_sy = ly - view->y;
+	struct wlr_surface *_surface = NULL;
+	_surface = wlr_xdg_surface_surface_at(
+	    view->surface, view_sx, view_sy, &_sx, &_sy
+	);
+	if (_surface != NULL) {
+	    *sx = _sx;
+	    *sy = _sy;
+	    *surface = _surface;
 	    return view;
 	}
     }
