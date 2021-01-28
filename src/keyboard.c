@@ -16,7 +16,7 @@ static void on_modifier(struct wl_listener *listener, void *data) {
     );
 
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-    bool handled;
+    bool handled = false;
     struct binding *kb;
     if ((modifiers & wimp.mod)) {
 	modifiers &= ~wimp.mod;
