@@ -16,6 +16,7 @@ static void on_modifier(struct wl_listener *listener, void *data) {
     );
 
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+    bool handled;
     struct binding *kb;
     if ((modifiers & wimp.mod)) {
 	modifiers &= ~wimp.mod;
@@ -28,14 +29,25 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 		    case SCROLL:
 			wimp.on_mouse_scroll = kb->action;
 			break;
+		    case DRAG1:
+			wimp.on_drag1 = kb->action;
+			break;
+		    case DRAG2:
+			wimp.on_drag2 = kb->action;
+			break;
+		    case DRAG3:
+			wimp.on_drag3 = kb->action;
+			break;
 		}
 		wimp.cursor_mode = CURSOR_MOD;
-		return;
+		handled = true;
 	    }
 	}
     }
 
-    wimp.cursor_mode = CURSOR_PASSTHROUGH;
+    if (!handled){
+	wimp.cursor_mode = CURSOR_PASSTHROUGH;
+    }
 }
 
 

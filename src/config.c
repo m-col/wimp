@@ -67,6 +67,9 @@ static struct value_map dirs[] = {
 static struct value_map mouse_keys[] = {
     { "motion", MOTION },
     { "scroll", SCROLL },
+    { "drag1", DRAG1 },
+    { "drag2", DRAG2 },
+    { "drag3", DRAG3 },
 };
 
 

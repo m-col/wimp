@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <linux/input-event-codes.h>
 #include <unistd.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
@@ -150,7 +151,32 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_button(wimp.seat, event->time_msec, event->button, event->state);
 
     if (event->state == WLR_BUTTON_RELEASED) {
+	if (wimp.cursor_mode == CURSOR_MOD) {
+	    wimp.on_mouse_motion = NULL;
+	    struct binding *kb;
+	    wl_list_for_each(kb, &wimp.mouse_bindings, link) {
+		if (kb->key == MOTION) {
+		    wimp.on_mouse_motion = kb->action;
+		    break;
+		}
+	    }
+	}
 	wimp.cursor_mode = CURSOR_PASSTHROUGH;
+
+    } else if (wimp.cursor_mode == CURSOR_MOD) {
+	switch (event->button) {
+	    case BTN_LEFT:
+		wimp.on_mouse_motion = wimp.on_drag1;
+		break;
+	    case BTN_MIDDLE:
+		wimp.on_mouse_motion = wimp.on_drag2;
+		break;
+	    case BTN_RIGHT:
+		wimp.on_mouse_motion = wimp.on_drag3;
+		break;
+	}
+
+
     } else {
 	double sx, sy;
 	struct wlr_surface *surface;
