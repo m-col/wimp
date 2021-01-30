@@ -7,8 +7,10 @@ static void layer(struct output *output) {
     struct layer_view *lview;
     struct wlr_layer_surface_v1 *surface;
     struct wlr_layer_surface_v1_state *state;
+    int width, height;
+    wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
-    for (int i = 0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
 	if (wl_list_empty(&output->layer_views[i])) {
 	    continue;
 	}
@@ -16,7 +18,61 @@ static void layer(struct output *output) {
 	wl_list_for_each(lview, &output->layer_views[i], link) {
 	    surface = lview->surface;
 	    state = &surface->current;
-	    wlr_layer_surface_v1_configure(surface, state->desired_width, state->desired_height);
+	    struct wlr_box box = {
+		.width = state->desired_width,
+		.height = state->desired_height
+	    };
+	    // Horizontal axis
+	    const uint32_t both_horiz = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+		| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+	    if ((state->anchor & both_horiz) && box.width == 0) {
+		box.x = state->margin.left;
+		box.width = width - state->margin.left - state->margin.right;
+	    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)) {
+		box.x = state->margin.left;
+	    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT)) {
+		box.x = width - box.width - state->margin.right;
+	    } else {
+		box.x = width / 2 - box.width / 2;
+	    }
+	    // Vertical axis
+	    const uint32_t both_vert = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
+		    | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+	    if ((state->anchor & both_vert) && box.height == 0) {
+		box.y = state->margin.top;
+		box.height = height - state->margin.top - state->margin.bottom;
+	    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)) {
+		box.y = state->margin.top;
+	    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM)) {
+		box.y = height - box.height - state->margin.bottom;
+	    } else {
+		box.y = height / 2 - box.height / 2;
+	    }
+	    if (box.width < 0 || box.height < 0) {
+		wlr_layer_surface_v1_close(surface);
+		continue;
+	    }
+	    lview->geo = box;
+	    wlr_layer_surface_v1_configure(surface, box.width, box.height);
+	}
+    }
+
+    // Find topmost keyboard interactive layer, if such a layer exists
+    uint32_t layers_above_shell[] = {
+	ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+	ZWLR_LAYER_SHELL_V1_LAYER_TOP,
+    };
+    size_t nlayers = sizeof(layers_above_shell) / sizeof(layers_above_shell[0]);
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
+    for (size_t i = 0; i < nlayers; ++i) {
+	wl_list_for_each_reverse(lview, &output->layer_views[layers_above_shell[i]], link) {
+	    if (lview->surface->current.keyboard_interactive && lview->surface->mapped) {
+		wlr_seat_keyboard_notify_enter(
+		    wimp.seat, lview->surface->surface, keyboard->keycodes,
+		    keyboard->num_keycodes, &keyboard->modifiers
+		);
+		return;
+	    }
 	}
     }
 }
@@ -73,7 +129,12 @@ static void on_new_surface(struct wl_listener *listener, void *data) {
     lview->output = output;
     wl_list_insert(&output->layer_views[surface->client_pending.layer], &lview->link);
 
+    // Temporarily set the layer's current state to client_pending
+    // So that we can easily arrange it
+    struct wlr_layer_surface_v1_state old_state = surface->current;
+    surface->current = surface->client_pending;
     layer(lview->output);
+    surface->current = old_state;
 }
 
 

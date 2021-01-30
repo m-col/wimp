@@ -134,6 +134,7 @@ struct layer_view {
     struct wl_listener unmap_listener;
     struct wl_listener destroy_listener;
     struct output *output;
+    struct wlr_box geo;
 };
 
 struct keyboard {

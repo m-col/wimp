@@ -87,17 +87,6 @@ static void on_frame(struct wl_listener *listener, void *data) {
     wlr_renderer_begin(renderer, width, height);
     wlr_renderer_clear(renderer, desk->background);
 
-    struct render_data rdata = {
-	.output = output->wlr_output,
-	.renderer = renderer,
-	.bordered = NULL,
-	.when = &now,
-	.zoom = zoom,
-	.is_focussed = false,
-	.x = 0,
-	.y = 0,
-    };
-
     double ox, oy;
     struct wlr_output_layout_output *ol;
     wl_list_for_each(ol, &wimp.output_layout->outputs, link) {
@@ -123,6 +112,17 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	}
     }
 
+    struct render_data rdata = {
+	.output = output->wlr_output,
+	.renderer = renderer,
+	.bordered = NULL,
+	.when = &now,
+	.zoom = 1,
+	.is_focussed = false,
+	.x = 0,
+	.y = 0,
+    };
+
     // paint background and bottom layers
     struct layer_view *lview;
     wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND], link) {
@@ -135,6 +135,8 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	    lview->surface->surface, render_surface, &rdata
 	);
     }
+
+    rdata.zoom = zoom;
 
     // paint clients
     struct view *view;
@@ -157,16 +159,19 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
     rdata.bordered = NULL;
     rdata.is_focussed = false;
-    rdata.x = 0;
-    rdata.y = 0;
+    rdata.zoom = 1;
 
     // paint top and overlay layers
     wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_TOP], link) {
+	rdata.x = lview->geo.x;
+	rdata.y = lview->geo.y;
 	wlr_surface_for_each_surface(
 	    lview->surface->surface, render_surface, &rdata
 	);
     }
     wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY], link) {
+	rdata.x = lview->geo.x;
+	rdata.y = lview->geo.y;
 	wlr_surface_for_each_surface(
 	    lview->surface->surface, render_surface, &rdata
 	);
