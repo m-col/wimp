@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-void add_desk();
+void configure_desks(int wanted);
 void set_desk(struct desk *desk);
 void view_to_desk(struct view *view, int index);
 

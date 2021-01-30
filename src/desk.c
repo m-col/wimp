@@ -4,7 +4,7 @@
 #include "types.h"
 
 
-void add_desk() {
+static void add_desk() {
     struct desk *desk = calloc(1, sizeof(struct desk));
     wl_list_insert(wimp.desks.prev, &desk->link);
     wl_list_init(&desk->views);
@@ -20,6 +20,32 @@ void add_desk() {
 
     if (!wimp.current_desk) {
 	wimp.current_desk = wl_container_of(wimp.desks.next, wimp.current_desk, link);
+    }
+}
+
+
+static void remove_desk() {
+    struct desk *last = wl_container_of(wimp.desks.next, last, link);
+    if (last == wimp.current_desk) {
+	set_desk(wl_container_of(wimp.desks.next, last, link));
+    }
+    struct view *view, *tview;
+    wl_list_for_each_safe(view, tview, &last->views, link) {
+	view_to_desk(view, 0);
+    };
+    wl_list_init(&last->link);
+    wl_list_remove(&last->link);
+    free(last->wallpaper);
+    free(last);
+    wimp.desk_count--;
+}
+
+void configure_desks(int wanted) {
+    while (wanted > wimp.desk_count) {
+	add_desk();
+    }
+    while (wanted < wimp.desk_count) {
+	remove_desk();
     }
 }
 

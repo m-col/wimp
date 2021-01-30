@@ -24,7 +24,6 @@
 
 
 struct wimp wimp = {
-    .mark_waiting = false,
     .on_mouse_motion = NULL,
     .on_mouse_scroll = NULL,
     .on_drag1 = NULL,
@@ -32,6 +31,7 @@ struct wimp wimp = {
     .on_drag3 = NULL,
     .can_steal_focus = true,
     .desk_count = 0,
+    .mark_waiting = false,
     .mark_indicator.box.width = 25,
     .mark_indicator.box.height = 25,
     .mark_indicator.box.x = 0,
@@ -157,7 +157,6 @@ int main(int argc, char *argv[])
     wl_list_init(&wimp.key_bindings);
     wl_list_init(&wimp.mouse_bindings);
     wl_list_init(&wimp.marks);
-    add_desk();
 
     // configure
     locate_config();
