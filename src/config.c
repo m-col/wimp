@@ -355,9 +355,6 @@ static void setup_vt_switching() {
 	return;
     }
 
-    /* If the configured mod key is alt then we have to bind the VT key combos
-     * otherwise they interfere with the alt. With other mods we don't get this
-     * key combo so we have to bind the function keys manually. */
     uint32_t func_keys[] = {
 	XKB_KEY_F1,
 	XKB_KEY_F2,
@@ -366,28 +363,12 @@ static void setup_vt_switching() {
 	XKB_KEY_F5,
 	XKB_KEY_F6,
     };
-    uint32_t switch_keys[] = {
-	XKB_KEY_XF86Switch_VT_1,
-	XKB_KEY_XF86Switch_VT_2,
-	XKB_KEY_XF86Switch_VT_3,
-	XKB_KEY_XF86Switch_VT_4,
-	XKB_KEY_XF86Switch_VT_5,
-	XKB_KEY_XF86Switch_VT_6
-    };
-    uint32_t *keys;
-    if (wimp.mod == WLR_MODIFIER_ALT) {
-	keys = switch_keys;
-    } else {
-	keys = func_keys;
-    }
-
     struct binding *kb;
 
     for (unsigned i = 0; i < 6; i++) {
 	kb = calloc(1, sizeof(struct binding));
 	kb->mods = WLR_MODIFIER_CTRL;
-	kb->key = *keys;
-	keys++;
+	kb->key = func_keys[i];
 	kb->action = &change_vt;
 	kb->data = calloc(1, sizeof(unsigned));
 	*(unsigned *)(kb->data) = i + 1;
