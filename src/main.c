@@ -51,6 +51,18 @@ static const char usage[] =
 static void shutdown() {
     free(wimp.config_directory);
     free(wimp.config_file);
+    wl_list_remove(&wimp.new_output_listener.link);
+    wl_list_remove(&wimp.new_xdg_surface_listener.link);
+    wl_list_remove(&wimp.decoration_listener.link);
+    wl_list_remove(&wimp.layer_shell_surface_listener.link);
+    wl_list_remove(&wimp.cursor_motion_listener.link);
+    wl_list_remove(&wimp.cursor_motion_absolute_listener.link);
+    wl_list_remove(&wimp.cursor_button_listener.link);
+    wl_list_remove(&wimp.cursor_axis_listener.link);
+    wl_list_remove(&wimp.cursor_frame_listener.link);
+    wl_list_remove(&wimp.new_input_listener.link);
+    wl_list_remove(&wimp.request_cursor_listener.link);
+    wl_list_remove(&wimp.request_set_selection_listener.link);
 
     struct binding *kb, *tkb;
     wl_list_for_each_safe(kb, tkb, &wimp.mouse_bindings, link) {
@@ -73,6 +85,12 @@ static void shutdown() {
     wl_list_for_each_safe(desk, tdesk, &wimp.desks, link) {
 	wl_list_for_each_safe(view, tview, &desk->views, link) {
 	    wl_list_remove(&view->link);
+	    wl_list_remove(&view->map_listener.link);
+	    wl_list_remove(&view->unmap_listener.link);
+	    wl_list_remove(&view->destroy_listener.link);
+	    wl_list_remove(&view->request_move_listener.link);
+	    wl_list_remove(&view->request_resize_listener.link);
+	    wl_list_remove(&view->request_fullscreen_listener.link);
 	    free(view);
 	};
 	wl_list_remove(&desk->link);
@@ -86,16 +104,22 @@ static void shutdown() {
 	for (int i = 0; i < 4; i++ ) {
 	    wl_list_for_each_safe(lview, tlview, &output->layer_views[i], link) {
 		wl_list_remove(&lview->link);
+		wl_list_remove(&lview->map_listener.link);
+		wl_list_remove(&lview->unmap_listener.link);
+		wl_list_remove(&lview->destroy_listener.link);
 		free(lview);
 	    };
 	}
 	wl_list_remove(&output->link);
+	wl_list_remove(&output->frame_listener.link);
 	free(output);
     };
 
     struct keyboard *keyboard, *tkeyboard;
     wl_list_for_each_safe(keyboard, tkeyboard, &wimp.keyboards, link) {
 	wl_list_remove(&keyboard->link);
+	wl_list_remove(&keyboard->modifier_listener.link);
+	wl_list_remove(&keyboard->key_listener.link);
 	free(keyboard);
     };
 
