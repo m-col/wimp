@@ -144,7 +144,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	if (
 		(view->x + view->surface->geometry.width + border_width < 0) ||
 		(view->y + view->surface->geometry.height + border_width < 0) ||
-		(view->x - border_width > width) || (view->y - border_width > height)
+		(view->x - border_width > width / zoom) || (view->y - border_width > height / zoom)
 	) {
 	    continue;
 	}
