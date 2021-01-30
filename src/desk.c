@@ -70,15 +70,20 @@ void set_desk(struct desk *desk) {
 
 void view_to_desk(struct view *view, int index) {
     struct desk *desk;
+    wimp.can_steal_focus = false;
+
     wl_list_for_each(desk, &wimp.desks, link) {
 	if (desk->index == index) {
 	    wl_list_remove(&view->link);
-	    if (desk == wimp.current_desk) {
-		map_view(view);
-	    } else {
-		unmap_view(view);
-	    }
+	    desk == wimp.current_desk ? map_view(view) : unmap_view(view);
 	    wl_list_insert(&desk->views, &view->link);
+	    break;
 	}
+    }
+
+    wimp.can_steal_focus = true;
+    if (!wl_list_empty(&wimp.current_desk->views)) {
+	struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
+	focus_view(next_view, next_view->surface->surface);
     }
 }

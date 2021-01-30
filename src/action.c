@@ -350,6 +350,6 @@ void reload_config(void *data) {
 
 void send_to_desk(void *data) {
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
-    int index = *(int*)data;
+    int index = *(double*)data - 1;
     view_to_desk(view, index);
 }
