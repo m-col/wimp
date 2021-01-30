@@ -46,13 +46,12 @@ void close_window(void *data) {
 
 
 void move_window(void *data) {
-    struct wlr_surface *surface;
-    double sx, sy;
     struct view *view;
-
     if (wimp.grabbed_view) {
 	view = wimp.grabbed_view;
     } else {
+	double sx, sy;
+	struct wlr_surface *surface;
 	view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
 	if (!view) {
 	    return;
