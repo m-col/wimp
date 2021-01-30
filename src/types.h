@@ -70,6 +70,13 @@ struct wimp {
     struct wl_listener cursor_button_listener;
     struct wl_listener cursor_axis_listener;
     struct wl_listener cursor_frame_listener;
+    struct wlr_pointer_gestures_v1 *pointer_gestures;
+    struct wl_listener pinch_begin_listener;
+    struct wl_listener pinch_update_listener;
+    struct wl_listener pinch_end_listener;
+    struct wl_listener swipe_begin_listener;
+    struct wl_listener swipe_update_listener;
+    struct wl_listener swipe_end_listener;
 
     struct wlr_seat *seat;
     struct wl_listener new_input_listener;

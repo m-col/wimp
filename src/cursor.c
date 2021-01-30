@@ -2,6 +2,7 @@
 #include <linux/input-event-codes.h>
 #include <unistd.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
 #include "action.h"
@@ -216,25 +217,84 @@ static void on_cursor_frame(struct wl_listener *listener, void *data) {
 }
 
 
+static void on_pinch_end(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_pinch_end *event = data;
+    wlr_pointer_gestures_v1_send_pinch_end(
+	wimp.pointer_gestures, wimp.seat, event->time_msec, event->cancelled
+    );
+}
+
+
+static void on_pinch_update(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_pinch_update *event = data;
+    wlr_pointer_gestures_v1_send_pinch_update(
+	wimp.pointer_gestures, wimp.seat, event->time_msec,
+	event->dx, event->dy, event->scale, event->rotation
+    );
+}
+
+
+static void on_pinch_begin(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_pinch_begin *event = data;
+    wlr_pointer_gestures_v1_send_pinch_begin(
+	wimp.pointer_gestures, wimp.seat, event->time_msec, event->fingers
+    );
+
+}
+
+
+static void on_swipe_end(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_swipe_end *event = data;
+    wlr_pointer_gestures_v1_send_swipe_end(
+	wimp.pointer_gestures, wimp.seat, event->time_msec, event->cancelled
+    );
+}
+
+
+static void on_swipe_update(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_swipe_update *event = data;
+    wlr_pointer_gestures_v1_send_swipe_update(
+	wimp.pointer_gestures, wimp.seat, event->time_msec, event->dx, event->dy
+    );
+}
+
+
+static void on_swipe_begin(struct wl_listener *listener, void *data) {
+    struct wlr_event_pointer_swipe_begin *event = data;
+    wlr_pointer_gestures_v1_send_swipe_begin(
+	wimp.pointer_gestures, wimp.seat, event->time_msec, event->fingers
+    );
+}
+
+
 void set_up_cursor() {
     wimp.cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(wimp.cursor, wimp.output_layout);
     wimp.cursor_manager = wlr_xcursor_manager_create(NULL, 24);
     wlr_xcursor_manager_load(wimp.cursor_manager, 1);
 
-    wimp.cursor_motion_listener.notify = on_cursor_motion;
-    wl_signal_add(&wimp.cursor->events.motion, &wimp.cursor_motion_listener);
-
-    wimp.cursor_motion_absolute_listener.notify = on_cursor_motion_absolute;
-    wl_signal_add(&wimp.cursor->events.motion_absolute,
-	&wimp.cursor_motion_absolute_listener);
-
-    wimp.cursor_button_listener.notify = on_cursor_button;
-    wl_signal_add(&wimp.cursor->events.button, &wimp.cursor_button_listener);
-
     wimp.cursor_axis_listener.notify = on_cursor_axis;
-    wl_signal_add(&wimp.cursor->events.axis, &wimp.cursor_axis_listener);
-
     wimp.cursor_frame_listener.notify = on_cursor_frame;
+    wimp.cursor_button_listener.notify = on_cursor_button;
+    wimp.cursor_motion_listener.notify = on_cursor_motion;
+    wimp.cursor_motion_absolute_listener.notify = on_cursor_motion_absolute;
+    wl_signal_add(&wimp.cursor->events.axis, &wimp.cursor_axis_listener);
     wl_signal_add(&wimp.cursor->events.frame, &wimp.cursor_frame_listener);
+    wl_signal_add(&wimp.cursor->events.button, &wimp.cursor_button_listener);
+    wl_signal_add(&wimp.cursor->events.motion, &wimp.cursor_motion_listener);
+    wl_signal_add(&wimp.cursor->events.motion_absolute, &wimp.cursor_motion_absolute_listener);
+
+    wimp.pointer_gestures = wlr_pointer_gestures_v1_create(wimp.display);
+    wimp.pinch_end_listener.notify = on_pinch_end;
+    wimp.pinch_begin_listener.notify = on_pinch_begin;
+    wimp.pinch_update_listener.notify = on_pinch_update;
+    wl_signal_add(&wimp.cursor->events.pinch_end, &wimp.pinch_end_listener);
+    wl_signal_add(&wimp.cursor->events.pinch_begin, &wimp.pinch_begin_listener);
+    wl_signal_add(&wimp.cursor->events.pinch_update, &wimp.pinch_update_listener);
+    wimp.swipe_end_listener.notify = on_swipe_end;
+    wimp.swipe_begin_listener.notify = on_swipe_begin;
+    wimp.swipe_update_listener.notify = on_swipe_update;
+    wl_signal_add(&wimp.cursor->events.swipe_end, &wimp.swipe_end_listener);
+    wl_signal_add(&wimp.cursor->events.swipe_begin, &wimp.swipe_begin_listener);
+    wl_signal_add(&wimp.cursor->events.swipe_update, &wimp.swipe_update_listener);
 }
