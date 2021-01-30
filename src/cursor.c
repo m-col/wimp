@@ -150,6 +150,8 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 		    break;
 		}
 	    }
+	} else {
+	    wimp.cursor_mode = CURSOR_PASSTHROUGH;
 	}
 	if (wimp.grabbed_view) {
 	    wimp.grabbed_view = NULL;
