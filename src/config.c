@@ -468,7 +468,6 @@ static void parse_config(FILE *stream) {
 	else if (!strcasecmp(s, "zoom_min")) {
 	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
 		wimp.zoom_min = strtod(s, NULL);
-		printf("%f\n", wimp.zoom_min);
 	    }
 	}
 
@@ -530,7 +529,6 @@ static void parse_config(FILE *stream) {
 	    wlr_log(WLR_ERROR, "Config line %i: unknown option '%s'.", line, s);
 	}
 	if (wimp.mark_waiting && a) {
-	    printf("%i\n", line);
 	    a = false;
 	}
     }
