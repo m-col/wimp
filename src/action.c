@@ -52,8 +52,9 @@ void move_window(void *data) {
     } else {
 	double sx, sy;
 	struct wlr_surface *surface;
-	view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
-	if (!view) {
+	bool is_layer;
+	view = under_pointer(&surface, &sx, &sy, &is_layer);
+	if (!view || is_layer) {
 	    return;
 	}
     }
@@ -277,8 +278,9 @@ void actually_go_to_mark(const xkb_keysym_t sym) {
 
 void toggle_fullscreen(void *data) {
     struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
-    if (!surface)
+    if (!surface || !wlr_surface_is_xdg_surface(surface)) {
 	return;
+    }
     struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     fullscreen_xdg_surface(view, xdg_surface, NULL);

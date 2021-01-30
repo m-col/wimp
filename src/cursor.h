@@ -3,10 +3,7 @@
 
 #include "types.h"
 
-struct view *view_at(
-    double lx, double ly, struct wlr_surface **surface, double *sx, double *sy
-);
-
+void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *is_layer);
 void set_up_cursor();
 
 #endif

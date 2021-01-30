@@ -24,7 +24,7 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
     if (prev_surface == surface) {
 	return;
     }
-    if (prev_surface) {
+    if (prev_surface && wlr_surface_is_xdg_surface(prev_surface)) {
 	struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
 	    seat->keyboard_state.focused_surface
 	);

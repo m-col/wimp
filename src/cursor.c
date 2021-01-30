@@ -2,6 +2,7 @@
 #include <linux/input-event-codes.h>
 #include <unistd.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
@@ -46,28 +47,68 @@ static void process_cursor_resize(uint32_t time, double zoom) {
 }
 
 
-struct view *view_at(
-    double lx, double ly, struct wlr_surface **surface, double *sx, double *sy
-) {
+void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *is_layer) {
+    double x = wimp.cursor->x;
+    double y = wimp.cursor->y;
+    double tsx, tsy;
     struct view *view;
-    lx /= wimp.current_desk->zoom;
-    ly /= wimp.current_desk->zoom;
-    double _sx, _sy;
+    struct layer_view *lview;
+    struct wlr_surface *tsurface;
+    struct wlr_output *wlr_output = wlr_output_layout_output_at(wimp.output_layout, x, y);
+    struct output *output = wlr_output->data;
+
+    // overlay and top layers
+    uint32_t above[] = { ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, ZWLR_LAYER_SHELL_V1_LAYER_TOP };
+    size_t nlayers = sizeof(above) / sizeof(above[0]);
+    for (size_t i = 0; i < nlayers; i++) {
+	wl_list_for_each(lview, &output->layer_views[above[i]], link) {
+	    tsurface = wlr_layer_surface_v1_surface_at(
+		lview->surface, x - lview->geo.x, y - lview->geo.y, &tsx, &tsy
+	    );
+	    if (tsurface) {
+		*sx = tsx;
+		*sy = tsy;
+		*surface = tsurface;
+		*is_layer = true;
+		return lview;
+	    }
+	}
+    }
+
+    // clients
+    double zx = x / wimp.current_desk->zoom;
+    double zy = y / wimp.current_desk->zoom;
 
     wl_list_for_each(view, &wimp.current_desk->views, link) {
-	double view_sx = lx - view->x;
-	double view_sy = ly - view->y;
-	struct wlr_surface *_surface = NULL;
-	_surface = wlr_xdg_surface_surface_at(
-	    view->surface, view_sx, view_sy, &_sx, &_sy
+	tsurface = wlr_xdg_surface_surface_at(
+	    view->surface, zx - view->x, zy - view->y, &tsx, &tsy
 	);
-	if (_surface != NULL) {
-	    *sx = _sx;
-	    *sy = _sy;
-	    *surface = _surface;
+	if (tsurface) {
+	    *sx = tsx;
+	    *sy = tsy;
+	    *surface = tsurface;
+	    *is_layer = false;
 	    return view;
 	}
     }
+
+    // bottom and background layers
+    uint32_t below[] = { ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM, ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND };
+    for (size_t i = 0; i < nlayers; i++) {
+	wl_list_for_each(lview, &output->layer_views[below[i]], link) {
+	    tsurface = wlr_layer_surface_v1_surface_at(
+		lview->surface, x - lview->geo.x, y - lview->geo.y, &tsx, &tsy
+	    );
+	    if (tsurface) {
+		*sx = tsx;
+		*sy = tsy;
+		*surface = tsurface;
+		*is_layer = true;
+		return lview;
+	    }
+	}
+    }
+
     return NULL;
 }
 
@@ -78,14 +119,13 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
     struct wlr_surface *surface;
     struct view *view;
     double zoom = wimp.current_desk->zoom;
-    dx /= zoom;
-    dy /= zoom;
 
     switch (wimp.cursor_mode) {
 	case CURSOR_PASSTHROUGH:
 	    seat = wimp.seat;
 	    surface = NULL;
-	    view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
+	    bool is_layer;
+	    view = under_pointer(&surface, &sx, &sy, &is_layer);
 	    if (!view) {
 		wlr_xcursor_manager_set_cursor_image(wimp.cursor_manager, "left_ptr", wimp.cursor);
 	    }
@@ -103,8 +143,8 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 	case CURSOR_MOD:
 	    if (wimp.on_mouse_motion) {
 		struct motion motion = {
-		    .dx = dx,
-		    .dy = dy,
+		    .dx = dx / zoom,
+		    .dy = dy / zoom,
 		    .is_percentage = false,
 		};
 		wimp.on_mouse_motion(&motion);
@@ -139,6 +179,9 @@ static void on_cursor_motion_absolute(struct wl_listener *listener, void *data) 
 static void on_cursor_button(struct wl_listener *listener, void *data) {
     struct wlr_event_pointer_button *event = data;
     wlr_seat_pointer_notify_button(wimp.seat, event->time_msec, event->button, event->state);
+    double sx, sy;
+    struct wlr_surface *surface;
+    bool is_layer;
 
     if (event->state == WLR_BUTTON_RELEASED) {
 	if (wimp.cursor_mode == CURSOR_MOD) {
@@ -156,8 +199,9 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	if (wimp.grabbed_view) {
 	    wimp.grabbed_view = NULL;
 	}
+    }
 
-    } else if (wimp.cursor_mode == CURSOR_MOD) {
+    else if (wimp.cursor_mode == CURSOR_MOD) {
 	bool grab = true;
 	switch (event->button) {
 	    case BTN_LEFT:
@@ -173,18 +217,15 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 		grab = false;
 	}
 	if (grab) {
-	    struct wlr_surface *surface;
-	    double sx, sy;
-	    wimp.grabbed_view = view_at(wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy);
+	    wimp.grabbed_view = under_pointer(&surface, &sx, &sy, &is_layer);
 	}
+    }
 
-    } else {
-	double sx, sy;
-	struct wlr_surface *surface;
-	struct view *view = view_at(
-	    wimp.cursor->x, wimp.cursor->y, &surface, &sx, &sy
-	);
-	focus_view(view, surface);
+    else {
+	struct view *view = under_pointer(&surface, &sx, &sy, &is_layer);
+	if (!is_layer) {
+	    focus_view(view, surface);
+	}
     }
 }
 

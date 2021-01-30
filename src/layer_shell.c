@@ -97,7 +97,7 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     lview->surface->mapped = false;
     layer(lview->output);
 
-    if (wimp.focussed_layer_view == lview) {
+    if (wimp.focussed_layer_view == lview && !wl_list_empty(&wimp.current_desk->views)) {
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
 	struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
 	wlr_seat_keyboard_notify_enter(
