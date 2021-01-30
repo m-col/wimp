@@ -62,6 +62,7 @@ struct wimp {
 
     struct wlr_layer_shell_v1 *layer_shell;
     struct wl_listener layer_shell_surface_listener;
+    struct layer_view *focussed_layer_view;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_manager;

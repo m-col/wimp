@@ -71,6 +71,7 @@ static void layer(struct output *output) {
 		    wimp.seat, lview->surface->surface, keyboard->keycodes,
 		    keyboard->num_keycodes, &keyboard->modifiers
 		);
+		wimp.focussed_layer_view = lview;
 		return;
 	    }
 	}
@@ -95,7 +96,16 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     struct layer_view *lview = wl_container_of(listener, lview, unmap_listener);
     lview->surface->mapped = false;
     layer(lview->output);
-    wlr_surface_send_enter(lview->surface->surface, lview->surface->output);
+
+    if (wimp.focussed_layer_view == lview) {
+	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
+	struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
+	wlr_seat_keyboard_notify_enter(
+	    wimp.seat, view->surface->surface, keyboard->keycodes,
+	    keyboard->num_keycodes, &keyboard->modifiers
+	);
+	wimp.focussed_layer_view = NULL;
+    }
 }
 
 
@@ -103,6 +113,7 @@ static void on_map(struct wl_listener *listener, void *data) {
     struct layer_view *lview = wl_container_of(listener, lview, map_listener);
     lview->surface->mapped = true;
     layer(lview->output);
+    wlr_surface_send_enter(lview->surface->surface, lview->surface->output);
 }
 
 
