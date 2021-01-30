@@ -27,8 +27,8 @@ desk 2 background #3e3e73\n\
 desk 2 borders normal #5D479D\n\
 desk 2 borders focus #998dd1\n\
 desk 2 borders width 6\n\
-zoom_min 0.1\n\
-zoom_max 10\n\
+zoom_min 0.2\n\
+zoom_max 5\n\
 mark_indicator #000000\n\
 vt_switching on\n\
 scroll_direction natural\n\
