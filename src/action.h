@@ -22,5 +22,6 @@ void actually_go_to_mark(const xkb_keysym_t sym);
 void toggle_fullscreen(void *data);
 void halfimize(void *data);
 void reload_config(void *data);
+void send_to_desk(void *data);
 
 #endif

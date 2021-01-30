@@ -331,3 +331,10 @@ void halfimize(void *data) {
 void reload_config(void *data) {
     load_config();
 }
+
+
+void send_to_desk(void *data) {
+    struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
+    int index = *(int*)data;
+    view_to_desk(view, index);
+}

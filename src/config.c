@@ -150,6 +150,7 @@ static struct {
     { "toggle_fullscreen", &toggle_fullscreen, NULL },
     { "halfimize", &halfimize, &dir_handler },
     { "reload_config", &reload_config, NULL },
+    { "send_to_desk", &send_to_desk, &str_handler },
 };
 
 static const int num_actions = sizeof(action_map) / sizeof(action_map[0]);

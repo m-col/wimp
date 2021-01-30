@@ -40,3 +40,19 @@ void set_desk(struct desk *desk) {
 	focus_view(view, view->surface->surface);
     }
 }
+
+
+void view_to_desk(struct view *view, int index) {
+    struct desk *desk;
+    wl_list_for_each(desk, &wimp.desks, link) {
+	if (desk->index == index) {
+	    wl_list_remove(&view->link);
+	    if (desk == wimp.current_desk) {
+		map_view(view);
+	    } else {
+		unmap_view(view);
+	    }
+	    wl_list_insert(&desk->views, &view->link);
+	}
+    }
+}
