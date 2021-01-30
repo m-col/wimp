@@ -130,8 +130,8 @@ void prev_desk(void *data) {
 void pan_desk(void *data) {
     struct desk *desk = wimp.current_desk;
     struct motion motion = *(struct motion*)data;
-    double dx = motion.dx;
-    double dy = motion.dy;
+    double dx = motion.dx / desk->zoom;
+    double dy = motion.dy / desk->zoom;
     if (motion.is_percentage) {
 	struct wlr_box *extents =
 	    wlr_output_layout_get_box(wimp.output_layout, NULL);
