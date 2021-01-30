@@ -264,8 +264,9 @@ void actually_go_to_mark(const xkb_keysym_t sym) {
     wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
 	    struct motion motion = {
-		.dx = mark->x - mark->desk->panned_x,
-		.dy = mark->y - mark->desk->panned_y,
+		.dx = mark->desk->panned_x - mark->x,
+		.dy = mark->desk->panned_y - mark->y,
+		.is_percentage = false,
 	    };
 	    mark->desk->zoom = mark->zoom;
 	    set_desk(mark->desk);
