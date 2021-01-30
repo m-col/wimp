@@ -50,6 +50,7 @@ void pan_to_view(struct view *view) {
     double width = view->surface->geometry.width + border_width * 2;
     double height = view->surface->geometry.height + border_width * 2;
     struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
+    double zoom = wimp.current_desk->zoom;
     struct motion motion = {
 	.dx = 0,
 	.dy = 0,
@@ -57,14 +58,14 @@ void pan_to_view(struct view *view) {
     };
 
     if (x < 0) {
-	motion.dx = x;
-    } else if (x + width > extents->width) {
-	motion.dx = x + width - extents->width;
+	motion.dx = x * zoom;
+    } else if (x + width > extents->width / zoom) {
+	motion.dx = (x + width) * zoom - extents->width;
     }
     if (y < 0) {
-	motion.dy = y;
-    } else if (y + height > extents->height) {
-	motion.dy = y + height - extents->height;
+	motion.dy = y * zoom;
+    } else if (y + height > extents->height / zoom) {
+	motion.dy = (y + height) * zoom - extents->height;
     }
     pan_desk(&motion);
 }
