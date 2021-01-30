@@ -188,10 +188,25 @@ void zoom(void *data) {
 }
 
 
-void zoom_mouse(void *data) {
+void zoom_scroll(void *data) {
     struct motion motion = *(struct motion*)data;
     double dz = - motion.dx - motion.dy;
     zoom(&dz);
+}
+
+
+static double zoom_pinch_initial;
+
+
+void zoom_pinch(void *data) {
+    double scale = *(double*)data;
+    double dz = 100 * scale * zoom_pinch_initial / wimp.current_desk->zoom - 100;
+    zoom(&dz);
+}
+
+
+void zoom_pinch_begin(void *data) {
+    zoom_pinch_initial = wimp.current_desk->zoom;
 }
 
 

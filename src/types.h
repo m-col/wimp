@@ -92,6 +92,8 @@ struct wimp {
     action on_drag1;
     action on_drag2;
     action on_drag3;
+    action on_pinch;
+    action on_pinch_begin;
 
     bool reverse_scrolling;
     enum cursor_mode cursor_mode;
@@ -166,6 +168,7 @@ struct binding {
     enum wlr_keyboard_modifier mods;
     uint32_t key;
     action action;
+    action begin;
     void *data;
 };
 
@@ -181,6 +184,7 @@ enum mouse_keys {
     DRAG1 = 3,
     DRAG2 = 4,
     DRAG3 = 5,
+    PINCH = 6,
 };
 
 struct mark {

@@ -79,6 +79,7 @@ static struct value_map mouse_keys[] = {
     { "drag1", DRAG1 },
     { "drag2", DRAG2 },
     { "drag3", DRAG3 },
+    { "pinch", PINCH },
 };
 
 
@@ -150,10 +151,8 @@ static struct {
     { "next_desk", &next_desk, NULL },
     { "prev_desk", &prev_desk, NULL },
     { "pan_desk", &pan_desk, &motion_handler },
-    { "pan_desk_mouse", &pan_desk, NULL },
     { "reset_zoom", &reset_zoom, NULL },
     { "zoom", &zoom, &str_handler },
-    { "zoom_mouse", &zoom_mouse, NULL },
     { "set_mark", &set_mark, NULL },
     { "go_to_mark", &go_to_mark, NULL },
     { "toggle_fullscreen", &toggle_fullscreen, NULL },
@@ -162,21 +161,60 @@ static struct {
     { "send_to_desk", &send_to_desk, &str_handler },
 };
 
-static const int num_actions = sizeof(action_map) / sizeof(action_map[0]);
+
+static struct {
+    const char *name;
+    const action action;
+    const action begin;
+} pinch_map[] = {
+    { "zoom", &zoom_pinch, &zoom_pinch_begin },
+};
+
+
+static struct {
+    const char *name;
+    const action action;
+} scroll_map[] = {
+    { "zoom", &zoom_scroll },
+    { "pan_desk", &pan_desk },
+};
 
 
 static bool assign_action(const char *name, char *data, struct binding *kb) {
     kb->action = NULL;
     kb->data = NULL;
+    size_t i;
 
-    for (int i = 0; i < num_actions; i++) {
-	if (strcmp(action_map[i].name, name) == 0) {
-	    kb->action = action_map[i].action;
-	    if (action_map[i].data_handler != NULL)
-		action_map[i].data_handler(kb, data);
-	    return true;
-	}
+    switch (kb->key) {
+	case PINCH:
+	    for (i = 0; i < sizeof(pinch_map) / sizeof(pinch_map[0]); i++) {
+		if (strcmp(pinch_map[i].name, name) == 0) {
+		    kb->action = pinch_map[i].action;
+		    kb->begin = pinch_map[i].begin;
+		    return true;
+		}
+	    }
+	    break;
+	case SCROLL:
+	    for (i = 0; i < sizeof(scroll_map) / sizeof(scroll_map[0]); i++) {
+		if (strcmp(scroll_map[i].name, name) == 0) {
+		    kb->action = scroll_map[i].action;
+		    return true;
+		}
+	    }
+	    break;
+	default:
+	    for (i = 0; i < sizeof(action_map) / sizeof(action_map[0]); i++) {
+		if (strcmp(action_map[i].name, name) == 0) {
+		    kb->action = action_map[i].action;
+		    if (action_map[i].data_handler != NULL) {
+			action_map[i].data_handler(kb, data);
+		    }
+		    return true;
+		}
+	    }
     }
+
     return false;
 }
 

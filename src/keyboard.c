@@ -38,6 +38,10 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 		    case DRAG3:
 			wimp.on_drag3 = kb->action;
 			break;
+		    case PINCH:
+			wimp.on_pinch = kb->action;
+			wimp.on_pinch_begin = kb->begin;
+			break;
 		}
 		wimp.cursor_mode = CURSOR_MOD;
 		handled = true;

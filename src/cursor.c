@@ -219,27 +219,40 @@ static void on_cursor_frame(struct wl_listener *listener, void *data) {
 
 static void on_pinch_end(struct wl_listener *listener, void *data) {
     struct wlr_event_pointer_pinch_end *event = data;
-    wlr_pointer_gestures_v1_send_pinch_end(
-	wimp.pointer_gestures, wimp.seat, event->time_msec, event->cancelled
-    );
+    if (wimp.cursor_mode == CURSOR_PASSTHROUGH) {
+	wlr_pointer_gestures_v1_send_pinch_end(
+	    wimp.pointer_gestures, wimp.seat, event->time_msec, event->cancelled
+	);
+    }
 }
 
 
 static void on_pinch_update(struct wl_listener *listener, void *data) {
     struct wlr_event_pointer_pinch_update *event = data;
-    wlr_pointer_gestures_v1_send_pinch_update(
-	wimp.pointer_gestures, wimp.seat, event->time_msec,
-	event->dx, event->dy, event->scale, event->rotation
-    );
+    if (wimp.cursor_mode == CURSOR_MOD) {
+	if (wimp.on_pinch) {
+	    wimp.on_pinch(&event->scale);
+	}
+    } else {
+	wlr_pointer_gestures_v1_send_pinch_update(
+	    wimp.pointer_gestures, wimp.seat, event->time_msec,
+	    event->dx, event->dy, event->scale, event->rotation
+	);
+    }
 }
 
 
 static void on_pinch_begin(struct wl_listener *listener, void *data) {
     struct wlr_event_pointer_pinch_begin *event = data;
-    wlr_pointer_gestures_v1_send_pinch_begin(
-	wimp.pointer_gestures, wimp.seat, event->time_msec, event->fingers
-    );
-
+    if (wimp.cursor_mode == CURSOR_MOD) {
+	if (wimp.on_pinch_begin) {
+	    wimp.on_pinch_begin(NULL);
+	}
+    } else {
+	wlr_pointer_gestures_v1_send_pinch_begin(
+	    wimp.pointer_gestures, wimp.seat, event->time_msec, event->fingers
+	);
+    }
 }
 
 
