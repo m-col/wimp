@@ -134,8 +134,7 @@ void pan_desk(void *data) {
     double dx = motion.dx / desk->zoom;
     double dy = motion.dy / desk->zoom;
     if (motion.is_percentage) {
-	struct wlr_box *extents =
-	    wlr_output_layout_get_box(wimp.output_layout, NULL);
+	struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
 	dx = extents->width * (dx / 100);
 	dy = extents->height * (dy / 100);
     }
@@ -270,17 +269,31 @@ void actually_go_to_mark(const xkb_keysym_t sym) {
 
     wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
-	    unfullscreen();
-	    struct motion motion = {
-		.dx = mark->desk->panned_x - mark->x,
-		.dy = mark->desk->panned_y - mark->y,
-		.is_percentage = false,
-	    };
-	    mark->desk->zoom = mark->zoom;
-	    set_desk(mark->desk);
-	    pan_desk(&motion);
-	    return;
+	    break;
 	}
+    }
+
+    unfullscreen();
+    struct motion motion = {
+	.dx = mark->desk->panned_x - mark->x,
+	.dy = mark->desk->panned_y - mark->y,
+	.is_percentage = false,
+    };
+    mark->desk->zoom = mark->zoom;
+    set_desk(mark->desk);
+    pan_desk(&motion);
+
+    struct view *view;
+    struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
+    wl_list_for_each(view, &wimp.current_desk->views, link) {
+	if (
+	    view->x + view->surface->geometry.width < 0 || extents->width < view->x ||
+	    view->y + view->surface->geometry.height < 0 || extents->height < view->y
+	) {
+	    continue;
+	}
+	focus_view(view, view->surface->surface);
+	return;
     }
 }
 
@@ -370,6 +383,7 @@ void maximize(void *data) {
     wlr_xdg_toplevel_set_size(view->surface, width, height);
     wlr_xdg_toplevel_set_tiled(view->surface, true);
 }
+
 
 void reload_config(void *data) {
     load_config();
