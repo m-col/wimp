@@ -205,6 +205,8 @@ static void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     view->request_fullscreen_listener.notify = on_request_fullscreen;
     wl_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen_listener);
 
+    view->x = wimp.current_desk->border_width;
+    view->y = wimp.current_desk->border_width;
     wl_list_insert(&wimp.current_desk->views, &view->link);
 }
 
