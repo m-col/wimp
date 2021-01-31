@@ -52,18 +52,20 @@ void configure_desks(int wanted) {
 
 void set_desk(struct desk *desk) {
     struct view *view;
-    wimp.can_steal_focus = false;
-    wl_list_for_each(view, &wimp.current_desk->views, link) {
-	unmap_view(view);
-    }
-    wimp.current_desk = desk;
-    wl_list_for_each(view, &wimp.current_desk->views, link) {
-	map_view(view);
-    }
-    wimp.can_steal_focus = true;
-    if (!wl_list_empty(&desk->views)) {
-	view = wl_container_of(desk->views.next, view, link);
-	focus_view(view, view->surface->surface);
+    if (desk != wimp.current_desk) {
+	wimp.can_steal_focus = false;
+	wl_list_for_each(view, &wimp.current_desk->views, link) {
+	    unmap_view(view);
+	}
+	wimp.current_desk = desk;
+	wl_list_for_each(view, &wimp.current_desk->views, link) {
+	    map_view(view);
+	}
+	wimp.can_steal_focus = true;
+	if (!wl_list_empty(&desk->views)) {
+	    view = wl_container_of(desk->views.next, view, link);
+	    focus_view(view, view->surface->surface);
+	}
     }
 }
 
