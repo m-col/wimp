@@ -349,6 +349,28 @@ void halfimize(void *data) {
 }
 
 
+void maximize(void *data) {
+    if (wl_list_empty(&wimp.current_desk->views))
+	return;
+
+    struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
+    double vx = view->x + view->surface->geometry.width / 2;
+    double vy = view->y + view->surface->geometry.height / 2;
+    double x, y;
+    wlr_output_layout_closest_point(wimp.output_layout, NULL, vx, vy, &x, &y);
+    struct wlr_output *output = wlr_output_layout_output_at(wimp.output_layout, x, y);
+    unfullscreen();
+
+    double zoom = wimp.current_desk->zoom;
+    int border_width = wimp.current_desk->border_width;
+    view->x = border_width;
+    view->y = border_width;
+    double width = (output->width - border_width * 2) / zoom;
+    double height = (output->height - border_width * 2) / zoom;
+    wlr_xdg_toplevel_set_size(view->surface, width, height);
+    wlr_xdg_toplevel_set_tiled(view->surface, true);
+}
+
 void reload_config(void *data) {
     load_config();
 }
