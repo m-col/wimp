@@ -99,6 +99,7 @@ void focus_in_direction(void *data) {
     }
 
     if (next) {
+	unfullscreen();
 	pan_to_view(next);
 	focus_view(next, next->surface->surface);
     }
@@ -138,6 +139,7 @@ void pan_desk(void *data) {
 	dx = extents->width * (dx / 100);
 	dy = extents->height * (dy / 100);
     }
+    unfullscreen();
     struct view *view;
     wl_list_for_each(view, &desk->views, link) {
 	view->x -= dx;
@@ -151,6 +153,10 @@ void pan_desk(void *data) {
 void reset_zoom(void *data) {
     struct desk *desk = wimp.current_desk;
     double f = 1 / desk->zoom;
+    if (f == 1) {
+	return;
+    }
+    unfullscreen();
     struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
     double fx = extents->width * (f - 1) / 2;
     double fy = extents->height * (f - 1) / 2;
@@ -175,6 +181,7 @@ void zoom(void *data) {
     ) {
 	return;
     }
+    unfullscreen();
     desk->zoom *= f;
     double fx = wimp.cursor->x * (f - 1) / desk->zoom;
     double fy = wimp.cursor->y * (f - 1) / desk->zoom;
@@ -263,6 +270,7 @@ void actually_go_to_mark(const xkb_keysym_t sym) {
 
     wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
+	    unfullscreen();
 	    struct motion motion = {
 		.dx = mark->desk->panned_x - mark->x,
 		.dy = mark->desk->panned_y - mark->y,
@@ -293,17 +301,13 @@ void halfimize(void *data) {
 	return;
 
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
-
-    if (wimp.current_desk->fullscreened == view->surface) {
-	fullscreen_xdg_surface(view, view->surface, NULL);
-    }
-
     enum direction dir = *(enum direction*)data;
     double vx = view->x + view->surface->geometry.width / 2;
     double vy = view->y + view->surface->geometry.height / 2;
     double x, y, width, height;
     wlr_output_layout_closest_point(wimp.output_layout, NULL, vx, vy, &x, &y);
     struct wlr_output *output = wlr_output_layout_output_at(wimp.output_layout, x, y);
+    unfullscreen();
 
     switch (dir) {
 	case RIGHT:
@@ -353,5 +357,6 @@ void reload_config(void *data) {
 void send_to_desk(void *data) {
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     int index = *(double*)data - 1;
+    unfullscreen();
     view_to_desk(view, index);
 }

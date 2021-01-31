@@ -10,6 +10,7 @@ void pan_to_view(struct view *view);
 void fullscreen_xdg_surface(
     struct view *view, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
 );
+void unfullscreen();
 void set_up_shell();
 
 #endif

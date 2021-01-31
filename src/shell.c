@@ -113,6 +113,13 @@ void fullscreen_xdg_surface(
 }
 
 
+void unfullscreen() {
+    if (wimp.current_desk->fullscreened != NULL) {
+	toggle_fullscreen(NULL);
+    }
+}
+
+
 static void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
     if (wimp.can_steal_focus)
@@ -132,6 +139,9 @@ static void on_unmap(struct wl_listener *listener, void *data) {
 
 static void on_surface_destroy(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, destroy_listener);
+    if (wimp.current_desk->fullscreened == view->surface) {
+	wimp.current_desk->fullscreened = NULL;
+    }
     wl_list_remove(&view->link);
     free(view);
 }
