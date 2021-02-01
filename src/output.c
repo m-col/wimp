@@ -143,10 +143,12 @@ static void on_frame(struct wl_listener *listener, void *data) {
     struct view *focussed = wl_container_of(wimp.current_desk->views.next, focussed, link);
     int border_width = wimp.current_desk->border_width;
     wl_list_for_each_reverse(view, &desk->views, link) {
+	rdata.x = view->x - ox / zoom;
+	rdata.y = view->y - oy / zoom;
 	if (
-		(view->x + view->surface->geometry.width + border_width < 0) ||
-		(view->y + view->surface->geometry.height + border_width < 0) ||
-		(view->x - border_width > width / zoom) || (view->y - border_width > height / zoom)
+		(rdata.x + view->surface->geometry.width + border_width < 0) ||
+		(rdata.y + view->surface->geometry.height + border_width < 0) ||
+		(rdata.x - border_width > width / zoom) || (rdata.y - border_width > height / zoom)
 	) {
 	    continue;
 	}
