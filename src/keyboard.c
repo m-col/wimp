@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
 
 #include "action.h"
 #include "cursor.h"
@@ -104,6 +105,20 @@ static void on_key(struct wl_listener *listener, void *data) {
 }
 
 
+static void on_keyboard_destroy(struct wl_listener *listener, void *data) {
+    struct keyboard *keyboard = wl_container_of(listener, keyboard, destroy_listener);
+
+    wl_list_remove(&keyboard->link);
+    wl_list_remove(&keyboard->modifier_listener.link);
+    wl_list_remove(&keyboard->key_listener.link);
+    wl_list_remove(&keyboard->destroy_listener.link);
+    free(keyboard);
+
+    keyboard = wl_container_of(wimp.keyboards.next, keyboard, link);
+    wlr_seat_set_keyboard(wimp.seat, keyboard->device);
+}
+
+
 static void on_new_keyboard(struct wlr_input_device *device) {
     struct keyboard *keyboard = calloc(1, sizeof(struct keyboard));
     keyboard->device = device;
@@ -119,10 +134,13 @@ static void on_new_keyboard(struct wlr_input_device *device) {
     xkb_context_unref(context);
     wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
 
-    keyboard->modifier_listener.notify = on_modifier;
-    wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifier_listener);
     keyboard->key_listener.notify = on_key;
+    keyboard->destroy_listener.notify = on_keyboard_destroy;
+    keyboard->modifier_listener.notify = on_modifier;
     wl_signal_add(&device->keyboard->events.key, &keyboard->key_listener);
+    wl_signal_add(&device->keyboard->events.destroy, &keyboard->destroy_listener);
+    wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifier_listener);
+
     wlr_seat_set_keyboard(wimp.seat, device);
     wl_list_insert(&wimp.keyboards, &keyboard->link);
 }
@@ -167,6 +185,13 @@ static void on_new_input(struct wl_listener *listener, void *data) {
 }
 
 
+static void on_new_virtual_keyboard(struct wl_listener *listener, void *data) {
+    struct wlr_virtual_keyboard_v1 *keyboard = data;
+    struct wlr_input_device *device = &keyboard->input_device;
+    on_new_keyboard(device);
+}
+
+
 void set_up_keyboard() {
     wl_list_init(&wimp.keyboards);
 
@@ -180,4 +205,9 @@ void set_up_keyboard() {
     wimp.request_set_selection_listener.notify = on_request_set_selection;
     wl_signal_add(&wimp.seat->events.request_set_selection,
 	&wimp.request_set_selection_listener);
+
+    wimp.virtual_keyboard = wlr_virtual_keyboard_manager_v1_create(wimp.display);
+    wimp.new_virtual_keyboard_listener.notify = on_new_virtual_keyboard;
+    wl_signal_add(&wimp.virtual_keyboard->events.new_virtual_keyboard,
+	&wimp.new_virtual_keyboard_listener);
 }

@@ -88,6 +88,9 @@ struct wimp {
     struct wl_list key_bindings;
     struct wl_list mouse_bindings;
 
+    struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard;
+    struct wl_listener new_virtual_keyboard_listener;
+
     action on_mouse_motion;
     action on_mouse_scroll;
     action on_drag1;
@@ -143,6 +146,7 @@ struct keyboard {
     struct wlr_input_device *device;
     struct wl_listener modifier_listener;
     struct wl_listener key_listener;
+    struct wl_listener destroy_listener;
 };
 
 struct wallpaper {
