@@ -174,11 +174,12 @@ void zoom(void *data) {
     /* Passed value (data) is the percentage step (+ve or -ve) */
     struct desk *desk = wimp.current_desk;
     double f = 1 + (*(double*)data / 100);
-    if (
-	(f > 1 && desk->zoom >= wimp.zoom_max) ||
-	(f < 1 && desk->zoom <= wimp.zoom_min)
-    ) {
-	return;
+
+    double next_zoom = desk->zoom * f;
+    if (next_zoom < wimp.zoom_min) {
+	f = wimp.zoom_min / desk->zoom;
+    } else if (next_zoom > wimp.zoom_max) {
+	f = wimp.zoom_max / desk->zoom;
     }
     unfullscreen();
     desk->zoom *= f;
