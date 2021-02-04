@@ -75,6 +75,24 @@ void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *
 	}
     }
 
+    // scratchpads
+    struct scratchpad *scratchpad;
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->is_mapped) {
+	    view = scratchpad->view;
+	    tsurface = wlr_xdg_surface_surface_at(
+		view->surface, x - view->x, y - view->y, &tsx, &tsy
+	    );
+	    if (tsurface) {
+		*sx = tsx;
+		*sy = tsy;
+		*surface = tsurface;
+		*is_layer = false;
+		return view;
+	    }
+	}
+    }
+
     // clients
     double zx = x / wimp.current_desk->zoom;
     double zy = y / wimp.current_desk->zoom;

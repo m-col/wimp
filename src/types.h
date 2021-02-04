@@ -106,8 +106,10 @@ struct wimp {
     struct wlr_box grab_geobox;
     uint32_t resize_edges;
     double zoom_min, zoom_max;
-
     bool vt_switching;
+
+    struct wl_list scratchpads;
+    pid_t scratchpad_waiting;
 };
 
 extern struct wimp wimp;
@@ -122,6 +124,7 @@ struct view {
     struct wl_listener request_resize_listener;
     struct wl_listener request_fullscreen_listener;
     double x, y;
+    bool is_scratchpad;
 };
 
 struct output {
@@ -206,6 +209,15 @@ enum direction {
     RIGHT = 1 << 1,
     DOWN = 1 << 2,
     LEFT = 1 << 3,
+};
+
+struct scratchpad {
+    struct wl_list link;
+    char *command;
+    int id;
+    pid_t pid;
+    struct view *view;
+    bool is_mapped;
 };
 
 #endif

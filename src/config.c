@@ -138,6 +138,26 @@ static void motion_handler(struct binding *kb, char *data) {
 }
 
 
+static int scratchpad_id = 0;
+
+
+static void scratchpad_handler(struct binding *kb, char *data) {
+    if (!data) {
+	return;
+    }
+    struct scratchpad *scratchpad = calloc(1, sizeof(struct scratchpad));
+    wl_list_insert(wimp.scratchpads.prev, &scratchpad->link);
+    scratchpad->command = strdup(data);
+    scratchpad->id = scratchpad_id;
+    scratchpad->view = NULL;
+    scratchpad->is_mapped = false;
+
+    kb->data = calloc(1, sizeof(int));
+    *(int *)(kb->data) = scratchpad_id;
+    scratchpad_id++;
+}
+
+
 static struct {
     const char *name;
     const action action;
@@ -160,6 +180,7 @@ static struct {
     { "maximize", &maximize, NULL },
     { "reload_config", &reload_config, NULL },
     { "send_to_desk", &send_to_desk, &str_handler },
+    { "scratchpad", &scratchpad, &scratchpad_handler },
 };
 
 

@@ -26,5 +26,6 @@ void halfimize(void *data);
 void maximize(void *data);
 void reload_config(void *data);
 void send_to_desk(void *data);
+void scratchpad(void *data);
 
 #endif

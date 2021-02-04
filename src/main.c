@@ -37,6 +37,7 @@ struct wimp wimp = {
     .mark_indicator.box.height = 25,
     .mark_indicator.box.x = 0,
     .mark_indicator.box.y = 0,
+    .scratchpad_waiting = false,
 };
 
 
@@ -116,6 +117,14 @@ static void shutdown() {
 	free(output);
     };
 
+    struct scratchpad *scratchpad, *tscratchpad;
+    wl_list_for_each_safe(scratchpad, tscratchpad, &wimp.scratchpads, link) {
+	wl_list_remove(&scratchpad->link);
+	free(scratchpad->view);
+	free(scratchpad->command);
+	free(scratchpad);
+    };
+
     struct keyboard *keyboard, *tkeyboard;
     wl_list_for_each_safe(keyboard, tkeyboard, &wimp.keyboards, link) {
 	wl_list_remove(&keyboard->link);
@@ -182,6 +191,7 @@ int main(int argc, char *argv[])
     wl_list_init(&wimp.key_bindings);
     wl_list_init(&wimp.mouse_bindings);
     wl_list_init(&wimp.marks);
+    wl_list_init(&wimp.scratchpads);
 
     // configure
     locate_config();

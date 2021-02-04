@@ -140,7 +140,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
 
     // paint clients
     struct view *view;
-    struct view *focussed = wl_container_of(wimp.current_desk->views.next, focussed, link);
+    struct wlr_surface *focussed = wimp.seat->keyboard_state.focused_surface;
     int border_width = wimp.current_desk->border_width;
     wl_list_for_each_reverse(view, &desk->views, link) {
 	rdata.x = view->x - ox / zoom;
@@ -154,14 +154,27 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	}
 	rdata.x = view->x + ox;
 	rdata.y = view->y + oy;
-	rdata.is_focussed = (view == focussed);
+	rdata.is_focussed = (view->surface->surface == focussed);
 	rdata.bordered = view->surface->surface;
 	wlr_xdg_surface_for_each_surface(view->surface, render_surface, &rdata);
     }
 
+    rdata.zoom = 1;
+
+    struct scratchpad *scratchpad;
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->is_mapped) {
+	    view = scratchpad->view;
+	    rdata.x = view->x;
+	    rdata.y = view->y;
+	    rdata.is_focussed = (view->surface->surface == focussed);
+	    rdata.bordered = view->surface->surface;
+	    wlr_xdg_surface_for_each_surface(view->surface, render_surface, &rdata);
+	}
+    }
+
     rdata.bordered = NULL;
     rdata.is_focussed = false;
-    rdata.zoom = 1;
 
     // paint top and overlay layers
     wl_list_for_each(lview, &output->layer_views[ZWLR_LAYER_SHELL_V1_LAYER_TOP], link) {

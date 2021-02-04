@@ -5,6 +5,19 @@
 #include "types.h"
 
 
+static struct scratchpad *scratchpad_from_view(struct view *view) {
+    struct scratchpad *scratchpad;
+
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (view == scratchpad->view) {
+	    return scratchpad;
+	}
+    }
+
+    return NULL;
+}
+
+
 void unmap_view(struct view *view) {
     wl_signal_emit(&view->surface->events.unmap, view);
 }
@@ -31,10 +44,19 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 	wlr_xdg_toplevel_set_activated(previous, false);
     }
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-    /* Move the view to the front */
-    wl_list_remove(&view->link);
-    wl_list_insert(&wimp.current_desk->views, &view->link);
-    /* Activate the new surface */
+
+    if (view->is_scratchpad) {
+	struct scratchpad *scratchpad;
+	wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	    if (scratchpad->view == view) {
+		scratchpad->is_mapped = true;
+	    }
+	}
+    } else {
+	wl_list_remove(&view->link);
+	wl_list_insert(&wimp.current_desk->views, &view->link);
+    }
+
     wlr_xdg_toplevel_set_activated(view->surface, true);
     wlr_seat_keyboard_notify_enter(
 	seat, view->surface->surface, keyboard->keycodes,
@@ -122,17 +144,33 @@ void unfullscreen() {
 
 static void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
-    if (wimp.can_steal_focus)
+
+    if (view->is_scratchpad) {
+	struct scratchpad *scratchpad = scratchpad_from_view(view);
+	scratchpad->is_mapped = true;
+    }
+
+    if (wimp.can_steal_focus) {
 	focus_view(view, view->surface->surface);
+    }
 }
 
 static void on_unmap(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, unmap_listener);
-    if (wimp.can_steal_focus) {
+
+    if (view->is_scratchpad) {
+	struct scratchpad *scratchpad = scratchpad_from_view(view);
+	scratchpad->is_mapped = false;
+    } else {
 	wl_list_remove(&view->link);
 	wl_list_insert(wimp.current_desk->views.prev, &view->link);
-	struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
-	focus_view(next_view, next_view->surface->surface);
+    }
+
+    if (wimp.can_steal_focus) {
+	if (!wl_list_empty(&wimp.current_desk->views)) {
+	    struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
+	    focus_view(next_view, next_view->surface->surface);
+	}
     }
 }
 
@@ -142,7 +180,15 @@ static void on_surface_destroy(struct wl_listener *listener, void *data) {
     if (wimp.current_desk->fullscreened == view->surface) {
 	wimp.current_desk->fullscreened = NULL;
     }
-    wl_list_remove(&view->link);
+
+    if (view->is_scratchpad) {
+	struct scratchpad *scratchpad = scratchpad_from_view(view);
+	scratchpad->is_mapped = false;
+	scratchpad->view = NULL;
+    } else {
+	wl_list_remove(&view->link);
+    }
+
     free(view);
 }
 
@@ -215,6 +261,23 @@ static void on_new_xdg_surface(struct wl_listener *listener, void *data) {
     view->request_fullscreen_listener.notify = on_request_fullscreen;
     wl_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen_listener);
 
+    if (wimp.scratchpad_waiting) {
+	pid_t pid;
+	wl_client_get_credentials(surface->client->client, &pid, NULL, NULL);
+	struct scratchpad *scratchpad;
+	wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	    if (scratchpad->pid == pid) {
+		scratchpad->view = view;
+		view->is_scratchpad = true;
+		view->x = 50;
+		view->y = 50;
+		map_view(view);
+		return;
+	    }
+	}
+    }
+
+    view->is_scratchpad = false;
     view->x = wimp.current_desk->border_width;
     view->y = wimp.current_desk->border_width;
     wl_list_insert(&wimp.current_desk->views, &view->link);

@@ -23,7 +23,7 @@ void exec_command(void *data) {
 	    exit(EXIT_FAILURE);
 	}
     } else if (pid < 0) {
-	wlr_log(WLR_ERROR, "Failed to execute: %s", data);
+	wlr_log(WLR_ERROR, "Failed to fork for exec command.");
     } else {
 	wlr_log(WLR_DEBUG, "Executing: %s", data);
     }
@@ -399,4 +399,38 @@ void send_to_desk(void *data) {
     int index = *(double*)data - 1;
     unfullscreen();
     view_to_desk(view, index);
+}
+
+
+void scratchpad(void *data) {
+    int id = *(int *)data;
+    struct scratchpad *scratchpad;
+
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->id == id) {
+	    break;
+	}
+    }
+
+    if (scratchpad->view) {
+	if (scratchpad->is_mapped) {
+	    unmap_view(scratchpad->view);
+	} else {
+	    map_view(scratchpad->view);
+	}
+	return;
+    }
+
+    wimp.scratchpad_waiting = true;
+
+    scratchpad->pid = fork();
+    if (scratchpad->pid == 0) {
+	execl("/bin/sh", "/bin/sh", "-c", scratchpad->command, (void *)NULL);
+	exit(EXIT_FAILURE);
+    } else if (scratchpad->pid < 0) {
+	wlr_log(WLR_ERROR, "Failed to fork for scratchpad.");
+	wimp.scratchpad_waiting = false;
+    } else {
+	wlr_log(WLR_DEBUG, "Launching scratchpad: %s", scratchpad->command);
+    }
 }
