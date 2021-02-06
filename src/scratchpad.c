@@ -75,6 +75,7 @@ void drop_scratchpads() {
 	    wl_list_insert(&wimp.current_desk->views, &scratchpad->view->link);
 	    map_view(scratchpad->view);
 	}
+	wl_list_remove(&scratchpad->link);
 	free(scratchpad->command);
 	free(scratchpad);
     }
