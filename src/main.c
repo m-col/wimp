@@ -120,14 +120,6 @@ static void shutdown() {
 	free(output);
     };
 
-    struct keyboard *keyboard, *tkeyboard;
-    wl_list_for_each_safe(keyboard, tkeyboard, &wimp.keyboards, link) {
-	wl_list_remove(&keyboard->link);
-	wl_list_remove(&keyboard->modifier_listener.link);
-	wl_list_remove(&keyboard->key_listener.link);
-	free(keyboard);
-    };
-
     struct mark *mark, *tmark;
     wl_list_for_each_safe(mark, tmark, &wimp.marks, link) {
 	wl_list_remove(&mark->link);

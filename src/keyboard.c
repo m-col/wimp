@@ -114,8 +114,10 @@ static void on_keyboard_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&keyboard->destroy_listener.link);
     free(keyboard);
 
-    keyboard = wl_container_of(wimp.keyboards.next, keyboard, link);
-    wlr_seat_set_keyboard(wimp.seat, keyboard->device);
+    if (!wl_list_empty(&wimp.keyboards)) {
+	keyboard = wl_container_of(wimp.keyboards.next, keyboard, link);
+	wlr_seat_set_keyboard(wimp.seat, keyboard->device);
+    }
 }
 
 
