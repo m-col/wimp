@@ -26,7 +26,7 @@ static void add_desk() {
 
 
 static void remove_desk() {
-    struct desk *last = wl_container_of(wimp.desks.next, last, link);
+    struct desk *last = wl_container_of(wimp.desks.prev, last, link);
     if (last == wimp.current_desk) {
 	set_desk(wl_container_of(wimp.desks.next, last, link));
     }
@@ -34,7 +34,6 @@ static void remove_desk() {
     wl_list_for_each_safe(view, tview, &last->views, link) {
 	view_to_desk(view, 0);
     };
-    wl_list_init(&last->link);
     wl_list_remove(&last->link);
     free(last->wallpaper);
     free(last);
