@@ -263,7 +263,7 @@ static struct {
     { "maximize", &maximize, NULL },
     { "reload_config", &reload_config, NULL },
     { "send_to_desk", &send_to_desk, &str_handler },
-    { "scratchpad", &scratchpad, &scratchpad_handler },
+    { "scratchpad", &toggle_scratchpad, &scratchpad_handler },
 };
 
 

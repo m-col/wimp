@@ -402,7 +402,7 @@ void send_to_desk(void *data) {
 }
 
 
-void scratchpad(void *data) {
+void toggle_scratchpad(void *data) {
     int id = *(int *)data;
     struct scratchpad *scratchpad;
 
