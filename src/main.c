@@ -38,6 +38,7 @@ struct wimp wimp = {
     .mark_indicator.box.x = 0,
     .mark_indicator.box.y = 0,
     .scratchpad_waiting = false,
+    .auto_focus = false,
 };
 
 

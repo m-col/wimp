@@ -148,10 +148,12 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 		wlr_xcursor_manager_set_cursor_image(wimp.cursor_manager, "left_ptr", wimp.cursor);
 	    }
 	    if (surface) {
-		bool focus_changed = seat->pointer_state.focused_surface != surface;
 		wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
-		if (!focus_changed) {
+		if (seat->pointer_state.focused_surface == surface) {
 		    wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+		}
+		if (wimp.auto_focus && seat->keyboard_state.focused_surface != surface) {
+		    focus_view(view, surface);
 		}
 	    } else {
 		wlr_seat_pointer_clear_focus(seat);

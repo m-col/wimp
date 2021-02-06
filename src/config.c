@@ -35,6 +35,7 @@ mark_indicator #000000\n\
 vt_switching on\n\
 scroll_direction natural\n\
 set_modifier Logo\n\
+auto_focus on\n\
 bind Ctrl Escape shutdown\n\
 ";
 
@@ -647,6 +648,16 @@ static void parse_config(FILE *stream) {
 	// auto_start ~/script/to/execute.sh
 	else if (!strcasecmp(s, "auto_start")) {
 	    wimp.auto_start = strdup(strtok(NULL, " \t\n\r"));
+	}
+
+	// auto_focus [on|off]
+	else if (!strcasecmp(s, "auto_focus")) {
+	    s = strtok(NULL, " \t\n\r");
+	    if (!strcasecmp(s, "off")) {
+		wimp.auto_focus = false;
+	    } else if (!strcasecmp(s, "on")) {
+		wimp.auto_focus = true;
+	    }
 	}
 
 	// other non-empty, non-commented lines

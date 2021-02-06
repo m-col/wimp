@@ -106,6 +106,7 @@ struct wimp {
     uint32_t resize_edges;
     double zoom_min, zoom_max;
     bool vt_switching;
+    bool auto_focus;
 
     struct wl_list scratchpads;
     pid_t scratchpad_waiting;
