@@ -10,6 +10,7 @@
 #include "action.h"
 #include "config.h"
 #include "desk.h"
+#include "scratchpad.h"
 #include "types.h"
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
@@ -667,6 +668,8 @@ void load_config() {
     wl_list_for_each_safe(kb, tmp, &wimp.key_bindings, link) {
 	free_binding(kb);
     }
+
+    drop_scratchpads();
 
     // load defaults
     char *buffer = NULL;

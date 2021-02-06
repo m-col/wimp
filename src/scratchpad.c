@@ -65,3 +65,17 @@ bool catch_scratchpad(struct view *view) {
     }
     return false;
 }
+
+
+void drop_scratchpads() {
+    struct scratchpad *scratchpad, *tmp;
+    wl_list_for_each_safe(scratchpad, tmp, &wimp.scratchpads, link) {
+	if (scratchpad->view) {
+	    scratchpad->view->is_scratchpad = false;
+	    wl_list_insert(&wimp.current_desk->views, &scratchpad->view->link);
+	    map_view(scratchpad->view);
+	}
+	free(scratchpad->command);
+	free(scratchpad);
+    }
+}

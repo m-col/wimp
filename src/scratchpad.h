@@ -6,5 +6,6 @@
 struct scratchpad *scratchpad_from_view(struct view *view);
 void scratchpad_apply_geo(struct scratchpad *scratchpad);
 bool catch_scratchpad(struct view *view);
+void drop_scratchpads();
 
 #endif

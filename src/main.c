@@ -19,6 +19,7 @@
 #include "layer_shell.h"
 #include "log.h"
 #include "output.h"
+#include "scratchpad.h"
 #include "shell.h"
 #include "types.h"
 
@@ -65,6 +66,8 @@ static void shutdown() {
     wl_list_remove(&wimp.new_input_listener.link);
     wl_list_remove(&wimp.request_cursor_listener.link);
     wl_list_remove(&wimp.request_set_selection_listener.link);
+
+    drop_scratchpads();
 
     struct binding *kb, *tkb;
     wl_list_for_each_safe(kb, tkb, &wimp.mouse_bindings, link) {
@@ -115,14 +118,6 @@ static void shutdown() {
 	wl_list_remove(&output->link);
 	wl_list_remove(&output->frame_listener.link);
 	free(output);
-    };
-
-    struct scratchpad *scratchpad, *tscratchpad;
-    wl_list_for_each_safe(scratchpad, tscratchpad, &wimp.scratchpads, link) {
-	wl_list_remove(&scratchpad->link);
-	free(scratchpad->view);
-	free(scratchpad->command);
-	free(scratchpad);
     };
 
     struct keyboard *keyboard, *tkeyboard;
