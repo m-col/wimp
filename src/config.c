@@ -570,8 +570,8 @@ static void parse_config(FILE *stream) {
 		    }
 		}
 
-		// borders [desk] [focus|normal] #rrggbb
-		// borders [desk] width <int>
+		// desk <index> borders [focus|normal] <#rrggbb>
+		// desk <index> borders width <int>
 		else if (!strcasecmp(s, "borders")) {
 		    s = strtok(NULL, " \t\n\r");
 		    if (!strcasecmp(s, "normal")) {
