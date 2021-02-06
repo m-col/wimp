@@ -13,6 +13,7 @@
 #include "types.h"
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
+#define is_number_perc(s) (strspn(s, "0123456789.-%") == strlen(s))
 #define CONFIG_HOME "$HOME/.config/wimp/"
 #define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/wimp/"
 
@@ -96,13 +97,14 @@ static int _get(struct value_map *values, const int len, const char *name) {
 }
 
 
-static void dir_handler(struct binding *kb, char *data) {
+static bool dir_handler(struct binding *kb, char *data, int line) {
     kb->data = calloc(1, sizeof(enum direction));
     *(enum direction *)(kb->data) = get(dirs, data);
+    return true;
 }
 
 
-static void str_handler(struct binding *kb, char *data) {
+static bool str_handler(struct binding *kb, char *data, int line) {
     if (is_number(data)) {
 	kb->data = calloc(1, sizeof(double));
 	*(double *)(kb->data) = strtod(data, NULL);
@@ -110,22 +112,26 @@ static void str_handler(struct binding *kb, char *data) {
 	kb->data = calloc(strlen(data), sizeof(char));
 	strncpy(kb->data, data, strlen(data));
     }
+    return true;
 }
 
 
-static void motion_handler(struct binding *kb, char *data) {
+static bool motion_handler(struct binding *kb, char *data, int line) {
     char *s;
-    if (!data)
-	return;
+    if (!data) {
+	goto err;
+    }
 
     s = strtok(data, " \t\n\r");
-    if (!is_number(s) || !data)
-	return;
+    if (!is_number(s) || !data) {
+	goto err;
+    }
     int x = atoi(s);
 
     s = strtok(NULL, " \t\n\r");
-    if (!is_number(s))
-	return;
+    if (!is_number(s)) {
+	goto err;
+    }
     int y = atoi(s);
 
     struct motion motion = {
@@ -135,33 +141,110 @@ static void motion_handler(struct binding *kb, char *data) {
     };
     kb->data = calloc(1, sizeof(struct motion));
     *(struct motion *)(kb->data) = motion;
+    return true;
+
+err:
+    wlr_log(WLR_ERROR, "Config line %i malformed/incomplete.", line);
+    return false;
+}
+
+
+static bool wlr_box_from_str(char* str, struct wlr_box *box) {
+    // turns e.g. 1920x1800+500+500 into a wlr_box
+    char *w, *h, *x, *y;
+    if (str) {
+	if ((w = strtok(str, "x")) && is_number_perc(w)) {
+	    if ((h = strtok(NULL, "+")) && is_number_perc(h)) {
+		if ((x = strtok(NULL, "+")) && is_number_perc(x)) {
+		    if ((y = strtok(NULL, " \t\n\r")) && is_number_perc(y)) {
+			if (is_number(w)) {
+			    box->width = atoi(w);
+			} else {
+			    if ((w = strtok(w, "%"))) {
+				box->width = - atoi(w);
+			    } else {
+				return false;
+			    }
+			}
+			if (is_number(h)) {
+			    box->height = atoi(h);
+			} else {
+			    if ((h = strtok(h, "%"))) {
+				box->height = - atoi(h);
+			    } else {
+				return false;
+			    }
+			}
+			if (is_number(x)) {
+			    box->x = atoi(x);
+			} else {
+			    if ((x = strtok(x, "%"))) {
+				box->x = - atoi(x);
+			    } else {
+				return false;
+			    }
+			}
+			if (is_number(y)) {
+			    box->y = atoi(y);
+			} else {
+			    if ((y = strtok(y, "%"))) {
+				box->y = - atoi(y);
+			    } else {
+				return false;
+			    }
+			}
+			return true;
+		    }
+		}
+	    }
+	}
+    }
+    return false;
 }
 
 
 static int scratchpad_id = 0;
 
 
-static void scratchpad_handler(struct binding *kb, char *data) {
+static bool scratchpad_handler(struct binding *kb, char *data, int line) {
+    char *geo, *command;
+    struct wlr_box box;
     if (!data) {
-	return;
+	goto err;
     }
+    if (!(geo = strtok(data, " \t\n\r"))) {
+	goto err;
+    }
+    if (!(command = strtok(NULL, "\n\r"))) {
+	goto err;
+    }
+    if (!wlr_box_from_str(geo, &box)) {
+	goto err;
+    }
+
     struct scratchpad *scratchpad = calloc(1, sizeof(struct scratchpad));
     wl_list_insert(wimp.scratchpads.prev, &scratchpad->link);
-    scratchpad->command = strdup(data);
+    scratchpad->command = strdup(command);
     scratchpad->id = scratchpad_id;
-    scratchpad->view = NULL;
     scratchpad->is_mapped = false;
+    scratchpad->view = NULL;
+    scratchpad->geo = box;
 
     kb->data = calloc(1, sizeof(int));
     *(int *)(kb->data) = scratchpad_id;
     scratchpad_id++;
+    return true;
+
+err:
+    wlr_log(WLR_ERROR, "Config line %i malformed/incomplete.", line);
+    return false;
 }
 
 
 static struct {
     const char *name;
     const action action;
-    void (*data_handler)(struct binding *kb, char *data);
+    bool (*data_handler)(struct binding *kb, char *data, int line);
 } action_map[] = {
     { "shutdown", &shutdown, NULL },
     { "exec", &exec_command, &str_handler },
@@ -202,7 +285,7 @@ static struct {
 };
 
 
-static bool assign_action(const char *name, char *data, struct binding *kb) {
+static bool assign_action(const char *name, char *data, struct binding *kb, int line) {
     kb->action = NULL;
     kb->data = NULL;
     size_t i;
@@ -230,7 +313,9 @@ static bool assign_action(const char *name, char *data, struct binding *kb) {
 		if (strcmp(action_map[i].name, name) == 0) {
 		    kb->action = action_map[i].action;
 		    if (action_map[i].data_handler != NULL) {
-			action_map[i].data_handler(kb, data);
+			if (!action_map[i].data_handler(kb, data, line)){
+			    return false;
+			}
 		    }
 		    return true;
 		}
@@ -287,8 +372,7 @@ static void add_binding(char *data, const int line) {
 	wlr_log(WLR_ERROR, "Config line %i: malformed option.", line);
 	return;
     }
-    if (!assign_action(s, strtok(NULL, "\n\r"), kb)) {
-	wlr_log(WLR_ERROR, "Config line %i: No such action '%s'.", line, s);
+    if (!assign_action(s, strtok(NULL, "\n\r"), kb, line)) {
 	free(kb);
 	return;
     }
@@ -446,7 +530,6 @@ static void parse_config(FILE *stream) {
     char linebuf[1024];
     int line = 0;
     int index;
-    static bool a = true;
 
     while (fgets(linebuf, sizeof(linebuf), stream)) {
 	line++;
@@ -568,9 +651,6 @@ static void parse_config(FILE *stream) {
 	// other non-empty, non-commented lines
 	else {
 	    wlr_log(WLR_ERROR, "Config line %i: unknown option '%s'.", line, s);
-	}
-	if (wimp.mark_waiting && a) {
-	    a = false;
 	}
     }
 }

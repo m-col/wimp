@@ -18,6 +18,39 @@ static struct scratchpad *scratchpad_from_view(struct view *view) {
 }
 
 
+static void scratchpad_apply_geo(struct scratchpad *scratchpad) {
+    struct wlr_output *output =
+	wlr_output_layout_output_at(wimp.output_layout, wimp.cursor->x, wimp.cursor->y);
+    struct wlr_box *ogeo = wlr_output_layout_get_box(wimp.output_layout, output);
+    struct view *view = scratchpad->view;
+    struct wlr_box *geo = &scratchpad->geo;
+
+    if (geo->x > 0) {
+	view->x = geo->x;
+    } else {
+	view->x = ogeo->x - (ogeo->width * geo->x / 100);
+    }
+    if (geo->y > 0) {
+	view->y = geo->y;
+    } else {
+	view->y = ogeo->y - (ogeo->height * geo->y / 100);
+    }
+
+    struct wlr_box *sgeo = &view->surface->geometry;
+    if (geo->width > 0) {
+	sgeo->width = geo->width;
+    } else {
+	sgeo->width = - ogeo->width * geo->width / 100;
+    }
+    if (geo->height > 0) {
+	sgeo->height = geo->height;
+    } else {
+	sgeo->height = - ogeo->height * geo->height / 100;
+    }
+    wlr_xdg_toplevel_set_size(view->surface, sgeo->width, sgeo->height);
+}
+
+
 void unmap_view(struct view *view) {
     wl_signal_emit(&view->surface->events.unmap, view);
 }
@@ -148,6 +181,7 @@ static void on_map(struct wl_listener *listener, void *data) {
     if (view->is_scratchpad) {
 	struct scratchpad *scratchpad = scratchpad_from_view(view);
 	scratchpad->is_mapped = true;
+	scratchpad_apply_geo(scratchpad);
     }
 
     if (wimp.can_steal_focus) {

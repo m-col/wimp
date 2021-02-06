@@ -218,6 +218,7 @@ struct scratchpad {
     pid_t pid;
     struct view *view;
     bool is_mapped;
+    struct wlr_box geo; // negative values represent a percentage of the output's geometry
 };
 
 #endif
