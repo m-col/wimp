@@ -18,6 +18,7 @@ void map_view(struct view *view) {
 
 void focus_view(struct view *view, struct wlr_surface *surface) {
     if (view == NULL) {
+	wlr_seat_keyboard_notify_clear_focus(wimp.seat);
 	return;
     }
     struct wlr_seat *seat = wimp.seat;
@@ -135,28 +136,39 @@ static void on_map(struct wl_listener *listener, void *data) {
 	scratchpad->is_mapped = true;
     }
 
-    if (wimp.can_steal_focus) {
-	focus_view(view, view->surface->surface);
-    }
+    focus_view(view, view->surface->surface);
 }
 
 static void on_unmap(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, unmap_listener);
+    struct scratchpad *scratchpad;
 
     if (view->is_scratchpad) {
-	struct scratchpad *scratchpad = scratchpad_from_view(view);
+	scratchpad = scratchpad_from_view(view);
 	scratchpad->is_mapped = false;
     } else {
 	wl_list_remove(&view->link);
 	wl_list_insert(wimp.current_desk->views.prev, &view->link);
     }
 
-    if (wimp.can_steal_focus) {
-	if (!wl_list_empty(&wimp.current_desk->views)) {
-	    struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
-	    focus_view(next_view, next_view->surface->surface);
+    if (view->surface->surface != wimp.seat->keyboard_state.focused_surface) {
+	return;
+    }
+
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->is_mapped) {
+	    focus_view(scratchpad->view, scratchpad->view->surface->surface);
+	    return;
 	}
     }
+
+    if (!wl_list_empty(&wimp.current_desk->views)) {
+	view = wl_container_of(wimp.current_desk->views.next, view, link);
+	focus_view(view, view->surface->surface);
+	return;
+    };
+
+    focus_view(NULL, NULL);
 }
 
 

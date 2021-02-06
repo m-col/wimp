@@ -1,5 +1,6 @@
 #include "config.h"
 #include "desk.h"
+#include "scratchpad.h"
 #include "shell.h"
 #include "types.h"
 
@@ -52,21 +53,28 @@ void configure_desks(int wanted) {
 
 
 void set_desk(struct desk *desk) {
-    struct view *view;
-    if (desk != wimp.current_desk) {
-	wimp.can_steal_focus = false;
-	wl_list_for_each(view, &wimp.current_desk->views, link) {
-	    unmap_view(view);
+    if (desk == wimp.current_desk) {
+	return;
+    }
+
+    wimp.current_desk = desk;
+
+    // If a scratchpad is focussed, keep it focussed.
+    struct scratchpad *scratchpad;
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->view && scratchpad->is_mapped) {
+	    if (scratchpad->view->surface->surface == wimp.seat->keyboard_state.focused_surface) {
+		return;
+	    }
 	}
-	wimp.current_desk = desk;
-	wl_list_for_each(view, &wimp.current_desk->views, link) {
-	    map_view(view);
-	}
-	wimp.can_steal_focus = true;
-	if (!wl_list_empty(&desk->views)) {
-	    view = wl_container_of(desk->views.next, view, link);
-	    focus_view(view, view->surface->surface);
-	}
+    }
+
+    // Otherwise focus the next view on the new desktop if there is one.
+    if (wl_list_empty(&desk->views)) {
+	focus_view(NULL, NULL);
+    } else {
+	struct view *view = wl_container_of(desk->views.next, view, link);
+	focus_view(view, view->surface->surface);
     }
 }
 
@@ -83,13 +91,10 @@ static struct desk *desk_from_index(int index) {
 
 
 void view_to_desk(struct view *view, int index) {
-    wimp.can_steal_focus = false;
     struct desk *desk = desk_from_index(index);
     if (desk) {
 	wl_list_remove(&view->link);
-	desk == wimp.current_desk ? map_view(view) : unmap_view(view);
 	wl_list_insert(&desk->views, &view->link);
-	wimp.can_steal_focus = true;
 	if (!wl_list_empty(&wimp.current_desk->views)) {
 	    struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
 	    focus_view(next_view, next_view->surface->surface);

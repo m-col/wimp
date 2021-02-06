@@ -51,7 +51,6 @@ struct wimp {
     struct wl_list desks;
     int desk_count;
     struct desk *current_desk;
-    bool can_steal_focus;
     struct wl_list marks;
     bool mark_waiting;
     struct mark_indicator mark_indicator;

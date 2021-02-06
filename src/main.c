@@ -31,7 +31,6 @@ struct wimp wimp = {
     .on_drag2 = NULL,
     .on_drag3 = NULL,
     .on_pinch = NULL,
-    .can_steal_focus = true,
     .desk_count = 0,
     .mark_waiting = false,
     .mark_indicator.box.width = 25,
