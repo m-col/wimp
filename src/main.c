@@ -103,23 +103,6 @@ static void shutdown() {
 	free(desk);
     };
 
-    struct output *output, *toutput;
-    struct layer_view *lview, *tlview;
-    wl_list_for_each_safe(output, toutput, &wimp.outputs, link) {
-	for (int i = 0; i < 4; i++ ) {
-	    wl_list_for_each_safe(lview, tlview, &output->layer_views[i], link) {
-		wl_list_remove(&lview->link);
-		wl_list_remove(&lview->map_listener.link);
-		wl_list_remove(&lview->unmap_listener.link);
-		wl_list_remove(&lview->destroy_listener.link);
-		free(lview);
-	    };
-	}
-	wl_list_remove(&output->link);
-	wl_list_remove(&output->frame_listener.link);
-	free(output);
-    };
-
     struct mark *mark, *tmark;
     wl_list_for_each_safe(mark, tmark, &wimp.marks, link) {
 	wl_list_remove(&mark->link);

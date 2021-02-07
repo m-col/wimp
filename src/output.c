@@ -208,6 +208,27 @@ static void on_frame(struct wl_listener *listener, void *data) {
 }
 
 
+static void on_destroy(struct wl_listener *listener, void *data) {
+    struct output *output = wl_container_of(listener, output, destroy_listener);
+
+    struct layer_view *lview, *tlview;
+    for (int i = 0; i < 4; i++ ) {
+        wl_list_for_each_safe(lview, tlview, &output->layer_views[i], link) {
+            wl_list_remove(&lview->link);
+            wl_list_remove(&lview->map_listener.link);
+            wl_list_remove(&lview->unmap_listener.link);
+            wl_list_remove(&lview->destroy_listener.link);
+            free(lview);
+        };
+    }
+
+    wl_list_remove(&output->frame_listener.link);
+    wl_list_remove(&output->destroy_listener.link);
+    wl_list_remove(&output->link);
+    free(output);
+}
+
+
 static void on_new_output(struct wl_listener *listener, void *data) {
     struct wlr_output *wlr_output = data;
 
@@ -225,7 +246,10 @@ static void on_new_output(struct wl_listener *listener, void *data) {
     wlr_output->data = output;
 
     output->frame_listener.notify = on_frame;
+    output->destroy_listener.notify = on_destroy;
     wl_signal_add(&wlr_output->events.frame, &output->frame_listener);
+    wl_signal_add(&wlr_output->events.destroy, &output->destroy_listener);
+
     wl_list_insert(&wimp.outputs, &output->link);
     wlr_output_layout_add_auto(wimp.output_layout, wlr_output);
 
