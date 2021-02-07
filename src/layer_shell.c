@@ -1,4 +1,5 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
+#include <wlr/types/wlr_output_damage.h>
 
 #include "layer_shell.h"
 
@@ -76,6 +77,8 @@ static void layer(struct output *output) {
 	    }
 	}
     }
+
+    wlr_output_damage_add_whole(output->wlr_output_damage);
 }
 
 

@@ -123,11 +123,13 @@ struct view {
     struct wlr_xdg_surface *surface;
     struct wl_listener map_listener;
     struct wl_listener unmap_listener;
+    struct wl_listener commit_listener;
     struct wl_listener destroy_listener;
     struct wl_listener request_move_listener;
     struct wl_listener request_resize_listener;
     struct wl_listener request_fullscreen_listener;
     double x, y;
+    int width, height;
     bool is_scratchpad;
 };
 
@@ -135,6 +137,7 @@ struct output {
     struct wl_list link;
     struct wl_list layer_views[4];
     struct wlr_output *wlr_output;
+    struct wlr_output_damage *wlr_output_damage;
     struct wl_listener frame_listener;
     struct wl_listener destroy_listener;
 };

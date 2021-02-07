@@ -7,6 +7,7 @@
 #include "config.h"
 #include "cursor.h"
 #include "desk.h"
+#include "output.h"
 #include "shell.h"
 #include "types.h"
 
@@ -149,6 +150,7 @@ void pan_desk(void *data) {
     }
     desk->panned_x -= dx;
     desk->panned_y -= dy;
+    damage_all_outputs();
 }
 
 
@@ -170,6 +172,7 @@ void reset_zoom(void *data) {
     desk->panned_x -= fx;
     desk->panned_y -= fy;
     desk->zoom = 1;
+    damage_all_outputs();
 }
 
 
@@ -195,6 +198,7 @@ void zoom(void *data) {
     }
     desk->panned_x -= fx;
     desk->panned_y -= fy;
+    damage_all_outputs();
 }
 
 
@@ -230,6 +234,7 @@ void set_mark(void *data) {
     mark->key = 0;
     wimp.mark_waiting = true;
     wl_list_insert(&wimp.marks, &mark->link);
+    damage_all_outputs();
 }
 
 
@@ -363,6 +368,7 @@ void halfimize(void *data) {
     height -= border_width * 2;
     wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
     wlr_xdg_toplevel_set_tiled(view->surface, true);
+    damage_all_outputs();
 }
 
 
@@ -386,6 +392,7 @@ void maximize(void *data) {
     double height = (output->height - border_width * 2) / zoom;
     wlr_xdg_toplevel_set_size(view->surface, width, height);
     wlr_xdg_toplevel_set_tiled(view->surface, true);
+    damage_all_outputs();
 }
 
 

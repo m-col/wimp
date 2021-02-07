@@ -1,7 +1,9 @@
 #include <time.h>
+#include <pixman.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_matrix.h>
+#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
@@ -72,15 +74,24 @@ static void render_surface(
 
 static void on_frame(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, frame_listener);
+
+    bool needs_frame;
+    pixman_region32_t damage;
+    pixman_region32_init(&damage);
+
+    if (!wlr_output_damage_attach_render(output->wlr_output_damage, &needs_frame, &damage)) {
+	goto finish;
+    }
+
+    if (!needs_frame) {
+	wlr_output_rollback(output->wlr_output);
+	goto finish;
+    }
+
     struct wlr_renderer *renderer = wimp.renderer;
     struct desk *desk = wimp.current_desk;
-
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-
-    if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-	return;
-    }
 
     int width, height;
     double zoom = desk->zoom;
@@ -204,6 +215,51 @@ static void on_frame(struct wl_listener *listener, void *data) {
     wlr_output_render_software_cursors(output->wlr_output, NULL);  // no-op with HW cursors
     wlr_renderer_end(renderer);
     wlr_output_commit(output->wlr_output);
+
+finish:
+    pixman_region32_fini(&damage);
+}
+
+
+void damage_box(struct wlr_box *geo, bool add_borders) {
+
+    struct wlr_box damaged;
+    memcpy(&damaged, geo, sizeof(struct wlr_box));
+
+    if (add_borders) {
+	int border_width = wimp.current_desk->border_width;
+	damaged.x -= border_width;
+	damaged.y -= border_width;
+	damaged.width += border_width * 2;
+	damaged.height += border_width * 2;
+    }
+
+    struct output *output;
+    wl_list_for_each(output, &wimp.outputs, link) {
+	wlr_output_damage_add_box(output->wlr_output_damage, &damaged);
+    }
+}
+
+
+void damage_by_view(struct view *view, bool with_borders) {
+    double zoom = wimp.current_desk->zoom;
+
+    struct wlr_box geo = {
+	.x = view->x,
+	.y = view->y,
+	.width = view->width * zoom,
+	.height = view->height * zoom,
+    };
+
+    damage_box(&geo, with_borders);
+}
+
+
+void damage_all_outputs() {
+    struct output *output;
+    wl_list_for_each(output, &wimp.outputs, link) {
+	wlr_output_damage_add_whole(output->wlr_output_damage);
+    }
 }
 
 
@@ -243,10 +299,11 @@ static void on_new_output(struct wl_listener *listener, void *data) {
     struct output *output = calloc(1, sizeof(struct output));
     output->wlr_output = wlr_output;
     wlr_output->data = output;
+    output->wlr_output_damage = wlr_output_damage_create(wlr_output);
 
     output->frame_listener.notify = on_frame;
     output->destroy_listener.notify = on_destroy;
-    wl_signal_add(&wlr_output->events.frame, &output->frame_listener);
+    wl_signal_add(&output->wlr_output_damage->events.frame, &output->frame_listener);
     wl_signal_add(&wlr_output->events.destroy, &output->destroy_listener);
 
     wl_list_insert(&wimp.outputs, &output->link);

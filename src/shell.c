@@ -1,7 +1,9 @@
+#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
 
 #include "action.h"
+#include "output.h"
 #include "scratchpad.h"
 #include "types.h"
 
@@ -19,6 +21,7 @@ void map_view(struct view *view) {
 void focus_view(struct view *view, struct wlr_surface *surface) {
     if (view == NULL) {
 	wlr_seat_keyboard_notify_clear_focus(wimp.seat);
+	damage_all_outputs();
 	return;
     }
     struct wlr_seat *seat = wimp.seat;
@@ -47,6 +50,7 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 	seat, view->surface->surface, keyboard->keycodes,
 	keyboard->num_keycodes, &keyboard->modifiers
     );
+    damage_all_outputs();
 }
 
 
@@ -75,13 +79,15 @@ void pan_to_view(struct view *view) {
 	motion.dy = (y + height) * zoom - extents->height;
     }
     pan_desk(&motion);
+
+    damage_all_outputs();
 }
 
 
 void fullscreen_xdg_surface(
-    struct view *view, struct wlr_xdg_surface *xdg_surface, struct wlr_output *output
+    struct view *view, struct wlr_xdg_surface *xdg_surface, struct wlr_output *wlr_output
 ) {
-    /* output can be NULL, in which case it is calculated using the surface's position */
+    /* wlr_output can be NULL, in which case it is calculated using the surface's position */
     struct wlr_box *saved_geo = &wimp.current_desk->fullscreened_saved_geo;
 
     struct wlr_xdg_surface *prev_surface = wimp.current_desk->fullscreened;
@@ -100,12 +106,12 @@ void fullscreen_xdg_surface(
     if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
 	return;
 
-    if (!output) {
+    if (!wlr_output) {
 	double x = view->x + xdg_surface->geometry.width / 2;
 	double y = view->y + xdg_surface->geometry.height / 2;
 	double lx, ly;
 	wlr_output_layout_closest_point(wimp.output_layout, NULL, x, y, &lx, &ly);
-	output = wlr_output_layout_output_at(wimp.output_layout, lx, ly);
+	wlr_output = wlr_output_layout_output_at(wimp.output_layout, lx, ly);
     }
 
     wimp.current_desk->fullscreened = xdg_surface;
@@ -116,7 +122,9 @@ void fullscreen_xdg_surface(
     saved_geo->height = xdg_surface->geometry.height;
     wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
     double zoom = wimp.current_desk->zoom;
-    wlr_xdg_toplevel_set_size(xdg_surface, output->width / zoom, output->height / zoom);
+    wlr_xdg_toplevel_set_size(xdg_surface, wlr_output->width / zoom, wlr_output->height / zoom);
+    struct output *output = wlr_output->data;
+    wlr_output_damage_add_whole(output->wlr_output_damage);
 }
 
 
@@ -127,8 +135,38 @@ void unfullscreen() {
 }
 
 
+static void on_commit(struct wl_listener *listener, void *data) {
+    struct view *view = wl_container_of(listener, view, commit_listener);
+
+    struct wlr_box new;
+    wlr_xdg_surface_get_geometry(view->surface, &new);
+
+    if (new.width != view->width || new.height != view->height) {
+       struct wlr_box old = {
+           .x = view->x,
+           .y = view->x,
+           .width = view->width,
+           .height = view->height,
+       };
+       if (new.width > old.width || new.height > old.height) {
+           damage_box(&new, true);
+       } else if (new.width <= old.width || new.height <= old.height) {
+           damage_box(&old, true);
+       }
+       view->width = new.width;
+       view->height = new.height;
+
+    } else {
+       damage_by_view(view, false);
+    }
+}
+
+
 static void on_map(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, map_listener);
+
+    view->commit_listener.notify = on_commit;
+    wl_signal_add(&view->surface->surface->events.commit, &view->commit_listener);
 
     if (view->is_scratchpad) {
 	struct scratchpad *scratchpad = scratchpad_from_view(view);
@@ -138,6 +176,7 @@ static void on_map(struct wl_listener *listener, void *data) {
 
     focus_view(view, view->surface->surface);
 }
+
 
 static void on_unmap(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, unmap_listener);
@@ -150,6 +189,8 @@ static void on_unmap(struct wl_listener *listener, void *data) {
 	wl_list_remove(&view->link);
 	wl_list_insert(wimp.current_desk->views.prev, &view->link);
     }
+
+    wl_list_remove(&view->commit_listener.link);
 
     if (view->surface->surface != wimp.seat->keyboard_state.focused_surface) {
 	return;

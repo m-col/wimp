@@ -1,5 +1,6 @@
 #include "config.h"
 #include "desk.h"
+#include "output.h"
 #include "scratchpad.h"
 #include "shell.h"
 #include "types.h"
@@ -75,6 +76,8 @@ void set_desk(struct desk *desk) {
 	struct view *view = wl_container_of(desk->views.next, view, link);
 	focus_view(view, view->surface->surface);
     }
+
+    damage_all_outputs();
 }
 
 
