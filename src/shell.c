@@ -19,38 +19,36 @@ void map_view(struct view *view) {
 
 
 void focus_view(struct view *view, struct wlr_surface *surface) {
-    if (view == NULL) {
-	wlr_seat_keyboard_notify_clear_focus(wimp.seat);
-	damage_all_outputs();
-	return;
-    }
-    struct wlr_seat *seat = wimp.seat;
-    struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+    struct wlr_surface *prev_surface = wimp.seat->keyboard_state.focused_surface;
     if (prev_surface == surface) {
 	return;
     }
+    wlr_seat_keyboard_notify_clear_focus(wimp.seat);
+
     if (prev_surface && wlr_surface_is_xdg_surface(prev_surface)) {
-	struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
-	    seat->keyboard_state.focused_surface
-	);
+	struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(prev_surface);
 	wlr_xdg_toplevel_set_activated(previous, false);
-    }
-    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-
-    if (view->is_scratchpad) {
-	struct scratchpad *scratchpad = scratchpad_from_view(view);
-	scratchpad->is_mapped = true;
-    } else {
-	wl_list_remove(&view->link);
-	wl_list_insert(&wimp.current_desk->views, &view->link);
+	damage_by_view(previous->data, true);
     }
 
-    wlr_xdg_toplevel_set_activated(view->surface, true);
-    wlr_seat_keyboard_notify_enter(
-	seat, view->surface->surface, keyboard->keycodes,
-	keyboard->num_keycodes, &keyboard->modifiers
-    );
-    damage_all_outputs();
+    if (view) {
+	if (view->is_scratchpad) {
+	    struct scratchpad *scratchpad = scratchpad_from_view(view);
+	    scratchpad->is_mapped = true;
+	} else {
+	    wl_list_remove(&view->link);
+	    wl_list_insert(&wimp.current_desk->views, &view->link);
+	}
+
+	wlr_xdg_toplevel_set_activated(view->surface, true);
+
+	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
+	wlr_seat_keyboard_notify_enter(
+	    wimp.seat, view->surface->surface, keyboard->keycodes,
+	    keyboard->num_keycodes, &keyboard->modifiers
+	);
+	damage_by_view(view, true);
+    }
 }
 
 
@@ -191,6 +189,7 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     }
 
     wl_list_remove(&view->commit_listener.link);
+    damage_by_view(view, true);
 
     if (view->surface->surface != wimp.seat->keyboard_state.focused_surface) {
 	return;
@@ -204,9 +203,11 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     }
 
     if (!wl_list_empty(&wimp.current_desk->views)) {
-	view = wl_container_of(wimp.current_desk->views.next, view, link);
-	focus_view(view, view->surface->surface);
-	return;
+	struct view *next = wl_container_of(wimp.current_desk->views.next, view, link);
+	if (view != next) {
+	    focus_view(view, view->surface->surface);
+	    return;
+	}
     };
 
     focus_view(NULL, NULL);
@@ -283,6 +284,7 @@ static void on_new_xdg_surface(struct wl_listener *listener, void *data) {
 
     struct view *view = calloc(1, sizeof(struct view));
     view->surface = surface;
+    surface->data = view;
 
     view->map_listener.notify = on_map;
     wl_signal_add(&surface->events.map, &view->map_listener);
