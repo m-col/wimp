@@ -152,8 +152,6 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	) {
 	    continue;
 	}
-	rdata.x = view->x + ox;
-	rdata.y = view->y + oy;
 	rdata.is_focussed = (view->surface->surface == focussed);
 	rdata.bordered = view->surface->surface;
 	wlr_xdg_surface_for_each_surface(view->surface, render_surface, &rdata);
