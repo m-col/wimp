@@ -3,6 +3,7 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "output.h"
@@ -258,12 +259,103 @@ static void on_new_output(struct wl_listener *listener, void *data) {
 }
 
 
+static void output_manager_reconfigure(
+    struct wlr_output_configuration_v1 *config, bool commit
+) {
+    struct wlr_output_configuration_head_v1 *config_head;
+    bool ok = 1;
+
+    wl_list_for_each(config_head, &config->heads, link) {
+        struct wlr_output *wlr_output = config_head->state.output;
+
+        wlr_output_enable(wlr_output, config_head->state.enabled);
+        if (config_head->state.enabled) {
+            if (config_head->state.mode) {
+                wlr_output_set_mode(wlr_output, config_head->state.mode);
+	    } else {
+                wlr_output_set_custom_mode(
+		    wlr_output,
+		    config_head->state.custom_mode.width,
+		    config_head->state.custom_mode.height,
+		    config_head->state.custom_mode.refresh
+		);
+	    }
+
+            wlr_output_layout_move(
+		wimp.output_layout, wlr_output, config_head->state.x, config_head->state.y
+	    );
+            wlr_output_set_transform(wlr_output, config_head->state.transform);
+            wlr_output_set_scale(wlr_output, config_head->state.scale);
+        }
+
+        ok = wlr_output_test(wlr_output);
+        if (!ok) {
+            break;
+	}
+    }
+
+    wl_list_for_each(config_head, &config->heads, link) {
+        if (ok && commit) {
+            wlr_output_commit(config_head->state.output);
+	} else {
+            wlr_output_rollback(config_head->state.output);
+	}
+    }
+
+    if (ok) {
+        wlr_output_configuration_v1_send_succeeded(config);
+    } else {
+        wlr_output_configuration_v1_send_failed(config);
+    }
+    wlr_output_configuration_v1_destroy(config);
+}
+
+
+static void on_output_manager_apply(struct wl_listener *listener, void *data) {
+    output_manager_reconfigure(data, true);
+}
+
+
+static void on_output_manager_test(struct wl_listener *listener, void *data) {
+    output_manager_reconfigure(data, false);
+}
+
+
+static void on_output_layout_change(struct wl_listener *listener, void *data) {
+    struct wlr_output_configuration_v1 *config = wlr_output_configuration_v1_create();
+
+    struct output *output;
+    wl_list_for_each(output, &wimp.outputs, link) {
+	struct wlr_output_configuration_head_v1 *config_head =
+	    wlr_output_configuration_head_v1_create(config, output->wlr_output);
+
+	struct wlr_box *box = wlr_output_layout_get_box(wimp.output_layout, output->wlr_output);
+	config_head->state.x = box->x;
+	config_head->state.y = box->y;
+	config_head->state.enabled = output->wlr_output->enabled;
+	config_head->state.mode = output->wlr_output->current_mode;
+    }
+
+    wlr_output_manager_v1_set_configuration(wimp.output_manager, config);
+}
+
+
 void set_up_outputs() {
     wimp.output_layout = wlr_output_layout_create();
+    wimp.output_layout_change_listener.notify = on_output_layout_change;
+    wl_signal_add(&wimp.output_layout->events.change, &wimp.output_layout_change_listener);
+
     wl_list_init(&wimp.outputs);
     wimp.new_output_listener.notify = on_new_output;
     wl_signal_add(&wimp.backend->events.new_output, &wimp.new_output_listener);
 
     wlr_xdg_output_manager_v1_create(wimp.display, wimp.output_layout);
+
+    wimp.output_manager = wlr_output_manager_v1_create(wimp.display);
+    wimp.output_manager_apply_listener.notify = on_output_manager_apply;
+    wimp.output_manager_test_listener.notify = on_output_manager_test;
+    wl_signal_add(&wimp.output_manager->events.apply, &wimp.output_manager_apply_listener);
+    wl_signal_add(&wimp.output_manager->events.test, &wimp.output_manager_test_listener);
+
     wlr_gamma_control_manager_v1_create(wimp.display);
 }

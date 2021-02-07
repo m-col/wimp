@@ -43,8 +43,12 @@ struct wimp {
     char *auto_start;
 
     struct wlr_output_layout *output_layout;
+    struct wl_listener output_layout_change_listener;
     struct wl_list outputs;
     struct wl_listener new_output_listener;
+    struct wlr_output_manager_v1 *output_manager;
+    struct wl_listener output_manager_apply_listener;
+    struct wl_listener output_manager_test_listener;
 
     struct wlr_xdg_shell *shell;
     struct wl_listener new_xdg_surface_listener;
