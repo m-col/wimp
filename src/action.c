@@ -8,6 +8,7 @@
 #include "cursor.h"
 #include "desk.h"
 #include "output.h"
+#include "scratchpad.h"
 #include "shell.h"
 #include "types.h"
 
@@ -410,14 +411,7 @@ void send_to_desk(void *data) {
 
 
 void toggle_scratchpad(void *data) {
-    int id = *(int *)data;
-    struct scratchpad *scratchpad;
-
-    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
-	if (scratchpad->id == id) {
-	    break;
-	}
-    }
+    struct scratchpad *scratchpad = scratchpad_from_id(*(int *)data);
 
     if (scratchpad->view) {
 	if (scratchpad->is_mapped) {

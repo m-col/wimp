@@ -16,6 +16,19 @@ struct scratchpad *scratchpad_from_view(struct view *view) {
 }
 
 
+struct scratchpad *scratchpad_from_id(int id) {
+    struct scratchpad *scratchpad;
+
+    wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
+	if (scratchpad->id == id) {
+	    return scratchpad;
+	}
+    }
+
+    return NULL;
+}
+
+
 void scratchpad_apply_geo(struct scratchpad *scratchpad) {
     struct wlr_output *output =
 	wlr_output_layout_output_at(wimp.output_layout, wimp.cursor->x, wimp.cursor->y);
