@@ -58,6 +58,7 @@ void set_desk(struct desk *desk) {
     }
 
     wimp.current_desk = desk;
+    damage_all_outputs();
 
     // If a scratchpad is focussed, keep it focussed.
     struct scratchpad *scratchpad;
@@ -76,8 +77,6 @@ void set_desk(struct desk *desk) {
 	struct view *view = wl_container_of(desk->views.next, view, link);
 	focus_view(view, view->surface->surface);
     }
-
-    damage_all_outputs();
 }
 
 
