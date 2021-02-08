@@ -72,7 +72,6 @@ bool catch_scratchpad(struct view *view) {
 	if (scratchpad->pid == pid) {
 	    scratchpad->view = view;
 	    view->is_scratchpad = true;
-	    map_view(view);
 	    return true;
 	}
     }
