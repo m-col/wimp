@@ -26,7 +26,7 @@ void exec_command(void *data) {
     } else if (pid < 0) {
 	wlr_log(WLR_ERROR, "Failed to fork for exec command.");
     } else {
-	wlr_log(WLR_DEBUG, "Executing: %s", data);
+	wlr_log(WLR_DEBUG, "Executing: %s", (char *)data);
     }
 }
 

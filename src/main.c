@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 
     // create
     wimp.display = wl_display_create();
-    wimp.backend = wlr_backend_autocreate(wimp.display, NULL);
+    wimp.backend = wlr_backend_autocreate(wimp.display);
     wimp.renderer = wlr_backend_get_renderer(wimp.backend);
     wlr_renderer_init_wl_display(wimp.renderer, wimp.display);
     wlr_compositor_create(wimp.display, wimp.renderer);

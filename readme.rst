@@ -21,7 +21,7 @@ Building
 Dependencies:
  - wayland
  - wayland-protocols
- - wlroots
+ - wlroots (currently git master version)
  - cairo
 
 .. code-block:: sh

@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <unistd.h>
+#include <wayland-server-protocol.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
@@ -59,7 +60,7 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 static void on_key(struct wl_listener *listener, void *data) {
     struct wlr_event_keyboard_key *event = data;
 
-    if (event->state == WLR_KEY_PRESSED) {
+    if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 	const xkb_keysym_t *syms;
 	xkb_keycode_t keycode = event->keycode + 8;
 	struct keyboard *keyboard = wl_container_of(listener, keyboard, key_listener);
