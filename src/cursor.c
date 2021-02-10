@@ -22,6 +22,19 @@ void centre_cursor() {
 }
 
 
+static void on_request_cursor(struct wl_listener *listener, void *data) {
+    struct wlr_seat_pointer_request_set_cursor_event *event = data;
+    struct wlr_seat_client *focused_client =
+	wimp.seat->pointer_state.focused_client;
+
+    if (focused_client == event->seat_client) {
+	wlr_cursor_set_surface(
+	    wimp.cursor, event->surface, event->hotspot_x, event->hotspot_y
+	);
+    }
+}
+
+
 static void process_cursor_move(uint32_t time, double zoom) {
     wimp.grabbed_view->x = (wimp.cursor->x - wimp.grab_x) / zoom;
     wimp.grabbed_view->y = (wimp.cursor->y - wimp.grab_y) / zoom;
@@ -358,6 +371,9 @@ void set_up_cursor() {
     wlr_cursor_attach_output_layout(wimp.cursor, wimp.output_layout);
     wimp.cursor_manager = wlr_xcursor_manager_create(NULL, 24);
     wlr_xcursor_manager_load(wimp.cursor_manager, 1);
+
+    wimp.request_cursor_listener.notify = on_request_cursor;
+    wl_signal_add(&wimp.seat->events.request_set_cursor, &wimp.request_cursor_listener);
 
     wimp.cursor_axis_listener.notify = on_cursor_axis;
     wimp.cursor_frame_listener.notify = on_cursor_frame;

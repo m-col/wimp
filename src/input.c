@@ -3,6 +3,7 @@
 #include <wayland-server-protocol.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 
 #include "action.h"
@@ -155,19 +156,6 @@ static void on_request_set_selection(struct wl_listener *listener, void *data) {
 }
 
 
-static void on_request_cursor(struct wl_listener *listener, void *data) {
-    struct wlr_seat_pointer_request_set_cursor_event *event = data;
-    struct wlr_seat_client *focused_client =
-	wimp.seat->pointer_state.focused_client;
-
-    if (focused_client == event->seat_client) {
-	wlr_cursor_set_surface(
-	    wimp.cursor, event->surface, event->hotspot_x, event->hotspot_y
-	);
-    }
-}
-
-
 static void on_new_input(struct wl_listener *listener, void *data) {
     struct wlr_input_device *device = data;
     switch (device->type) {
@@ -195,15 +183,14 @@ static void on_new_virtual_keyboard(struct wl_listener *listener, void *data) {
 }
 
 
-void set_up_keyboard() {
+void set_up_inputs() {
+    wimp.seat = wlr_seat_create(wimp.display, "seat0");
+    wlr_data_device_manager_create(wimp.display);
+    wlr_primary_selection_v1_device_manager_create(wimp.display);
     wl_list_init(&wimp.keyboards);
 
     wimp.new_input_listener.notify = on_new_input;
     wl_signal_add(&wimp.backend->events.new_input, &wimp.new_input_listener);
-
-    wimp.seat = wlr_seat_create(wimp.display, "seat0");
-    wimp.request_cursor_listener.notify = on_request_cursor;
-    wl_signal_add(&wimp.seat->events.request_set_cursor, &wimp.request_cursor_listener);
 
     wimp.request_set_selection_listener.notify = on_request_set_selection;
     wl_signal_add(&wimp.seat->events.request_set_selection,

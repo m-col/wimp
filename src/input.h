@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-void set_up_keyboard();
+void set_up_inputs();
 
 #endif

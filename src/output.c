@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_management_v1.h>
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "output.h"
@@ -406,6 +407,7 @@ void set_up_outputs() {
     wimp.new_output_listener.notify = on_new_output;
     wl_signal_add(&wimp.backend->events.new_output, &wimp.new_output_listener);
 
+    wlr_screencopy_manager_v1_create(wimp.display);
     wlr_xdg_output_manager_v1_create(wimp.display, wimp.output_layout);
 
     wimp.output_manager = wlr_output_manager_v1_create(wimp.display);

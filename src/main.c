@@ -4,9 +4,6 @@
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
-#include <wlr/types/wlr_data_device.h>
-#include <wlr/types/wlr_primary_selection_v1.h>
-#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -15,7 +12,7 @@
 #include "decorations.h"
 #include "desk.h"
 #include "main.h"
-#include "keyboard.h"
+#include "input.h"
 #include "layer_shell.h"
 #include "log.h"
 #include "output.h"
@@ -151,11 +148,6 @@ int main(int argc, char *argv[])
     wlr_renderer_init_wl_display(wimp.renderer, wimp.display);
     wlr_compositor_create(wimp.display, wimp.renderer);
 
-    // add some managers
-    wlr_screencopy_manager_v1_create(wimp.display);
-    wlr_data_device_manager_create(wimp.display);
-    wlr_primary_selection_v1_device_manager_create(wimp.display);
-
     // initialise
     wl_list_init(&wimp.desks);
     wl_list_init(&wimp.key_bindings);
@@ -166,10 +158,10 @@ int main(int argc, char *argv[])
     // configure
     locate_config();
     load_config();
+    set_up_inputs();
     set_up_outputs();
     set_up_shell();
     set_up_cursor();
-    set_up_keyboard();
     set_up_decorations();
     set_up_layer_shell();
 
