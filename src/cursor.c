@@ -12,6 +12,16 @@
 #include "types.h"
 
 
+void centre_cursor() {
+    struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
+    double cx, cy;
+    wlr_output_layout_closest_point(
+	wimp.output_layout, NULL, extents->width / 2, extents->height / 2, &cx, &cy
+    );
+    wlr_cursor_warp_closest(wimp.cursor, NULL, cx, cy);
+}
+
+
 static void process_cursor_move(uint32_t time, double zoom) {
     wimp.grabbed_view->x = (wimp.cursor->x - wimp.grab_x) / zoom;
     wimp.grabbed_view->y = (wimp.cursor->y - wimp.grab_y) / zoom;

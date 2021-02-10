@@ -182,6 +182,7 @@ int main(int argc, char *argv[])
     setenv("WAYLAND_DISPLAY", socket, true);
     wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s", socket);
     schedule_auto_start();
+    centre_cursor();
     wl_display_run(wimp.display);
 
     // stop
