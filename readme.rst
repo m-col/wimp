@@ -1,13 +1,5 @@
-::
-
- ██      ██  ██  ████████    ██████
- ██  ██  ██      ██  ██  ██  ██    ██
- ██  ██  ██  ██  ██  ██  ██  ██    ██
- ██  ██  ██  ██  ██  ██  ██  ██████
-   ████████  ██  ██      ██  ██
-             ██              ██
-             ██
-
+.. image:: https://github.com/m-col/wimp/blob/master/logo.png
+   :alt: Logo
 
 A desktop with limitless bounds. Picture GIMP but for windows. WIMP, if you
 will.
@@ -69,4 +61,3 @@ I learned a lot (and copied some code) from:
 With special thanks to the guys working on `wlroots
 <https://github.com/swaywm/wlroots>`_, upon which WIMP is built. Their TinyWL
 compositor served as a helpful base to start from.
-
