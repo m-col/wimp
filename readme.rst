@@ -1,4 +1,4 @@
-.. image:: https://github.com/m-col/wimp/blob/master/logo.png
+.. image:: logo.png
    :alt: Logo
 
 A desktop with limitless bounds. Picture GIMP but for windows. WIMP, if you
@@ -23,12 +23,12 @@ Aims/Features
 Using WIMP
 ----------
 
-WIMP can be called directly from a TTY as `wimp`. I recommend writing a small
-script to set up the session's environment and `exec wimp`.
+WIMP can be called directly from a TTY as ``wimp``. I recommend writing a small
+script to set up the session's environment and ``exec wimp``.
 
-WIMP looks for a configuration file first at `$XDG_CONFIG_HOME/wimp/config`
-then `$HOME/.config/wimp/config`. An example configuration file is provided and
-also serves as a reference of all possible settings and actions.
+WIMP looks for a configuration file first at ``$XDG_CONFIG_HOME/wimp/config``
+then ``$HOME/.config/wimp/config``. An example configuration file is provided
+and also serves as a reference of all possible settings and actions.
 
 Users migrating from X may find `arewewaylandyet.com
 <https://arewewaylandyet.com/>`_ and `this page
@@ -46,8 +46,8 @@ Dependencies:
  - wlroots (currently git master version)
  - cairo
 
-1. make with `make`
-2. install with `sudo make install`
+1. make with ``make``
+2. install with ``sudo make install``
 
 Acknowledgements
 ----------------
