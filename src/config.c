@@ -16,7 +16,7 @@
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
 #define is_number_perc(s) (strspn(s, "0123456789.-%") == strlen(s))
 #define CONFIG_HOME "$HOME/.config/wimp/"
-#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/.config/wimp/"
+#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/wimp/"
 
 
 static const char *DEFAULT_CONFIG =  "\n\
