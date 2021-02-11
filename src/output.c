@@ -223,21 +223,23 @@ finish:
 
 
 void damage_box(struct wlr_box *geo, bool add_borders) {
-
-    struct wlr_box damaged;
-    memcpy(&damaged, geo, sizeof(struct wlr_box));
+    struct output *output;
 
     if (add_borders) {
+	struct wlr_box damaged;
 	int border_width = wimp.current_desk->border_width;
+	memcpy(&damaged, geo, sizeof(struct wlr_box));
 	damaged.x -= border_width;
 	damaged.y -= border_width;
 	damaged.width += border_width * 2;
 	damaged.height += border_width * 2;
-    }
-
-    struct output *output;
-    wl_list_for_each(output, &wimp.outputs, link) {
-	wlr_output_damage_add_box(output->wlr_output_damage, &damaged);
+	wl_list_for_each(output, &wimp.outputs, link) {
+	    wlr_output_damage_add_box(output->wlr_output_damage, &damaged);
+	}
+    } else {
+	wl_list_for_each(output, &wimp.outputs, link) {
+	    wlr_output_damage_add_box(output->wlr_output_damage, geo);
+	}
     }
 }
 
