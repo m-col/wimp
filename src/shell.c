@@ -205,7 +205,7 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     if (!wl_list_empty(&wimp.current_desk->views)) {
 	struct view *next = wl_container_of(wimp.current_desk->views.next, view, link);
 	if (view != next) {
-	    focus_view(view, view->surface->surface);
+	    focus_view(next, next->surface->surface);
 	    return;
 	}
     };
