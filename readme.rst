@@ -19,6 +19,7 @@ Building
 --------
 
 Dependencies:
+
  - wayland
  - wayland-protocols
  - wlroots (currently git master version)
@@ -28,3 +29,13 @@ Dependencies:
 
    make
    sudo make install
+
+Acknowledgemnets
+----------------
+
+I learned a lot (and copied some code) from:
+
+ - `wlroots <https://github.com/swaywm/wlroots>`_
+ - `sway <https://github.com/swaywm/sway>`_
+ - `dwl <https://github.com/djpohly/dwl>`_
+ - `labwc <https://github.com/johanmalm/labwc>`_
