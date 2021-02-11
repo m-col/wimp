@@ -19,6 +19,8 @@ void map_view(struct view *view) {
 
 
 void focus_view(struct view *view, struct wlr_surface *surface) {
+    /* view can be NULL. In that case focus is removed from any focussed surface. */
+    /* surface can be NULL. In that case focus goes to view->surface->surface. */
     struct wlr_surface *prev_surface = wimp.seat->keyboard_state.focused_surface;
     if (prev_surface == surface) {
 	return;
@@ -39,9 +41,12 @@ void focus_view(struct view *view, struct wlr_surface *surface) {
 	    wl_list_remove(&view->link);
 	    wl_list_insert(&wimp.current_desk->views, &view->link);
 	}
-
-	wlr_xdg_toplevel_set_activated(view->surface, true);
-
+	if (!surface) {
+	    surface = view->surface->surface;
+	}
+	if (wlr_surface_is_xdg_surface(surface)) {
+	    wlr_xdg_toplevel_set_activated(view->surface, true);
+	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
 	wlr_seat_keyboard_notify_enter(
 	    wimp.seat, view->surface->surface, keyboard->keycodes,
@@ -172,7 +177,7 @@ static void on_map(struct wl_listener *listener, void *data) {
 	scratchpad->is_mapped = true;
     }
 
-    focus_view(view, view->surface->surface);
+    focus_view(view, NULL);
 }
 
 
@@ -197,7 +202,7 @@ static void on_unmap(struct wl_listener *listener, void *data) {
 
     wl_list_for_each(scratchpad, &wimp.scratchpads, link) {
 	if (scratchpad->is_mapped) {
-	    focus_view(scratchpad->view, scratchpad->view->surface->surface);
+	    focus_view(scratchpad->view, NULL);
 	    return;
 	}
     }
@@ -205,7 +210,7 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     if (!wl_list_empty(&wimp.current_desk->views)) {
 	struct view *next = wl_container_of(wimp.current_desk->views.next, view, link);
 	if (view != next) {
-	    focus_view(next, next->surface->surface);
+	    focus_view(next, NULL);
 	    return;
 	}
     };

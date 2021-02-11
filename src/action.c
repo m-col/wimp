@@ -106,7 +106,7 @@ void focus_in_direction(void *data) {
     if (next) {
 	unfullscreen();
 	pan_to_view(next);
-	focus_view(next, next->surface->surface);
+	focus_view(next, NULL);
     }
 }
 
@@ -302,7 +302,7 @@ void actually_go_to_mark(const xkb_keysym_t sym) {
 	) {
 	    continue;
 	}
-	focus_view(view, view->surface->surface);
+	focus_view(view, NULL);
 	return;
     }
 }

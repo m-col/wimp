@@ -75,7 +75,7 @@ void set_desk(struct desk *desk) {
 	focus_view(NULL, NULL);
     } else {
 	struct view *view = wl_container_of(desk->views.next, view, link);
-	focus_view(view, view->surface->surface);
+	focus_view(view, NULL);
     }
 }
 
@@ -98,7 +98,7 @@ void view_to_desk(struct view *view, int index) {
 	wl_list_insert(&desk->views, &view->link);
 	if (!wl_list_empty(&wimp.current_desk->views)) {
 	    struct view *next_view = wl_container_of(wimp.current_desk->views.next, view, link);
-	    focus_view(next_view, next_view->surface->surface);
+	    focus_view(next_view, NULL);
 	}
     }
 }
