@@ -5,6 +5,7 @@ CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic -Wno-unused-paramet
 LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs wayland-server) \
 	    $(shell pkg-config --cflags --libs xkbcommon) \
+	    $(shell pkg-config --cflags --libs libinput) \
 	    $(shell pkg-config --cflags --libs cairo) \
 	    $(shell pkg-config --cflags --libs pixman-1)
 

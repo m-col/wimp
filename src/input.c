@@ -1,6 +1,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <wayland-server-protocol.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_primary_selection_v1.h>
@@ -123,7 +124,18 @@ static void on_keyboard_destroy(struct wl_listener *listener, void *data) {
 }
 
 
-static void on_new_keyboard(struct wlr_input_device *device) {
+static void add_new_pointer(struct wlr_input_device *device) {
+    if (wlr_input_device_is_libinput(device)) {
+	struct libinput_device *ldev = wlr_libinput_get_device_handle(device);
+	if (libinput_device_config_tap_get_finger_count(ldev) > 1) {
+	    libinput_device_config_tap_set_enabled(ldev, LIBINPUT_CONFIG_TAP_ENABLED);
+	}
+    }
+    wlr_cursor_attach_input_device(wimp.cursor, device);
+}
+
+
+static void add_new_keyboard(struct wlr_input_device *device) {
     struct keyboard *keyboard = calloc(1, sizeof(struct keyboard));
     keyboard->device = device;
 
@@ -160,10 +172,10 @@ static void on_new_input(struct wl_listener *listener, void *data) {
     struct wlr_input_device *device = data;
     switch (device->type) {
 	case WLR_INPUT_DEVICE_KEYBOARD:
-	    on_new_keyboard(device);
+	    add_new_keyboard(device);
 	    break;
 	case WLR_INPUT_DEVICE_POINTER:
-	    wlr_cursor_attach_input_device(wimp.cursor, device);
+	    add_new_pointer(device);
 	    break;
 	default:
 	    break;
@@ -179,7 +191,7 @@ static void on_new_input(struct wl_listener *listener, void *data) {
 static void on_new_virtual_keyboard(struct wl_listener *listener, void *data) {
     struct wlr_virtual_keyboard_v1 *keyboard = data;
     struct wlr_input_device *device = &keyboard->input_device;
-    on_new_keyboard(device);
+    add_new_keyboard(device);
 }
 
 
