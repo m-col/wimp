@@ -147,6 +147,7 @@ struct layer_view {
     struct wlr_layer_surface_v1 *surface;
     struct wl_listener map_listener;
     struct wl_listener unmap_listener;
+    struct wl_listener commit_listener;
     struct wl_listener destroy_listener;
     struct output *output;
     struct wlr_box geo;

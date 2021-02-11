@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_output_damage.h>
 
 #include "layer_shell.h"
+#include "output.h"
 
 
 static void layer(struct output *output) {
@@ -12,10 +13,6 @@ static void layer(struct output *output) {
     wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
     for (int i = 0; i < 4; i++) {
-	if (wl_list_empty(&output->layer_views[i])) {
-	    continue;
-	}
-
 	wl_list_for_each(lview, &output->layer_views[i], link) {
 	    surface = lview->surface;
 	    state = &surface->current;
@@ -53,7 +50,7 @@ static void layer(struct output *output) {
 		wlr_layer_surface_v1_close(surface);
 		continue;
 	    }
-	    lview->geo = box;
+	    memcpy(&lview->geo, &box, sizeof(struct wlr_box));
 	    wlr_layer_surface_v1_configure(surface, box.width, box.height);
 	}
     }
@@ -73,7 +70,7 @@ static void layer(struct output *output) {
 		    keyboard->num_keycodes, &keyboard->modifiers
 		);
 		wimp.focussed_layer_view = lview;
-		return;
+		break;
 	    }
 	}
     }
@@ -92,6 +89,12 @@ static void on_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&lview->link);
     free(lview);
     layer(output);
+}
+
+
+static void on_commit(struct wl_listener *listener, void *data) {
+    struct layer_view *lview = wl_container_of(listener, lview, commit_listener);
+    damage_box(&lview->geo, false);
 }
 
 
@@ -130,9 +133,11 @@ static void on_new_surface(struct wl_listener *listener, void *data) {
     lview->map_listener.notify = on_map;
     lview->unmap_listener.notify = on_unmap;
     lview->destroy_listener.notify = on_destroy;
+    lview->commit_listener.notify = on_commit;
     wl_signal_add(&surface->events.map, &lview->map_listener);
     wl_signal_add(&surface->events.unmap, &lview->unmap_listener);
     wl_signal_add(&surface->events.destroy, &lview->destroy_listener);
+    wl_signal_add(&surface->surface->events.commit, &lview->commit_listener);
 
     if (!surface->output) {
 	surface->output = wlr_output_layout_output_at(
@@ -142,13 +147,7 @@ static void on_new_surface(struct wl_listener *listener, void *data) {
     struct output *output = surface->output->data;
     lview->output = output;
     wl_list_insert(&output->layer_views[surface->client_pending.layer], &lview->link);
-
-    // Temporarily set the layer's current state to client_pending
-    // So that we can easily arrange it
-    struct wlr_layer_surface_v1_state old_state = surface->current;
-    surface->current = surface->client_pending;
     layer(lview->output);
-    surface->current = old_state;
 }
 
 
