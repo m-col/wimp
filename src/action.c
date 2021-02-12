@@ -432,6 +432,7 @@ void maximize(void *data) {
 
 void reload_config(void *data) {
     load_config();
+    damage_all_outputs(); // in case wallpaper has changed
 }
 
 

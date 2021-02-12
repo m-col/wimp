@@ -10,6 +10,7 @@
 #include "action.h"
 #include "config.h"
 #include "desk.h"
+#include "output.h"
 #include "scratchpad.h"
 #include "types.h"
 
