@@ -258,6 +258,11 @@ void damage_by_view(struct view *view, bool with_borders) {
 }
 
 
+void damage_by_lview(struct layer_view *lview) {
+    damage_box(&lview->geo, false);
+}
+
+
 void damage_all_outputs() {
     struct output *output;
     wl_list_for_each(output, &wimp.outputs, link) {

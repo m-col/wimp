@@ -3,6 +3,7 @@
 
 #include "layer_shell.h"
 #include "output.h"
+#include "shell.h"
 
 
 static void layer(struct output *output) {
@@ -61,17 +62,17 @@ static void layer(struct output *output) {
 	ZWLR_LAYER_SHELL_V1_LAYER_TOP,
     };
     size_t nlayers = sizeof(layers_above_shell) / sizeof(layers_above_shell[0]);
-    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
+    bool found = false;
     for (size_t i = 0; i < nlayers; ++i) {
 	wl_list_for_each_reverse(lview, &output->layer_views[layers_above_shell[i]], link) {
 	    if (lview->surface->current.keyboard_interactive && lview->surface->mapped) {
-		wlr_seat_keyboard_notify_enter(
-		    wimp.seat, lview->surface->surface, keyboard->keycodes,
-		    keyboard->num_keycodes, &keyboard->modifiers
-		);
-		wimp.focussed_layer_view = lview;
+		focus(lview, NULL, true);
+		found = true;
 		break;
 	    }
+	}
+	if (found) {
+	    break;
 	}
     }
 
@@ -94,7 +95,7 @@ static void on_destroy(struct wl_listener *listener, void *data) {
 
 static void on_commit(struct wl_listener *listener, void *data) {
     struct layer_view *lview = wl_container_of(listener, lview, commit_listener);
-    damage_box(&lview->geo, false);
+    damage_by_lview(lview);
 }
 
 
@@ -102,15 +103,9 @@ static void on_unmap(struct wl_listener *listener, void *data) {
     struct layer_view *lview = wl_container_of(listener, lview, unmap_listener);
     lview->surface->mapped = false;
     layer(lview->output);
-
-    if (wimp.focussed_layer_view == lview && !wl_list_empty(&wimp.current_desk->views)) {
-	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wimp.seat);
-	struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
-	wlr_seat_keyboard_notify_enter(
-	    wimp.seat, view->surface->surface, keyboard->keycodes,
-	    keyboard->num_keycodes, &keyboard->modifiers
-	);
+    if (wimp.focussed_layer_view == lview) {
 	wimp.focussed_layer_view = NULL;
+	find_focus();
     }
 }
 

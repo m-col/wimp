@@ -158,7 +158,6 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
     double sx, sy;
     struct wlr_seat *seat;
     struct wlr_surface *surface;
-    struct view *view;
     double zoom = wimp.current_desk->zoom;
 
     switch (wimp.cursor_mode) {
@@ -166,7 +165,7 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 	    seat = wimp.seat;
 	    surface = NULL;
 	    bool is_layer;
-	    view = under_pointer(&surface, &sx, &sy, &is_layer);
+	    struct view *view = under_pointer(&surface, &sx, &sy, &is_layer);
 	    if (!view) {
 		wlr_xcursor_manager_set_cursor_image(wimp.cursor_manager, "left_ptr", wimp.cursor);
 	    }
@@ -176,7 +175,7 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 		    wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 		}
 		if (wimp.auto_focus && seat->keyboard_state.focused_surface != surface) {
-		    focus_view(view, surface);
+		    focus(view, surface, is_layer);
 		}
 	    } else {
 		wlr_seat_pointer_clear_focus(seat);
