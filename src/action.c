@@ -324,9 +324,10 @@ void toggle_fullscreen(void *data) {
 
 
 void halfimize(void *data) {
-    if (wl_list_empty(&wimp.current_desk->views))
+    struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
+    if (!surface || !wlr_surface_is_xdg_surface(surface) || wl_list_empty(&wimp.current_desk->views)) {
 	return;
-
+    }
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     enum direction dir = *(enum direction*)data;
     double vx = view->x + view->surface->geometry.width / 2;
@@ -367,19 +368,21 @@ void halfimize(void *data) {
 
     double zoom = wimp.current_desk->zoom;
     int border_width = wimp.current_desk->border_width;
-    view->x = x / zoom + border_width;
-    view->y = y / zoom + border_width;
-    width -= border_width * 2;
-    height -= border_width * 2;
-    wlr_xdg_toplevel_set_size(view->surface, width / zoom, height / zoom);
-    wlr_xdg_toplevel_set_tiled(view->surface, true);
-    damage_all_outputs();
+    struct wlr_box new = {
+	.x = x / zoom + border_width,
+	.y = y / zoom + border_width,
+	.width = (width - border_width * 2) / zoom,
+	.height = (height - border_width * 2) / zoom,
+    };
+    view_apply_geometry(view, &new);
 }
 
 
 void maximize(void *data) {
-    if (wl_list_empty(&wimp.current_desk->views))
+    struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
+    if (!surface || !wlr_surface_is_xdg_surface(surface) || wl_list_empty(&wimp.current_desk->views)) {
 	return;
+    }
 
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     double vx = view->x + view->surface->geometry.width / 2;

@@ -9,6 +9,22 @@
 #include "types.h"
 
 
+void view_apply_geometry(struct view *view, struct wlr_box *new) {
+    struct wlr_box old = {
+	.x = view->x,
+	.y = view->y,
+	.width = view->surface->geometry.width,
+	.height = view->surface->geometry.height,
+    };
+
+    view->x = new->x;
+    view->y = new->y,
+    wlr_xdg_toplevel_set_size(view->surface, new->width, new->height);
+    damage_box(&old, true);
+    damage_box(new, true);
+}
+
+
 void unmap_view(struct view *view) {
     wl_signal_emit(&view->surface->events.unmap, view);
 }
@@ -158,6 +174,7 @@ void fullscreen_xdg_surface(
     struct wlr_xdg_surface *prev_surface = wimp.current_desk->fullscreened;
     if (prev_surface) {
 	wlr_xdg_toplevel_set_fullscreen(prev_surface, false);
+	wlr_xdg_toplevel_set_tiled(view->surface, true);
 	wlr_xdg_toplevel_set_size(prev_surface, saved_geo->width, saved_geo->height);
 	view->x = saved_geo->x;
 	view->y = saved_geo->y;
@@ -186,6 +203,7 @@ void fullscreen_xdg_surface(
     saved_geo->width = xdg_surface->geometry.width;
     saved_geo->height = xdg_surface->geometry.height;
     wlr_xdg_toplevel_set_fullscreen(xdg_surface, true);
+    wlr_xdg_toplevel_set_tiled(view->surface, false);
     double zoom = wimp.current_desk->zoom;
     wlr_xdg_toplevel_set_size(xdg_surface, wlr_output->width / zoom, wlr_output->height / zoom);
     struct output *output = wlr_output->data;
@@ -239,6 +257,7 @@ static void on_map(struct wl_listener *listener, void *data) {
 	scratchpad->is_mapped = true;
     }
 
+    wlr_xdg_toplevel_set_tiled(view->surface, true);
     focus_view(view, NULL);
 }
 

@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+void view_apply_geometry(struct view *view, struct wlr_box *geo);
 void unmap_view(struct view *view);
 void map_view(struct view *view);
 void focus(void *aview, struct wlr_surface *surface, bool is_layer);
