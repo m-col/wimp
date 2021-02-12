@@ -76,6 +76,7 @@ void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *
     struct wlr_surface *tsurface;
     struct wlr_output *wlr_output = wlr_output_layout_output_at(wimp.output_layout, x, y);
     struct output *output = wlr_output->data;
+    int border_width = wimp.current_desk->border_width;
 
     // overlay and top layers
     uint32_t above[] = { ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, ZWLR_LAYER_SHELL_V1_LAYER_TOP };
@@ -114,8 +115,9 @@ void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *
     }
 
     // clients
-    double zx = x / wimp.current_desk->zoom;
-    double zy = y / wimp.current_desk->zoom;
+    double zoom = wimp.current_desk->zoom;
+    double zx = x / zoom;
+    double zy = y / zoom;
 
     wl_list_for_each(view, &wimp.current_desk->views, link) {
 	tsurface = wlr_xdg_surface_surface_at(
@@ -127,6 +129,21 @@ void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *
 	    *surface = tsurface;
 	    *is_layer = false;
 	    return view;
+	}
+	if (border_width) {
+	    struct wlr_box bordered = {
+		.x = (view->x - border_width) * zoom,
+		.y = (view->y - border_width) * zoom,
+		.width = (view->surface->geometry.width + border_width * 2) * zoom,
+		.height = (view->surface->geometry.height + border_width * 2) * zoom,
+	    };
+	    if (wlr_box_contains_point(&bordered, zx, zy)) {
+		*sx = tsx;
+		*sy = tsy;
+		*surface = view->surface->surface;
+		*is_layer = false;
+		return view;
+	    }
 	}
     }
 
