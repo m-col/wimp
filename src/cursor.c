@@ -24,10 +24,7 @@ void centre_cursor() {
 
 static void on_request_cursor(struct wl_listener *listener, void *data) {
     struct wlr_seat_pointer_request_set_cursor_event *event = data;
-    struct wlr_seat_client *focused_client =
-	wimp.seat->pointer_state.focused_client;
-
-    if (focused_client == event->seat_client) {
+    if (wimp.seat->pointer_state.focused_client == event->seat_client) {
 	wlr_cursor_set_surface(
 	    wimp.cursor, event->surface, event->hotspot_x, event->hotspot_y
 	);
