@@ -70,8 +70,9 @@ void move_window(void *data) {
 
 
 void focus_in_direction(void *data) {
-    if (wl_list_empty(&wimp.current_desk->views))
+    if (wl_list_empty(&wimp.current_desk->views)) {
 	return;
+    }
 
     struct view *current = wl_container_of(wimp.current_desk->views.next, current, link);
     enum direction dir = *(enum direction*)data;
@@ -107,6 +108,9 @@ void focus_in_direction(void *data) {
 	unfullscreen();
 	pan_to_view(next);
 	focus_view(next, NULL);
+    } else {
+	pan_to_view(current);
+	focus_view(current, NULL);
     }
 }
 
