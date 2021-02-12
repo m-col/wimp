@@ -271,6 +271,24 @@ void damage_all_outputs() {
 }
 
 
+void damage_mark_indicator() {
+    struct output *output;
+    struct wlr_box indicator = wimp.mark_indicator.box;
+    int width, height;
+
+    wl_list_for_each(output, &wimp.outputs, link) {
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	struct wlr_box geo = {
+	    .x = 0,
+	    .y = height - indicator.height,
+	    .width = indicator.width,
+	    .height = indicator.height,
+	};
+	wlr_output_damage_add_box(output->wlr_output_damage, &geo);
+    }
+}
+
+
 static void on_destroy(struct wl_listener *listener, void *data) {
     struct output *output = wl_container_of(listener, output, destroy_listener);
 

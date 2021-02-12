@@ -9,6 +9,7 @@
 
 #include "action.h"
 #include "cursor.h"
+#include "output.h"
 #include "shell.h"
 #include "types.h"
 
@@ -71,12 +72,13 @@ static void on_key(struct wl_listener *listener, void *data) {
 	if (wimp.mark_waiting) {
 	    struct mark *mark;
 	    wimp.mark_waiting = false;
+	    damage_mark_indicator();
 	    xkb_state_key_get_syms(wlr_kb->xkb_state, keycode, &syms);
 	    mark = wl_container_of(wimp.marks.next, mark, link);
-	    if (mark->key == 0) {
-		actually_set_mark(syms[0]);
-	    } else {
+	    if (mark->key) {
 		actually_go_to_mark(syms[0]);
+	    } else {
+		actually_set_mark(syms[0]);
 	    }
 	    return;
 	}

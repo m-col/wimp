@@ -256,9 +256,9 @@ void set_mark(void *data) {
     mark->y = desk->panned_y;
     mark->zoom = desk->zoom;
     mark->key = 0;
-    wimp.mark_waiting = true;
     wl_list_insert(&wimp.marks, &mark->link);
-    damage_all_outputs();
+    wimp.mark_waiting = true;
+    damage_mark_indicator();
 }
 
 
@@ -291,19 +291,26 @@ void actually_set_mark(const xkb_keysym_t sym) {
 
 void go_to_mark(void *data) {
     wimp.mark_waiting = true;
+    damage_mark_indicator();
 }
 
 
 void actually_go_to_mark(const xkb_keysym_t sym) {
     struct mark *mark;
 
-    if (sym == XKB_KEY_Escape)
+    if (sym == XKB_KEY_Escape) {
 	return;
+    }
 
+    bool found = false;
     wl_list_for_each(mark, &wimp.marks, link) {
 	if (mark->key == sym) {
+	    found = true;
 	    break;
 	}
+    }
+    if (!found) {
+	return;
     }
 
     unfullscreen();
