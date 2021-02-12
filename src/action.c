@@ -394,13 +394,13 @@ void maximize(void *data) {
 
     double zoom = wimp.current_desk->zoom;
     int border_width = wimp.current_desk->border_width;
-    view->x = border_width;
-    view->y = border_width;
-    double width = (output->width - border_width * 2) / zoom;
-    double height = (output->height - border_width * 2) / zoom;
-    wlr_xdg_toplevel_set_size(view->surface, width, height);
-    wlr_xdg_toplevel_set_tiled(view->surface, true);
-    damage_all_outputs();
+    struct wlr_box new = {
+	.x = border_width,
+	.y = border_width,
+	.width = (output->width - border_width * 2) / zoom,
+	.height = (output->height - border_width * 2) / zoom,
+    };
+    view_apply_geometry(view, &new);
 }
 
 
