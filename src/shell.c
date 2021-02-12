@@ -149,19 +149,25 @@ void pan_to_view(struct view *view) {
 	.is_percentage = false,
     };
 
+    int panning = 2;
     if (x < 0) {
 	motion.dx = x * zoom;
     } else if (x + width > extents->width / zoom) {
 	motion.dx = (x + width) * zoom - extents->width;
+    } else {
+	panning -= 1;
     }
     if (y < 0) {
 	motion.dy = y * zoom;
     } else if (y + height > extents->height / zoom) {
 	motion.dy = (y + height) * zoom - extents->height;
+    } else {
+	panning -= 1;
     }
-    pan_desk(&motion);
-
-    damage_all_outputs();
+    if (panning) {
+	pan_desk(&motion);
+	damage_all_outputs();
+    }
 }
 
 
