@@ -13,6 +13,7 @@ static void add_desk() {
     assign_colour("#5D479D", desk->background);
     assign_colour("#3e3e73", desk->border_normal);
     assign_colour("#998dd1", desk->border_focus);
+    assign_colour("#406794", desk->corner_resize);
     desk->border_width = 4;
     desk->wallpaper = NULL;
     desk->index = wimp.desk_count;

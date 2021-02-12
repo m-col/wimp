@@ -88,6 +88,7 @@ struct wimp {
     struct wl_listener request_set_selection_listener;
     struct wl_list keyboards;
     enum wlr_keyboard_modifier mod;
+    bool mod_on;
     struct wl_list key_bindings;
     struct wl_list mouse_bindings;
 
@@ -172,6 +173,7 @@ struct desk {
     float background[4];
     float border_normal[4];
     float border_focus[4];
+    float corner_resize[4];
     int border_width;
     struct wallpaper *wallpaper;
     double panned_x, panned_y;

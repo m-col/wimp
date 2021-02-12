@@ -26,10 +26,12 @@ desk 1 background #5D479D\n\
 desk 1 borders normal #3e3e73\n\
 desk 1 borders focus #998dd1\n\
 desk 1 borders width 4\n\
+desk 1 corners resize #406794\n\
 desk 2 background #3e3e73\n\
 desk 2 borders normal #5D479D\n\
 desk 2 borders focus #998dd1\n\
 desk 2 borders width 6\n\
+desk 2 corners resize #3e3e73\n\
 zoom_min 0.2\n\
 zoom_max 5\n\
 mark_indicator #000000\n\
@@ -586,6 +588,14 @@ static void parse_config(FILE *stream) {
 			if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
 			    desk->border_width = strtod(s, NULL);
 			}
+		    }
+		}
+
+		// desk <index> corners resize <#rrggbb>
+		else if (!strcasecmp(s, "corners")) {
+		    s = strtok(NULL, " \t\n\r");
+		    if (!strcasecmp(s, "resize")) {
+			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_resize);
 		    }
 		}
 	    }

@@ -44,18 +44,44 @@ static void render_surface(
 
     if (rdata->bordered == surface) {
 	int border_width = wimp.current_desk->border_width;
-	struct wlr_box borders = {
-	    .x = x - border_width * rdata->zoom,
-	    .y = y - border_width * rdata->zoom,
-	    .width = width + ceil(border_width * 2 * rdata->zoom),
-	    .height = height + ceil(border_width * 2 * rdata->zoom),
-	};
-	wlr_render_rect(
-	    rdata->renderer,
-	    &borders,
-	    rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal,
-	    output->transform_matrix
-	);
+	if (border_width > 0) {
+	    int remainder = ceil(border_width * 2 * rdata->zoom);
+	    struct wlr_box borders = {
+		.x = x - border_width * rdata->zoom,
+		.y = y - border_width * rdata->zoom,
+		.width = width + remainder,
+		.height = height + remainder,
+	    };
+	    wlr_render_rect(
+		rdata->renderer,
+		&borders,
+		rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal,
+		output->transform_matrix
+	    );
+	    if (wimp.mod_on) {
+		struct wlr_box corners = {
+		    .x = borders.x,
+		    .y = borders.y,
+		    .width = 24,
+		    .height = 24,
+		};
+		wlr_render_rect(
+		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
+		);
+		corners.x = borders.x + borders.width - 24;
+		wlr_render_rect(
+		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
+		);
+		corners.y = borders.y + borders.height - 24;
+		wlr_render_rect(
+		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
+		);
+		corners.x = borders.x;
+		wlr_render_rect(
+		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
+		);
+	    }
+	}
     }
 
     struct wlr_box box = {
@@ -268,6 +294,14 @@ void damage_all_outputs() {
     struct output *output;
     wl_list_for_each(output, &wimp.outputs, link) {
 	wlr_output_damage_add_whole(output->wlr_output_damage);
+    }
+}
+
+
+void damage_all_views() {
+    struct view *view;
+    wl_list_for_each(view, &wimp.current_desk->views, link) {
+	damage_by_view(view, true);
     }
 }
 

@@ -52,6 +52,15 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 		handled = true;
 	    }
 	}
+	if (!wimp.mod_on) {
+	    wimp.mod_on = true;
+	    damage_all_views();
+	}
+    } else {
+	if (wimp.mod_on) {
+	    wimp.mod_on = false;
+	    damage_all_views();
+	}
     }
 
     if (!handled){
