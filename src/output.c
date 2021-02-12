@@ -1,3 +1,4 @@
+#include <math.h>
 #include <time.h>
 #include <pixman.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
@@ -44,10 +45,10 @@ static void render_surface(
     if (rdata->bordered == surface) {
 	int border_width = wimp.current_desk->border_width;
 	struct wlr_box borders = {
-	    .x = x - border_width,
-	    .y = y - border_width,
-	    .width = width + border_width * 2,
-	    .height = height + border_width * 2,
+	    .x = x - border_width * rdata->zoom,
+	    .y = y - border_width * rdata->zoom,
+	    .width = width + ceil(border_width * 2 * rdata->zoom),
+	    .height = height + ceil(border_width * 2 * rdata->zoom),
 	};
 	wlr_render_rect(
 	    rdata->renderer,

@@ -7,7 +7,8 @@ LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs xkbcommon) \
 	    $(shell pkg-config --cflags --libs libinput) \
 	    $(shell pkg-config --cflags --libs cairo) \
-	    $(shell pkg-config --cflags --libs pixman-1)
+	    $(shell pkg-config --cflags --libs pixman-1) \
+	    -lm
 
 PREFIX    ?= /usr/local
 BINPREFIX ?= $(PREFIX)/bin
