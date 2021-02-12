@@ -63,9 +63,28 @@ void move_window(void *data) {
 	    return;
 	}
     }
+    struct wlr_box damage = {
+	.x = view->x,
+	.y = view->y,
+	.width = view->surface->geometry.width,
+	.height = view->surface->geometry.height,
+    };
     struct motion motion = *(struct motion*)data;
+    if (motion.dx > 0) {
+	damage.width += motion.dx;
+    } else {
+	damage.x -= motion.dx;
+	damage.width -= motion.dx;
+    }
+    if (motion.dy > 0) {
+	damage.height += motion.dy;
+    } else {
+	damage.y -= motion.dy;
+	damage.height -= motion.dy;
+    }
     view->x += motion.dx;
     view->y += motion.dy;
+    damage_box(&damage, true);
 }
 
 
