@@ -29,14 +29,13 @@ struct wimp wimp = {
     .on_drag3 = NULL,
     .on_pinch = NULL,
     .desk_count = 0,
-    .mod_on = false,
     .mark_waiting = false,
     .mark_indicator.box.width = 25,
     .mark_indicator.box.height = 25,
     .mark_indicator.box.x = 0,
     .mark_indicator.box.y = 0,
     .scratchpad_waiting = false,
-    .auto_focus = false,
+    .auto_focus = true,
 };
 
 

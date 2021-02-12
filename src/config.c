@@ -22,23 +22,15 @@
 
 static const char *DEFAULT_CONFIG =  "\n\
 desks 2\n\
-desk 1 background #5D479D\n\
-desk 1 borders normal #3e3e73\n\
-desk 1 borders focus #998dd1\n\
-desk 1 borders width 4\n\
-desk 1 corners resize #406794\n\
 desk 2 background #3e3e73\n\
-desk 2 borders normal #5D479D\n\
-desk 2 borders focus #998dd1\n\
-desk 2 borders width 6\n\
-desk 2 corners resize #3e3e73\n\
+desk 2 borders normal #31475c\n\
+desk 2 corners normal #3e5973\n\
 zoom_min 0.2\n\
 zoom_max 5\n\
-mark_indicator #000000\n\
+mark_indicator #47315c\n\
 vt_switching on\n\
 scroll_direction natural\n\
 set_modifier Logo\n\
-auto_focus on\n\
 bind Ctrl Escape shutdown\n\
 ";
 
@@ -591,11 +583,14 @@ static void parse_config(FILE *stream) {
 		    }
 		}
 
-		// desk <index> corners resize <#rrggbb>
+		// desk <index> corners [focus|normal] <#rrggbb>
 		else if (!strcasecmp(s, "corners")) {
 		    s = strtok(NULL, " \t\n\r");
-		    if (!strcasecmp(s, "resize")) {
-			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_resize);
+		    if (!strcasecmp(s, "normal")) {
+			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_normal);
+		    }
+		    else if (!strcasecmp(s, "focus")) {
+			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_focus);
 		    }
 		}
 	    }

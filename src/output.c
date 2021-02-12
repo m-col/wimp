@@ -58,29 +58,21 @@ static void render_surface(
 		rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal,
 		output->transform_matrix
 	    );
-	    if (wimp.mod_on) {
-		struct wlr_box corners = {
-		    .x = borders.x,
-		    .y = borders.y,
-		    .width = 24,
-		    .height = 24,
-		};
-		wlr_render_rect(
-		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
-		);
-		corners.x = borders.x + borders.width - 24;
-		wlr_render_rect(
-		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
-		);
-		corners.y = borders.y + borders.height - 24;
-		wlr_render_rect(
-		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
-		);
-		corners.x = borders.x;
-		wlr_render_rect(
-		    rdata->renderer, &corners, wimp.current_desk->corner_resize, output->transform_matrix
-		);
-	    }
+	    struct wlr_box corners = {
+		.x = borders.x,
+		.y = borders.y,
+		.width = 24,
+		.height = 24,
+	    };
+	    float *corner = rdata->is_focussed ?
+		wimp.current_desk->corner_focus : wimp.current_desk->corner_normal;
+	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
+	    corners.x = borders.x + borders.width - 24;
+	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
+	    corners.y = borders.y + borders.height - 24;
+	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
+	    corners.x = borders.x;
+	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
 	}
     }
 

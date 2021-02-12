@@ -10,11 +10,12 @@ static void add_desk() {
     struct desk *desk = calloc(1, sizeof(struct desk));
     wl_list_insert(wimp.desks.prev, &desk->link);
     wl_list_init(&desk->views);
-    assign_colour("#5D479D", desk->background);
+    assign_colour("#31475c", desk->background);
     assign_colour("#3e3e73", desk->border_normal);
-    assign_colour("#998dd1", desk->border_focus);
-    assign_colour("#406794", desk->corner_resize);
-    desk->border_width = 4;
+    assign_colour("#31315c", desk->corner_normal);
+    assign_colour("#47315c", desk->border_focus);
+    assign_colour("#7e5992", desk->corner_focus);
+    desk->border_width = 6;
     desk->wallpaper = NULL;
     desk->index = wimp.desk_count;
     desk->zoom = 1;
