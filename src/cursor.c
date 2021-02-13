@@ -281,6 +281,26 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 
 static void on_cursor_motion(struct wl_listener *listener, void *data){
     struct wlr_event_pointer_motion *event = data;
+    if (wimp.grabbed_view) {
+	if (wimp.resize_edges & WLR_EDGE_TOP) {
+	    if (wimp.grabbed_view->surface->geometry.height <= CORNER && event->delta_y > 0) {
+		event->delta_y = 0;
+	    }
+	} else if (wimp.resize_edges & WLR_EDGE_BOTTOM) {
+	    if (wimp.grabbed_view->surface->geometry.height <= CORNER && event->delta_y < 0) {
+		event->delta_y = 0;
+	    }
+	}
+	if (wimp.resize_edges & WLR_EDGE_LEFT) {
+	    if (wimp.grabbed_view->surface->geometry.width <= CORNER && event->delta_x > 0) {
+		event->delta_x = 0;
+	    }
+	} else if (wimp.resize_edges & WLR_EDGE_RIGHT) {
+	    if (wimp.grabbed_view->surface->geometry.width <= CORNER && event->delta_x < 0) {
+		event->delta_x = 0;
+	    }
+	}
+    }
     wlr_cursor_move(wimp.cursor, event->device, event->delta_x, event->delta_y);
     process_cursor_motion(event->time_msec, event->delta_x, event->delta_y);
 }
