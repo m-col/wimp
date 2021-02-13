@@ -43,6 +43,9 @@ void focus(void *data, struct wlr_surface *surface, bool is_layer) {
     if (data) {
 	if (is_layer) {
 	    lview = (struct layer_view *)data;
+	    if (!lview->surface->current.keyboard_interactive) {
+		return;
+	    }
 	    if (!surface) {
 		surface = lview->surface->surface;
 	    }
