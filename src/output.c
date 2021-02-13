@@ -61,15 +61,15 @@ static void render_surface(
 	    struct wlr_box corners = {
 		.x = borders.x,
 		.y = borders.y,
-		.width = 24,
-		.height = 24,
+		.width = CORNER,
+		.height = CORNER,
 	    };
 	    float *corner = rdata->is_focussed ?
 		wimp.current_desk->corner_focus : wimp.current_desk->corner_normal;
 	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
-	    corners.x = borders.x + borders.width - 24;
+	    corners.x = borders.x + borders.width - CORNER;
 	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
-	    corners.y = borders.y + borders.height - 24;
+	    corners.y = borders.y + borders.height - CORNER;
 	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
 	    corners.x = borders.x;
 	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);

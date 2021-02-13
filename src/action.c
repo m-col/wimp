@@ -388,7 +388,7 @@ void halfimize(void *data) {
 	    width = output->width;
 	    height = output->height / 2;
 	    break;
-	case NONE:
+	case NO_DIRECTION:
 	    return;
     }
 

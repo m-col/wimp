@@ -168,6 +168,67 @@ void *under_pointer(struct wlr_surface **surface, double *sx, double *sy, bool *
 }
 
 
+static enum wlr_edges pointer_in_view_corner(struct view *view) {
+    /* It is assumed that the pointer is above the view. */
+    double x = wimp.cursor->x;
+    double y = wimp.cursor->y;
+    double zoom = wimp.current_desk->zoom;
+    int border_width = wimp.current_desk->border_width;
+    enum wlr_edges edges = WLR_EDGE_NONE;
+
+    struct wlr_box inner = {
+	.x = view->x * zoom,
+	.y = view->y * zoom,
+	.width = view->surface->geometry.width * zoom,
+	.height = view->surface->geometry.height * zoom,
+    };
+    struct wlr_box outer = {
+	.x = inner.x - border_width * zoom,
+	.y = inner.y - border_width * zoom,
+	.width = inner.width + border_width * 2 * zoom,
+	.height = inner.height + border_width * 2 * zoom,
+    };
+
+    if (x <= inner.x) {
+	edges |= WLR_EDGE_LEFT;
+	if (y <= outer.y + CORNER) {
+	    edges |= WLR_EDGE_TOP;
+	} else if (outer.y + outer.height - CORNER <= y) {
+	    edges |= WLR_EDGE_BOTTOM;
+	}
+	return edges;
+    }
+    if (inner.x + inner.width <= x) {
+	edges |= WLR_EDGE_RIGHT;
+	if (y <= outer.y + CORNER) {
+	    edges |= WLR_EDGE_TOP;
+	} else if (outer.y + outer.height - CORNER <= y) {
+	    edges |= WLR_EDGE_BOTTOM;
+	}
+	return edges;
+    }
+    if (y <= inner.y) {
+	edges |= WLR_EDGE_TOP;
+	if (x <= outer.x + CORNER) {
+	    edges |= WLR_EDGE_LEFT;
+	} else if (outer.x + outer.width - CORNER <= x) {
+	    edges |= WLR_EDGE_RIGHT;
+	}
+	return edges;
+    }
+    if (inner.y + inner.height <= y) {
+	edges |= WLR_EDGE_BOTTOM;
+	if (x <= outer.x + CORNER) {
+	    edges |= WLR_EDGE_LEFT;
+	} else if (outer.x + outer.width - CORNER <= x) {
+	    edges |= WLR_EDGE_RIGHT;
+	}
+	return edges;
+    }
+    return edges;
+}
+
+
 static void process_cursor_motion(uint32_t time, double dx, double dy) {
     double sx, sy;
     struct wlr_seat *seat;
@@ -280,7 +341,23 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
     else {
 	struct view *view = under_pointer(&surface, &sx, &sy, &is_layer);
 	if (!is_layer) {
-	    focus_view(view, surface);
+	    if (view) {
+		enum wlr_edges edges = pointer_in_view_corner(view);
+		if (edges) {
+		    wimp.grabbed_view = view;
+		    wimp.resize_edges = edges;
+		    wimp.grab_x = wimp.cursor->x - view->x * wimp.current_desk->zoom;
+		    wimp.grab_y = wimp.cursor->y - view->y * wimp.current_desk->zoom;
+		    wlr_xdg_surface_get_geometry(view->surface, &wimp.grab_geobox);
+		    wimp.grab_geobox.x = view->x;
+		    wimp.grab_geobox.y = view->y;
+		    wimp.cursor_mode = CURSOR_RESIZE;
+		} else {
+		    focus_view(view, surface);
+		}
+	    } else {
+		focus_view(view, surface);
+	    }
 	}
     }
 }

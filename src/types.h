@@ -19,6 +19,8 @@
 #define is_readable(p) (access(p, R_OK) != -1)
 #define is_executable(p) (access(p, R_OK | X_OK) != -1)
 
+#define CORNER 24
+
 enum cursor_mode {
     CURSOR_PASSTHROUGH,
     CURSOR_MOD,
@@ -215,7 +217,7 @@ struct mark {
 };
 
 enum direction {
-    NONE = 0,
+    NO_DIRECTION = 0,
     UP = 1 << 0,
     RIGHT = 1 << 1,
     DOWN = 1 << 2,
