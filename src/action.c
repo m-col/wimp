@@ -178,28 +178,6 @@ void pan_desk(void *data) {
 }
 
 
-void reset_zoom(void *data) {
-    struct desk *desk = wimp.current_desk;
-    double f = 1 / desk->zoom;
-    if (f == 1) {
-	return;
-    }
-    unfullscreen();
-    struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
-    double fx = extents->width * (f - 1) / 2;
-    double fy = extents->height * (f - 1) / 2;
-    struct view *view;
-    wl_list_for_each(view, &desk->views, link) {
-	view->x -= fx;
-	view->y -= fy;
-    }
-    desk->panned_x -= fx;
-    desk->panned_y -= fy;
-    desk->zoom = 1;
-    damage_all_outputs();
-}
-
-
 void zoom(void *data) {
     /* Passed value (data) is the percentage step (+ve or -ve) */
     struct desk *desk = wimp.current_desk;
@@ -223,6 +201,12 @@ void zoom(void *data) {
     desk->panned_x -= fx;
     desk->panned_y -= fy;
     damage_all_outputs();
+}
+
+
+void reset_zoom(void *data) {
+    double dz = 100 * 1 / wimp.current_desk->zoom - 100;
+    zoom(&dz);
 }
 
 
