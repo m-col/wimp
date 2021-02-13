@@ -43,36 +43,38 @@ static void render_surface(
     int height = surface->current.height * output->scale * rdata->zoom;
 
     if (rdata->bordered == surface) {
-	int border_width = wimp.current_desk->border_width;
-	if (border_width > 0) {
-	    int remainder = ceil(border_width * 2 * rdata->zoom);
-	    struct wlr_box borders = {
-		.x = x - border_width * rdata->zoom,
-		.y = y - border_width * rdata->zoom,
-		.width = width + remainder,
-		.height = height + remainder,
-	    };
-	    wlr_render_rect(
-		rdata->renderer,
-		&borders,
-		rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal,
-		output->transform_matrix
-	    );
-	    struct wlr_box corners = {
-		.x = borders.x,
-		.y = borders.y,
-		.width = CORNER,
-		.height = CORNER,
-	    };
-	    float *corner = rdata->is_focussed ?
+	if (wimp.current_desk->border_width > 0) {
+	    double border_width = ceil(wimp.current_desk->border_width * rdata->zoom);
+	    float *colour = rdata->is_focussed ?
 		wimp.current_desk->corner_focus : wimp.current_desk->corner_normal;
-	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
-	    corners.x = borders.x + borders.width - CORNER;
-	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
-	    corners.y = borders.y + borders.height - CORNER;
-	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
-	    corners.x = borders.x;
-	    wlr_render_rect(rdata->renderer, &corners, corner, output->transform_matrix);
+	    struct wlr_box border = {
+		.x = x - border_width,
+		.y = y - border_width,
+		.width = width + border_width * 2,
+		.height = border_width,
+	    };
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.y = y + height;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.y = y - border_width;
+	    border.width = border_width;
+	    border.height = height + border_width * 2;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.x = x + width;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    colour = rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal;
+	    border.y += CORNER;
+	    border.height -= CORNER * 2;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.x = x - border_width;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.y = y - border_width;
+	    border.x += CORNER;
+	    border.height = border_width;
+	    border.width = width + border_width * 2 - CORNER * 2;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
+	    border.y = y + height;
+	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
 	}
     }
 
