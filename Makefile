@@ -1,5 +1,4 @@
-OUT	= wimp
-SOURCES	= $(wildcard src/*.c)
+SOURCES	= $(filter-out src/wimptool.c, $(wildcard src/*.c))
 OBJECTS	= $(SOURCES:.c=.o)
 CFLAGS  += -g -I. -DWLR_USE_UNSTABLE -Wall -Wextra -pedantic -Wno-unused-parameter
 LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
@@ -10,14 +9,19 @@ LDFLAGS	+= $(shell pkg-config --cflags --libs wlroots) \
 	    $(shell pkg-config --cflags --libs pixman-1) \
 	    -lm
 
+all: wimp wimptool
+
 PREFIX    ?= /usr/local
 BINPREFIX ?= $(PREFIX)/bin
 
-${OUT}: xdg-shell-protocol wlr-layer-shell-unstable-v1-protocol ${OBJECTS}
-	@$(CC) -o ${OUT} $(OBJECTS) $(LDFLAGS)
+wimp: xdg-shell-protocol wlr-layer-shell-unstable-v1-protocol ${OBJECTS}
+	@$(CC) -o wimp $(OBJECTS) $(LDFLAGS)
 
 %.o: %.c %.h
 	@$(CC) $(CFLAGS) -c -o $@ $< ${LDFLAGS}
+
+wimptool: src/wimptool.c
+	@$(CC) $(CFLAGS) -o $@ $<
 
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
 WAYLAND_SCANNER=$(shell pkg-config --variable=wayland_scanner wayland-scanner)
@@ -31,14 +35,13 @@ wlr-layer-shell-unstable-v1-protocol:
 	@$(WAYLAND_SCANNER) private-code protocols/wlr-layer-shell-unstable-v1.xml $@.c
 
 clean:
-	rm -f ${OUT} *-protocol.h *-protocol.c ${OBJECTS}
+	rm -f wimp wimptool *-protocol.h *-protocol.c ${OBJECTS}
 
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
-	cp -pf "$(OUT)" "$(DESTDIR)$(BINPREFIX)"
+	cp -pf "wimp" "$(DESTDIR)$(BINPREFIX)"
 
 uninstall:
-	rm -f "$(DESTDIR)$(BINPREFIX)/$(OUT)"
+	rm -f "$(DESTDIR)$(BINPREFIX)/wimp"
 
-.DEFAULT_GOAL=${OUT}
-.PHONY: clean
+.PHONY: all clean install uninstall

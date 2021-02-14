@@ -1,4 +1,5 @@
 wimp
+wimptool
 src/*.o
 *-protocol.c
 *-protocol.h
