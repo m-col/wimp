@@ -102,6 +102,10 @@ static bool dir_handler(struct binding *kb, char *data, int line) {
 
 
 static bool str_handler(struct binding *kb, char *data, int line) {
+    if (!data) {
+	wlr_log(WLR_ERROR, "Config line %i: requires arguments.", line);
+	return false;
+    }
     if (is_number(data)) {
 	kb->data = calloc(1, sizeof(double));
 	*(double *)(kb->data) = strtod(data, NULL);
