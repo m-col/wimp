@@ -1,5 +1,5 @@
-#ifndef DESKWM_SHELL_H
-#define DESKWM_SHELL_H
+#ifndef WIMP_SHELL_H
+#define WIMP_SHELL_H
 
 #include "types.h"
 

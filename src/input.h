@@ -1,5 +1,5 @@
-#ifndef DESKWM_KEYBOARD_H
-#define DESKWM_KEYBOARD_H
+#ifndef WIMP_KEYBOARD_H
+#define WIMP_KEYBOARD_H
 
 #include "types.h"
 

@@ -1,5 +1,5 @@
-#ifndef DESKWM_SCRATCHPAD_H
-#define DESKWM_SCRATCHPAD_H
+#ifndef WIMP_SCRATCHPAD_H
+#define WIMP_SCRATCHPAD_H
 
 #include "types.h"
 

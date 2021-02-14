@@ -1,5 +1,5 @@
-#ifndef DESKWM_OUTPUT_H
-#define DESKWM_OUTPUT_H
+#ifndef WIMP_OUTPUT_H
+#define WIMP_OUTPUT_H
 
 #include "types.h"
 

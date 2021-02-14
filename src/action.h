@@ -1,5 +1,5 @@
-#ifndef DESKWM_ACTION_H
-#define DESKWM_ACTION_H
+#ifndef WIMP_ACTION_H
+#define WIMP_ACTION_H
 
 #include "types.h"
 

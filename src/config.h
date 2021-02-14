@@ -1,5 +1,5 @@
-#ifndef DESKWM_CONFIG_H
-#define DESKWM_CONFIG_H
+#ifndef WIMP_CONFIG_H
+#define WIMP_CONFIG_H
 
 #include "types.h"
 

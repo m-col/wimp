@@ -1,5 +1,5 @@
-#ifndef DESKWM_TYPES_H
-#define DESKWM_TYPES_H
+#ifndef WIMP_TYPES_H
+#define WIMP_TYPES_H
 
 #include <cairo/cairo.h>
 #include <stdlib.h>
