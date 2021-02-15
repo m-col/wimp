@@ -37,6 +37,9 @@ struct wimp wimp = {
     .mark_indicator.box.y = 0,
     .scratchpad_waiting = false,
     .auto_focus = true,
+    .reverse_scrolling = false,
+    .zoom_min = 0.2,
+    .zoom_max = 5,
 };
 
 
@@ -50,8 +53,6 @@ static const char usage[] =
 
 
 static void shutdown() {
-    free(wimp.config_directory);
-    free(wimp.config_file);
     wl_list_remove(&wimp.new_output_listener.link);
     wl_list_remove(&wimp.new_xdg_surface_listener.link);
     wl_list_remove(&wimp.decoration_listener.link);
@@ -120,16 +121,12 @@ int main(int argc, char *argv[])
 {
     int opt;
     int log_level = WLR_ERROR;
-    wimp.config_file = NULL;
 
     while ((opt = getopt(argc, argv, "hc:di")) != -1) {
         switch (opt) {
 	    case 'h':
 		printf(usage);
 		return EXIT_SUCCESS;
-		break;
-	    case 'c':
-		wimp.config_file = strdup(optarg);
 		break;
 	    case 'd':
 		log_level = WLR_DEBUG;
@@ -163,14 +160,13 @@ int main(int argc, char *argv[])
     wl_list_init(&wimp.scratchpads);
 
     // configure
-    locate_config();
-    load_config();
     set_up_inputs();
     set_up_outputs();
     set_up_shell();
     set_up_cursor();
     set_up_decorations();
     set_up_layer_shell();
+    set_up_defaults();
 
     // start
     if (!start_ipc(socket) || !wlr_backend_start(wimp.backend)) {
@@ -178,7 +174,7 @@ int main(int argc, char *argv[])
 	return EXIT_FAILURE;
     }
     setenv("WAYLAND_DISPLAY", socket, true);
-    schedule_auto_start();
+    schedule_startup();
     centre_cursor();
     wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s.", socket);
     wl_display_run(wimp.display);

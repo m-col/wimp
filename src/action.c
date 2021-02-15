@@ -414,12 +414,6 @@ void maximize(void *data) {
 }
 
 
-void reload_config(void *data) {
-    load_config();
-    damage_all_outputs(); // in case wallpaper has changed
-}
-
-
 void send_to_desk(void *data) {
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     int index = *(double*)data - 1;

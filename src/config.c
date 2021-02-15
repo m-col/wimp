@@ -16,33 +16,8 @@
 
 #define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
 #define is_number_perc(s) (strspn(s, "0123456789.-%") == strlen(s))
-#define CONFIG_HOME "$HOME/.config/wimp/"
-#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/wimp/"
-
-
-static const char *DEFAULT_CONFIG =  "\n\
-desks 2\n\
-desk 2 background #3e3e73\n\
-desk 2 borders normal #31475c\n\
-desk 2 corners normal #3e5973\n\
-zoom_min 0.2\n\
-zoom_max 5\n\
-mark_indicator #47315c\n\
-vt_switching on\n\
-scroll_direction natural\n\
-set_modifier Logo\n\
-bind Ctrl Escape shutdown\n\
-";
-
-
-static char *expand(char *path) {
-    wordexp_t p;
-    wordexp(path, &p, WRDE_NOCMD | WRDE_UNDEF);
-    free(path);
-    char *new = strdup(p.we_wordv[0]);
-    wordfree(&p);
-    return new;
-}
+#define CONFIG_HOME "$HOME/.config/wimp/startup"
+#define CONFIG_HOME_XDG "$XDG_CONFIG_HOME/wimp/startup"
 
 
 struct value_map {
@@ -94,16 +69,16 @@ static int _get(struct value_map *values, const int len, const char *name) {
 }
 
 
-static bool dir_handler(struct binding *kb, char *data, int line) {
+static bool dir_handler(struct binding *kb, char *data) {
     kb->data = calloc(1, sizeof(enum direction));
-    *(enum direction *)(kb->data) = get(dirs, data);
+    *(enum direction *)(kb->data) = get(dirs, strtok(data, " \t\n\r"));
     return true;
 }
 
 
-static bool str_handler(struct binding *kb, char *data, int line) {
+static bool str_handler(struct binding *kb, char *data) {
     if (!data) {
-	wlr_log(WLR_ERROR, "Config line %i: requires arguments.", line);
+	wlr_log(WLR_ERROR, "Command requires arguments.");
 	return false;
     }
     if (is_number(data)) {
@@ -117,7 +92,7 @@ static bool str_handler(struct binding *kb, char *data, int line) {
 }
 
 
-static bool motion_handler(struct binding *kb, char *data, int line) {
+static bool motion_handler(struct binding *kb, char *data) {
     char *s;
     if (!data) {
 	goto err;
@@ -145,7 +120,7 @@ static bool motion_handler(struct binding *kb, char *data, int line) {
     return true;
 
 err:
-    wlr_log(WLR_ERROR, "Config line %i malformed/incomplete.", line);
+    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
     return false;
 }
 
@@ -207,7 +182,7 @@ static bool wlr_box_from_str(char* str, struct wlr_box *box) {
 static int scratchpad_id = 0;
 
 
-static bool scratchpad_handler(struct binding *kb, char *data, int line) {
+static bool scratchpad_handler(struct binding *kb, char *data) {
     char *geo, *command;
     struct wlr_box box;
     if (!data) {
@@ -237,7 +212,7 @@ static bool scratchpad_handler(struct binding *kb, char *data, int line) {
     return true;
 
 err:
-    wlr_log(WLR_ERROR, "Config line %i malformed/incomplete.", line);
+    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
     return false;
 }
 
@@ -245,7 +220,7 @@ err:
 static struct {
     const char *name;
     const action action;
-    bool (*data_handler)(struct binding *kb, char *data, int line);
+    bool (*data_handler)(struct binding *kb, char *data);
 } action_map[] = {
     { "shutdown", &shutdown, NULL },
     { "exec", &exec_command, &str_handler },
@@ -262,7 +237,6 @@ static struct {
     { "toggle_fullscreen", &toggle_fullscreen, NULL },
     { "halfimize", &halfimize, &dir_handler },
     { "maximize", &maximize, NULL },
-    { "reload_config", &reload_config, NULL },
     { "send_to_desk", &send_to_desk, &str_handler },
     { "scratchpad", &toggle_scratchpad, &scratchpad_handler },
 };
@@ -286,7 +260,7 @@ static struct {
 };
 
 
-static bool assign_action(const char *name, char *data, struct binding *kb, int line) {
+static bool assign_action(const char *name, char *data, struct binding *kb) {
     kb->action = NULL;
     kb->data = NULL;
     size_t i;
@@ -314,7 +288,7 @@ static bool assign_action(const char *name, char *data, struct binding *kb, int 
 		if (strcmp(action_map[i].name, name) == 0) {
 		    kb->action = action_map[i].action;
 		    if (action_map[i].data_handler != NULL) {
-			if (!action_map[i].data_handler(kb, data, line)){
+			if (!action_map[i].data_handler(kb, data)){
 			    return false;
 			}
 		    }
@@ -335,7 +309,7 @@ static void free_binding(struct binding *kb) {
 }
 
 
-static void add_binding(char *data, const int line) {
+static void add_binding(char *data) {
     struct binding *kb = calloc(1, sizeof(struct binding));
     enum wlr_keyboard_modifier mod;
     char *s = strtok(data, " \t\n\r");
@@ -360,7 +334,7 @@ static void add_binding(char *data, const int line) {
     if (kb->key == XKB_KEY_NoSymbol) {
 	kb->key = get(mouse_keys, s);
 	if (kb->key == 0) {
-	    wlr_log(WLR_ERROR, "Config line %i: No such key '%s'.", line, s);
+	    wlr_log(WLR_ERROR, "No such key '%s'.", s);
 	    free(kb);
 	    return;
 	}
@@ -370,10 +344,10 @@ static void add_binding(char *data, const int line) {
     // action
     s = strtok(NULL, " \t\n\r");
     if (!s) {
-	wlr_log(WLR_ERROR, "Config line %i: malformed option.", line);
+	wlr_log(WLR_ERROR, "Command malformed/incompleted.");
 	return;
     }
-    if (!assign_action(s, strtok(NULL, "\n\r"), kb, line)) {
+    if (!assign_action(s, strtok(NULL, "\n\r"), kb)) {
 	free(kb);
 	return;
     }
@@ -436,6 +410,7 @@ static void load_wallpaper(struct desk *desk, char *path) {
 	wallpaper->height, cairo_image_surface_get_data(canvas)
     );
     desk->wallpaper = wallpaper;
+    damage_all_outputs();
     cairo_destroy(cr);
     cairo_surface_destroy(image);
     cairo_surface_destroy(canvas);
@@ -457,11 +432,12 @@ static void set_wallpaper(struct desk *desk, char *wallpaper) {
 }
 
 
-static void setup_vt_switching() {
-    if (!wimp.vt_switching) {
-	return;
-    }
+static void disable_vt_switching() {
+    // TODO
+}
 
+
+static void setup_vt_switching() {
     uint32_t func_keys[] = {
 	XKB_KEY_F1,
 	XKB_KEY_F2,
@@ -484,253 +460,202 @@ static void setup_vt_switching() {
 }
 
 
-struct source {
+void parse_message(char *message) {
+    char *s;
+    if (!(s = strtok(message, " \t\n\r"))) {
+	return;
+    }
+
+    // desks <int>
+    if (!strcasecmp(s, "desks")) {
+	if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
+	    configure_desks(strtod(s, NULL));
+	}
+    }
+
+    // desk ...
+    else if (!strcasecmp(s, "desk")) {
+	if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
+	    int index = strtod(s, NULL) - 1;
+	    s = strtok(NULL, " \t\n\r");
+	    struct desk *desk;
+	    bool found = false;
+	    wl_list_for_each(desk, &wimp.desks, link) {
+		if (desk->index == index) {
+		    found = true;
+		    break;
+		}
+	    }
+	    if (!found) {
+		return;
+	    }
+
+	    // desk <index> background #rrggbb
+	    // desk <index> background ~/path/to/image.png
+	    if (!strcasecmp(s, "background")) {
+		if ((s = strtok(NULL, " \t\n\r"))) {
+		    set_wallpaper(desk, s);
+		}
+	    }
+
+	    // desk <index> borders [focus|normal] <#rrggbb>
+	    // desk <index> borders width <int>
+	    else if (!strcasecmp(s, "borders")) {
+		s = strtok(NULL, " \t\n\r");
+		if (!strcasecmp(s, "normal")) {
+		    assign_colour(strtok(NULL, " \t\n\r"), desk->border_normal);
+		}
+		else if (!strcasecmp(s, "focus")) {
+		    assign_colour(strtok(NULL, " \t\n\r"), desk->border_focus);
+		}
+		else if (!strcasecmp(s, "width")) {
+		    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
+			desk->border_width = strtod(s, NULL);
+		    }
+		}
+	    }
+
+	    // desk <index> corners [focus|normal] <#rrggbb>
+	    else if (!strcasecmp(s, "corners")) {
+		s = strtok(NULL, " \t\n\r");
+		if (!strcasecmp(s, "normal")) {
+		    assign_colour(strtok(NULL, " \t\n\r"), desk->corner_normal);
+		}
+		else if (!strcasecmp(s, "focus")) {
+		    assign_colour(strtok(NULL, " \t\n\r"), desk->corner_focus);
+		}
+	    }
+	}
+    }
+
+    // zoom_min <float>
+    else if (!strcasecmp(s, "zoom_min")) {
+	if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
+	    wimp.zoom_min = strtod(s, NULL);
+	}
+    }
+
+    // zoom_max <float>
+    else if (!strcasecmp(s, "zoom_max")) {
+	if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
+	    wimp.zoom_max = strtod(s, NULL);
+	}
+    }
+
+    // mark_indicator #rrggbb
+    else if (!strcasecmp(s, "mark_indicator")) {
+	assign_colour(strtok(NULL, " \t\n\r"), wimp.mark_indicator.colour);
+	wimp.mark_indicator.box.x = 0;
+	wimp.mark_indicator.box.y = 0;
+    }
+
+    // vt_switching [off|on]
+    else if (!strcasecmp(s, "vt_switching")) {
+	s = strtok(NULL, " \t\n\r");
+	if (!strcasecmp(s, "off"))
+	    disable_vt_switching();
+	else if (!strcasecmp(s, "on"))
+	    setup_vt_switching();
+    }
+
+    // scroll_direciton [natural|reverse]
+    else if (!strcasecmp(s, "scroll_direction")) {
+	s = strtok(NULL, " \t\n\r");
+	if (!strcasecmp(s, "natural"))
+	    wimp.reverse_scrolling = false;
+	else if (!strcasecmp(s, "reverse"))
+	    wimp.reverse_scrolling = true;
+    }
+
+    // e.g.: set_modifier logo
+    else if (!strcasecmp(s, "set_modifier")) {
+	if ((s = strtok(NULL, " \t\n\r"))) {
+	    enum wlr_keyboard_modifier mod = get(mods, s);
+	    if (mod)
+		wimp.mod = mod;
+	    else
+		wlr_log(WLR_ERROR, "Invalid modifier name '%s'.", s);
+	}
+    }
+
+    // bind [<modifiers>] <key> <action>
+    else if (!strcasecmp(s, "bind")) {
+	add_binding(strtok(NULL, ""));
+    }
+
+    // auto_focus [on|off]
+    else if (!strcasecmp(s, "auto_focus")) {
+	s = strtok(NULL, " \t\n\r");
+	if (!strcasecmp(s, "off")) {
+	    wimp.auto_focus = false;
+	} else if (!strcasecmp(s, "on")) {
+	    wimp.auto_focus = true;
+	}
+    }
+
+    // other non-empty, non-commented lines
+    else {
+        wlr_log(WLR_ERROR, "Unknown command '%s'.", s);
+    }
+}
+
+
+struct startup_data {
     struct wl_event_source *wl_event_source;
+    char *script;
 };
 
 
-static int _auto_start(void *data) {
-    struct source *source = data;
-    wl_event_source_remove(source->wl_event_source);
-    free(source);
-
-    char *script = wimp.auto_start;
+static int _startup(void *vdata) {
+    struct startup_data *data = vdata;
+    wl_event_source_remove(data->wl_event_source);
     if (fork() == 0) {
-	if (execl(script, script, (void *)NULL) == -1) {
+	if (execl(data->script, data->script, (void *)NULL) == -1) {
 	    exit(EXIT_FAILURE);
 	}
     } else {
-	wlr_log(WLR_DEBUG, "Running autostart script: %s", script);
+	wlr_log(WLR_DEBUG, "Running startup script: %s", data->script);
     }
-    free(wimp.auto_start);
+    free(data->script);
+    free(data);
     return 0;
 }
 
 
-void schedule_auto_start() {
-    if (wimp.auto_start) {
-	wimp.auto_start = expand(wimp.auto_start);
-    } else {
-	wimp.auto_start = strndup(
-	    wimp.config_directory, strlen(wimp.config_directory) + strlen("autostart")
-	);
-	strcat(wimp.auto_start, "autostart");
-    }
-
-    if (is_executable(wimp.auto_start)) {
-	struct wl_event_loop *event_loop = wl_display_get_event_loop(wimp.display);
-	struct source *source = calloc(1, sizeof(struct source));
-	source->wl_event_source = wl_event_loop_add_timer(event_loop, _auto_start, source);
-	wl_event_source_timer_update(source->wl_event_source, 1);
-    }
-}
-
-
-void parse_message(char *buffer, ssize_t len) {
-    printf("msg: %s\n", buffer);
-}
-
-
-static void parse_config(FILE *stream) {
-    char *s;
-    char linebuf[1024];
-    int line = 0;
-    int index;
-
-    while (fgets(linebuf, sizeof(linebuf), stream)) {
-	line++;
-	if (!(s = strtok(linebuf, " \t\n\r")) || s[0] == '#') {
-	    continue;
-	}
-
-	// desks <int>
-	if (!strcasecmp(s, "desks")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		configure_desks(strtod(s, NULL));
-	    }
-	}
-
-	// desk ...
-	else if (!strcasecmp(s, "desk")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		index = strtod(s, NULL) - 1;
-		s = strtok(NULL, " \t\n\r");
-		struct desk *desk;
-		bool found = false;
-		wl_list_for_each(desk, &wimp.desks, link) {
-		    if (desk->index == index) {
-			found = true;
-			break;
-		    }
-		}
-		if (!found) {
-		    continue;
-		}
-
-		// desk <index> background #rrggbb
-		// desk <index> background ~/path/to/image.png
-		if (!strcasecmp(s, "background")) {
-		    if ((s = strtok(NULL, " \t\n\r"))) {
-			set_wallpaper(desk, s);
-		    }
-		}
-
-		// desk <index> borders [focus|normal] <#rrggbb>
-		// desk <index> borders width <int>
-		else if (!strcasecmp(s, "borders")) {
-		    s = strtok(NULL, " \t\n\r");
-		    if (!strcasecmp(s, "normal")) {
-			assign_colour(strtok(NULL, " \t\n\r"), desk->border_normal);
-		    }
-		    else if (!strcasecmp(s, "focus")) {
-			assign_colour(strtok(NULL, " \t\n\r"), desk->border_focus);
-		    }
-		    else if (!strcasecmp(s, "width")) {
-			if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-			    desk->border_width = strtod(s, NULL);
-			}
-		    }
-		}
-
-		// desk <index> corners [focus|normal] <#rrggbb>
-		else if (!strcasecmp(s, "corners")) {
-		    s = strtok(NULL, " \t\n\r");
-		    if (!strcasecmp(s, "normal")) {
-			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_normal);
-		    }
-		    else if (!strcasecmp(s, "focus")) {
-			assign_colour(strtok(NULL, " \t\n\r"), desk->corner_focus);
-		    }
-		}
-	    }
-	}
-
-	// zoom_min <float>
-	else if (!strcasecmp(s, "zoom_min")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		wimp.zoom_min = strtod(s, NULL);
-	    }
-	}
-
-	// zoom_max <float>
-	else if (!strcasecmp(s, "zoom_max")) {
-	    if ((s = strtok(NULL, " \t\n\r")) && is_number(s)) {
-		wimp.zoom_max = strtod(s, NULL);
-	    }
-	}
-
-	// mark_indicator #rrggbb
-	else if (!strcasecmp(s, "mark_indicator")) {
-	    assign_colour(strtok(NULL, " \t\n\r"), wimp.mark_indicator.colour);
-	    wimp.mark_indicator.box.x = 0;
-	    wimp.mark_indicator.box.y = 0;
-	}
-
-	// vt_switching [off|on]
-	else if (!strcasecmp(s, "vt_switching")) {
-	    s = strtok(NULL, " \t\n\r");
-	    if (!strcasecmp(s, "off"))
-		wimp.vt_switching = false;
-	    else if (!strcasecmp(s, "on"))
-		wimp.vt_switching = true;
-	}
-
-	// scroll_direciton [natural|reverse]
-	else if (!strcasecmp(s, "scroll_direction")) {
-	    s = strtok(NULL, " \t\n\r");
-	    if (!strcasecmp(s, "natural"))
-		wimp.reverse_scrolling = false;
-	    else if (!strcasecmp(s, "reverse"))
-		wimp.reverse_scrolling = true;
-	}
-
-	// e.g.: set_modifier logo
-	else if (!strcasecmp(s, "set_modifier")) {
-	    if ((s = strtok(NULL, " \t\n\r"))) {
-		enum wlr_keyboard_modifier mod = get(mods, s);
-		if (mod)
-		    wimp.mod = mod;
-		else
-		    wlr_log(WLR_ERROR, "Config line %i: invalid modifier name '%s'.", line, s);
-	    }
-	}
-
-	// bind [<modifiers>] <key> <action>
-	else if (!strcasecmp(s, "bind")) {
-	    add_binding(strtok(NULL, ""), line);
-	}
-
-	// auto_start ~/script/to/execute.sh
-	else if (!strcasecmp(s, "auto_start")) {
-	    wimp.auto_start = strdup(strtok(NULL, " \t\n\r"));
-	}
-
-	// auto_focus [on|off]
-	else if (!strcasecmp(s, "auto_focus")) {
-	    s = strtok(NULL, " \t\n\r");
-	    if (!strcasecmp(s, "off")) {
-		wimp.auto_focus = false;
-	    } else if (!strcasecmp(s, "on")) {
-		wimp.auto_focus = true;
-	    }
-	}
-
-	// other non-empty, non-commented lines
-	else {
-	    wlr_log(WLR_ERROR, "Config line %i: unknown option '%s'.", line, s);
-	}
-    }
-}
-
-
-void load_config() {
-    FILE *stream;
-
-    // remove existing keybindings
-    struct binding *kb, *tmp;
-    wl_list_for_each_safe(kb, tmp, &wimp.mouse_bindings, link) {
-	free_binding(kb);
-    }
-    wl_list_for_each_safe(kb, tmp, &wimp.key_bindings, link) {
-	free_binding(kb);
-    }
-
-    drop_scratchpads();
-
-    // load defaults
-    char *buffer = NULL;
-    size_t size = 0;
-    stream = open_memstream(&buffer, &size);
-    fprintf(stream, DEFAULT_CONFIG);
-    rewind(stream);
-    parse_config(stream);
-    free(buffer);
-    fclose(stream);
-
-    // load configuration file
-    if (is_readable(wimp.config_file)) {
-	stream = fopen(wimp.config_file, "r");
-	parse_config(stream);
-	fclose(stream);
-    } else {
-	wlr_log(WLR_ERROR, "%s not accessible. Using defaults.", wimp.config_file);
-    }
-
-    setup_vt_switching();
-}
-
-
-void locate_config() {
+void schedule_startup() {
     char *xdg_config = getenv("XDG_CONFIG_HOME");
     char *config_dir = (xdg_config && *xdg_config) ? CONFIG_HOME_XDG : CONFIG_HOME;
-    wimp.config_directory = strdup(config_dir);
-    wimp.config_directory = expand(wimp.config_directory);
-    config_dir = wimp.config_directory;
+    struct startup_data *data = calloc(1, sizeof(struct startup_data));
+    wordexp_t p;
+    wordexp(config_dir, &p, WRDE_NOCMD | WRDE_UNDEF);
+    data->script = strdup(p.we_wordv[0]);
+    wordfree(&p);
 
-    if (wimp.config_file == NULL) {
-	wimp.config_file = strndup(config_dir, strlen(config_dir) + strlen("config"));
-	strcat(wimp.config_file, "config");
+    if (is_executable(data->script)) {
+	struct wl_event_loop *event_loop = wl_display_get_event_loop(wimp.display);
+	data->wl_event_source = wl_event_loop_add_timer(event_loop, _startup, data);
+	wl_event_source_timer_update(data->wl_event_source, 1);
     } else {
-	wimp.config_file = expand(wimp.config_file);
+	wlr_log(WLR_ERROR, "Cannot run startup script: %s", data->script);
+	free(data->script);
+	free(data);
+    }
+
+}
+
+
+void set_up_defaults(){
+    char defaults[][64] = {
+	"desks 2",
+	"desk 2 background #3e3e73",
+	"desk 2 borders normal #31475c",
+	"desk 2 corners normal #3e5973",
+	"mark_indicator #47315c",
+	"set_modifier Logo",
+	"bind Ctrl Escape shutdown",
     };
+    for (size_t i = 0; i < sizeof(defaults) / sizeof(defaults[0]); i++) {
+	parse_message(defaults[i]);
+    }
+    setup_vt_switching();
 }

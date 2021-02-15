@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     char buffer[BUFSIZ] = {0};
     for (int i = 1; i < argc; i++) {
 	strcat(buffer, argv[i]);
+	strcat(buffer, " ");
     }
 
     if (send(sock, buffer, strlen(buffer), 0) == -1) {

@@ -40,10 +40,6 @@ struct wimp {
     struct wlr_backend *backend;
     struct wlr_renderer *renderer;
 
-    char *config_directory;
-    char *config_file;
-    char *auto_start;
-
     struct wlr_output_layout *output_layout;
     struct wl_listener output_layout_change_listener;
     struct wl_list outputs;
@@ -111,7 +107,6 @@ struct wimp {
     struct wlr_box grab_geobox;
     uint32_t resize_edges;
     double zoom_min, zoom_max;
-    bool vt_switching;
     bool auto_focus;
 
     struct wl_list scratchpads;
