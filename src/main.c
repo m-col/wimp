@@ -13,6 +13,7 @@
 #include "desk.h"
 #include "main.h"
 #include "input.h"
+#include "ipc.h"
 #include "layer_shell.h"
 #include "log.h"
 #include "output.h"
@@ -148,6 +149,12 @@ int main(int argc, char *argv[])
     wlr_renderer_init_wl_display(wimp.renderer, wimp.display);
     wlr_compositor_create(wimp.display, wimp.renderer);
 
+    const char *socket = wl_display_add_socket_auto(wimp.display);
+    if (!socket) {
+	wlr_log(WLR_INFO, "Could not create socket: %s.", socket);
+	return EXIT_FAILURE;
+    }
+
     // initialise
     wl_list_init(&wimp.desks);
     wl_list_init(&wimp.key_bindings);
@@ -166,19 +173,19 @@ int main(int argc, char *argv[])
     set_up_layer_shell();
 
     // start
-    const char *socket = wl_display_add_socket_auto(wimp.display);
-    if (!socket || !wlr_backend_start(wimp.backend)) {
+    if (!start_ipc(socket) || !wlr_backend_start(wimp.backend)) {
 	shutdown();
 	return EXIT_FAILURE;
     }
     setenv("WAYLAND_DISPLAY", socket, true);
-    wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s", socket);
     schedule_auto_start();
     centre_cursor();
+    wlr_log(WLR_INFO, "Starting with WAYLAND_DISPLAY=%s.", socket);
     wl_display_run(wimp.display);
 
     // stop
     wl_display_destroy_clients(wimp.display);
+    close_ipc(socket);
     shutdown();
     return EXIT_SUCCESS;
 }

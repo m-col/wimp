@@ -526,6 +526,11 @@ void schedule_auto_start() {
 }
 
 
+void parse_message(char *buffer, ssize_t len) {
+    printf("msg: %s\n", buffer);
+}
+
+
 static void parse_config(FILE *stream) {
     char *s;
     char linebuf[1024];
