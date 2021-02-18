@@ -27,7 +27,7 @@ static int dispatch(int sock, unsigned int mask, void *data) {
 	ssize_t len = recv(fd, buffer, sizeof(buffer) - 1, 0);
 	if (len > 0) {
 	    buffer[len] = '\0';
-	    parse_message(buffer);
+	    handle_message(buffer);
 	}
 	close(fd);
     }

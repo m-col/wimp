@@ -12,6 +12,21 @@
 #include "shell.h"
 #include "types.h"
 
+bool handle_do_action(char *command) {
+    char *s;
+
+    if (!strcasecmp(command, "to_region")) {
+	if ((s = strtok(NULL, " \t\n\r"))) {
+	    struct wlr_box box;
+	    if (wlr_box_from_str(s, &box)) {
+		to_region(&box);
+	    }
+	}
+	return true;
+    }
+    return false;
+}
+
 
 void shutdown(void *data) {
     wl_display_terminate(wimp.display);
@@ -446,4 +461,32 @@ void toggle_scratchpad(void *data) {
     } else {
 	wlr_log(WLR_DEBUG, "Launching scratchpad: %s", scratchpad->command);
     }
+}
+
+
+void to_region(void *data) {
+    struct wlr_box *box = (struct wlr_box *)data;
+    struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
+
+    struct motion motion = {
+	.dx = - (extents->width / 2) + (box->width / 2) + box->x,
+	.dy = - (extents->height / 2) + (box->height / 2) + box->y,
+	.is_percentage = false,
+    };
+    pan_desk(&motion);
+
+    double f;
+    if (extents->width / extents->height > box->width / box->height) {
+	f = wimp.current_desk->zoom / ((double)box->width / (double)extents->width);
+    } else {
+	f = wimp.current_desk->zoom / ((double)box->height / (double)extents->height);
+    }
+    double dz = 100 * f / wimp.current_desk->zoom - 100;
+    double cx = wimp.cursor->x;
+    double cy = wimp.cursor->y;
+    wimp.cursor->x = extents->width / 2;
+    wimp.cursor->y = extents->height / 2;
+    zoom(&dz);
+    wimp.cursor->x = cx;
+    wimp.cursor->y = cy;
 }

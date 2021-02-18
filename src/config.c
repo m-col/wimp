@@ -125,7 +125,7 @@ err:
 }
 
 
-static bool wlr_box_from_str(char* str, struct wlr_box *box) {
+bool wlr_box_from_str(char* str, struct wlr_box *box) {
     // turns e.g. 1920x1800+500+500 into a wlr_box
     char *w, *h, *x, *y;
     if (str) {
@@ -217,6 +217,23 @@ err:
 }
 
 
+static bool box_handler(struct binding *kb, char *data) {
+    char *geo;
+    if (!(geo = strtok(data, " \t\n\r"))) {
+	goto err;
+    }
+    struct wlr_box *box = calloc(1, sizeof(struct wlr_box));
+    if (!wlr_box_from_str(geo, box)) {
+	goto err;
+    }
+    kb->data = box;
+    return true;
+err:
+    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
+    return false;
+}
+
+
 static struct {
     const char *name;
     const action action;
@@ -239,6 +256,7 @@ static struct {
     { "maximize", &maximize, NULL },
     { "send_to_desk", &send_to_desk, &str_handler },
     { "scratchpad", &toggle_scratchpad, &scratchpad_handler },
+    { "to_region", &to_region, &box_handler },
 };
 
 
@@ -460,7 +478,7 @@ static void setup_vt_switching() {
 }
 
 
-void parse_message(char *message) {
+void handle_message(char *message) {
     char *s;
     if (!(s = strtok(message, " \t\n\r"))) {
 	return;
@@ -595,7 +613,9 @@ void parse_message(char *message) {
 
     // other non-empty, non-commented lines
     else {
-        wlr_log(WLR_ERROR, "Unknown command '%s'.", s);
+	if(!handle_do_action(s)) {
+	    wlr_log(WLR_ERROR, "Unknown command '%s'.", s);
+	}
     }
 }
 
@@ -655,7 +675,7 @@ void set_up_defaults(){
 	"bind Ctrl Escape shutdown",
     };
     for (size_t i = 0; i < sizeof(defaults) / sizeof(defaults[0]); i++) {
-	parse_message(defaults[i]);
+	handle_message(defaults[i]);
     }
     setup_vt_switching();
 }

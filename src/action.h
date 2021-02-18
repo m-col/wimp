@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+bool handle_do_action(char *command);
 void shutdown(void *data);
 void exec_command(void *data);
 void change_vt(void *data);
@@ -26,5 +27,6 @@ void halfimize(void *data);
 void maximize(void *data);
 void send_to_desk(void *data);
 void toggle_scratchpad(void *data);
+void to_region(void *data);
 
 #endif
