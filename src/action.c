@@ -78,11 +78,12 @@ void move_window(void *data) {
 	    return;
 	}
     }
+    double zoom = wimp.current_desk->zoom;
     struct wlr_box damage = {
-	.x = view->x,
-	.y = view->y,
-	.width = view->surface->geometry.width,
-	.height = view->surface->geometry.height,
+	.x = view->x * zoom,
+	.y = view->y * zoom,
+	.width = view->surface->geometry.width * zoom,
+	.height = view->surface->geometry.height * zoom,
     };
     struct motion motion = *(struct motion*)data;
     if (motion.dx > 0) {
