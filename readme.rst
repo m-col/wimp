@@ -57,6 +57,7 @@ I learned a lot (and copied some code) from:
  - `sway <https://github.com/swaywm/sway>`_
  - `dwl <https://github.com/djpohly/dwl>`_
  - `labwc <https://github.com/johanmalm/labwc>`_
+ - `cardboard <https://gitlab.com/cardboardwm/cardboard>`_
 
 With special thanks to the guys working on `wlroots
 <https://github.com/swaywm/wlroots>`_, upon which WIMP is built. Their TinyWL
