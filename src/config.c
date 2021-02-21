@@ -478,11 +478,8 @@ static void setup_vt_switching() {
 }
 
 
-void handle_message(char *message) {
-    char *s;
-    if (!(s = strtok(message, " \t\n\r"))) {
-	return;
-    }
+void handle_message(char *message, char *response) {
+    char *s = strtok(message, " \t\n\r");
 
     // desks <int>
     if (!strcasecmp(s, "desks")) {
@@ -614,7 +611,7 @@ void handle_message(char *message) {
     // other non-empty, non-commented lines
     else {
 	if(!handle_do_action(s)) {
-	    wlr_log(WLR_ERROR, "Unknown command '%s'.", s);
+	    sprintf(response, "Unknown command '%s'.", s);
 	}
     }
 }
@@ -675,7 +672,7 @@ void set_up_defaults(){
 	"bind Ctrl Escape shutdown",
     };
     for (size_t i = 0; i < sizeof(defaults) / sizeof(defaults[0]); i++) {
-	handle_message(defaults[i]);
+	handle_message(defaults[i], NULL);
     }
     setup_vt_switching();
 }

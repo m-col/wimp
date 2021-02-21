@@ -16,7 +16,8 @@ void close_ipc(const char *display) {
 
 
 static int dispatch(int sock, unsigned int mask, void *data) {
-    char buffer[1024];
+    char message[1024];
+    char response[1024] = {0};
 
     if (mask & WL_EVENT_READABLE) {
 	int fd = accept(sock, NULL, NULL);
@@ -24,10 +25,11 @@ static int dispatch(int sock, unsigned int mask, void *data) {
 	    wlr_log(WLR_ERROR, "Failed to accept connection from client.");
 	    return 0;
 	}
-	ssize_t len = recv(fd, buffer, sizeof(buffer) - 1, 0);
-	if (len > 0) {
-	    buffer[len] = '\0';
-	    handle_message(buffer);
+	ssize_t len = recv(fd, message, sizeof(message) - 1, 0);
+	message[len] = '\0';
+	handle_message(message, response);
+	if (response[0]) {
+	    send(fd, response, strlen(response), 0);
 	}
 	close(fd);
     }
