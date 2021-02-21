@@ -21,7 +21,7 @@ static int dispatch(int sock, unsigned int mask, void *data) {
     if (mask & WL_EVENT_READABLE) {
 	int fd = accept(sock, NULL, NULL);
 	if (fd == -1) {
-	    wlr_log(WLR_ERROR, "Failed accept connection from client.");
+	    wlr_log(WLR_ERROR, "Failed to accept connection from client.");
 	    return 0;
 	}
 	ssize_t len = recv(fd, buffer, sizeof(buffer) - 1, 0);
@@ -46,6 +46,7 @@ bool start_ipc(const char *display) {
     struct sockaddr_un addr;
     snprintf(addr.sun_path, sizeof(addr.sun_path), SOCKET_PATH, display);
     addr.sun_family = AF_UNIX;
+    unlink(addr.sun_path);
 
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
 	wlr_log(WLR_ERROR, "Failed to bind IPC socket.");
