@@ -40,30 +40,25 @@ static void process_cursor_move(uint32_t time, double zoom) {
 
 static void process_cursor_resize(uint32_t time, double zoom) {
     struct view *view = wimp.grabbed_view;
-    int x = wimp.grab_geobox.x;
-    int width = wimp.grab_geobox.width;
-    int y = wimp.grab_geobox.y;
-    int height = wimp.grab_geobox.height;
-
     double cx = (wimp.cursor->x - wimp.grab_x) / zoom;
     double cy = (wimp.cursor->y - wimp.grab_y) / zoom;
+    struct wlr_box new;
+    memcpy(&new, &wimp.grab_geobox, sizeof(struct wlr_box));
 
     if (wimp.resize_edges & WLR_EDGE_TOP) {
-	height -= cy - y;
-	y = cy;
+	new.height -= cy - new.y;
+	new.y = cy;
     } else if (wimp.resize_edges & WLR_EDGE_BOTTOM) {
-        height += cy - y;
+        new.height += cy - new.y;
     }
     if (wimp.resize_edges & WLR_EDGE_LEFT) {
-        width -= cx - x;
-	x = cx;
+        new.width -= cx - new.x;
+	new.x = cx;
     } else if (wimp.resize_edges & WLR_EDGE_RIGHT) {
-        width += cx - x;
+        new.width += cx - new.x;
     }
 
-    view->x = x;
-    view->y = y;
-    wlr_xdg_toplevel_set_size(view->surface, width, height);
+    view_apply_geometry(view, &new);
 }
 
 
