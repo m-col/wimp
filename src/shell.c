@@ -10,6 +10,10 @@
 
 
 void view_apply_geometry(struct view *view, struct wlr_box *new) {
+    if (new->width <= 0 || new->height <= 0) {
+	return;
+    }
+
     struct wlr_box old = {
 	.x = view->x,
 	.y = view->y,

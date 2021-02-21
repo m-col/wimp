@@ -26,6 +26,56 @@ struct render_data {
 };
 
 
+static void render_borders(
+    struct render_data *rdata, int x, int y, int width, int height
+) {
+    double border_width = ceil(wimp.current_desk->border_width * rdata->zoom);
+    int corner = CORNER * rdata->zoom;
+
+    struct wlr_output *output = rdata->output;
+    float *colour = rdata->is_focussed ?
+	wimp.current_desk->corner_focus : wimp.current_desk->corner_normal;
+
+    // edges including corners
+    struct wlr_box border = {
+	.x = x - border_width,
+	.y = y - border_width,
+	.width = width + border_width * 2,
+	.height = border_width,
+    };
+    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // N
+    border.y = y + height;
+    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // S
+    border.y = y - border_width;
+    border.width = border_width;
+    border.height = height + border_width * 2;
+    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // W
+    border.x = x + width;
+    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // E
+
+    // edges excluding corners
+    colour = rdata->is_focussed ?  wimp.current_desk->border_focus : wimp.current_desk->border_normal;
+    border.y += corner;
+    border.height -= corner * 2;
+    if (border.height > 0) {
+	wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // E
+	border.x = x - border_width;
+	wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // W
+    } else {
+	border.x = x - border_width;
+    }
+    border.y = y - border_width;
+    border.x += corner;
+    border.height = border_width;
+    border.width = width + border_width * 2 - corner * 2;
+    if (border.width > 0) {
+	wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // S
+	border.y = y + height;
+	wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix); // N
+    }
+}
+
+
 static void render_surface(
     struct wlr_surface *surface, int sx, int sy, void *data
 ) {
@@ -42,40 +92,8 @@ static void render_surface(
     int width = surface->current.width * output->scale * rdata->zoom;
     int height = surface->current.height * output->scale * rdata->zoom;
 
-    if (rdata->bordered == surface) {
-	if (wimp.current_desk->border_width > 0) {
-	    double border_width = ceil(wimp.current_desk->border_width * rdata->zoom);
-	    float *colour = rdata->is_focussed ?
-		wimp.current_desk->corner_focus : wimp.current_desk->corner_normal;
-	    struct wlr_box border = {
-		.x = x - border_width,
-		.y = y - border_width,
-		.width = width + border_width * 2,
-		.height = border_width,
-	    };
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.y = y + height;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.y = y - border_width;
-	    border.width = border_width;
-	    border.height = height + border_width * 2;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.x = x + width;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    colour = rdata->is_focussed ? wimp.current_desk->border_focus : wimp.current_desk->border_normal;
-	    border.y += CORNER;
-	    border.height -= CORNER * 2;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.x = x - border_width;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.y = y - border_width;
-	    border.x += CORNER;
-	    border.height = border_width;
-	    border.width = width + border_width * 2 - CORNER * 2;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	    border.y = y + height;
-	    wlr_render_rect(rdata->renderer, &border, colour, output->transform_matrix);
-	}
+    if (rdata->bordered == surface && wimp.current_desk->border_width > 0) {
+	render_borders(rdata, x, y, width, height);
     }
 
     struct wlr_box box = {
