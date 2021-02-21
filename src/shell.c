@@ -229,28 +229,7 @@ void unfullscreen() {
 
 static void on_commit(struct wl_listener *listener, void *data) {
     struct view *view = wl_container_of(listener, view, commit_listener);
-
-    struct wlr_box new;
-    wlr_xdg_surface_get_geometry(view->surface, &new);
-
-    if (new.width != view->width || new.height != view->height) {
-       struct wlr_box old = {
-           .x = view->x,
-           .y = view->x,
-           .width = view->width,
-           .height = view->height,
-       };
-       if (new.width > old.width || new.height > old.height) {
-           damage_box(&new, true);
-       } else if (new.width <= old.width || new.height <= old.height) {
-           damage_box(&old, true);
-       }
-       view->width = new.width;
-       view->height = new.height;
-
-    } else {
-       damage_by_view(view, false);
-    }
+    damage_by_view(view, false);
 }
 
 
