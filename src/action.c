@@ -12,23 +12,22 @@
 #include "shell.h"
 #include "types.h"
 
-bool handle_do_action(char *command) {
+
+void do_action(char *message, char *response) {
     char *s;
 
-    if (!strcasecmp(command, "to_region")) {
+    if (!strcasecmp(message, "to_region")) {
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    struct wlr_box box;
 	    if (wlr_box_from_str(s, &box)) {
 		to_region(&box);
 	    }
 	}
-	return true;
     }
-    return false;
 }
 
 
-void shutdown(void *data) {
+void terminate(void *data) {
     wl_display_terminate(wimp.display);
 }
 

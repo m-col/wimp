@@ -2,8 +2,10 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include "action.h"
 #include "config.h"
 #include "ipc.h"
+#include "keybind.h"
 
 #define SOCKET_PATH "/tmp/wimpy-sock-%s"
 
@@ -12,6 +14,26 @@ void close_ipc(const char *display) {
     char path[1024];
     snprintf(path, sizeof(path), SOCKET_PATH, display);
     unlink(path);
+}
+
+
+static void handle_message(char *message, char *response) {
+    char *s = strtok(message, " \t\n\r");
+
+    // set <option> <value>
+    if (!strcasecmp(s, "set")) {
+	set_configurable(s, response);
+    }
+
+    // bind [<modifiers>] <key> <action>
+    else if (!strcasecmp(s, "bind")) {
+	add_binding(s, response);
+    }
+
+    // <action> <data>
+    else {
+	do_action(message, response);
+    }
 }
 
 
@@ -35,6 +57,23 @@ static int dispatch(int sock, unsigned int mask, void *data) {
     }
 
     return 0;
+}
+
+
+void set_up_defaults(){
+    char defaults[][64] = {
+	"set desks 2",
+	"set desk 2 background #3e3e73",
+	"set desk 2 borders normal #31475c",
+	"set desk 2 corners normal #3e5973",
+	"set mark_indicator #47315c",
+	"set mod Logo",
+	"set vt_switching on",
+	"bind Ctrl Escape terminate",
+    };
+    for (size_t i = 0; i < sizeof(defaults) / sizeof(defaults[0]); i++) {
+	handle_message(defaults[i], NULL);
+    }
 }
 
 

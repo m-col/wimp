@@ -16,6 +16,9 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#define is_number(s) (strspn(s, "0123456789.-") == strlen(s))
+#define is_number_perc(s) (strspn(s, "0123456789.-%") == strlen(s))
+
 #define is_readable(p) (access(p, R_OK) != -1)
 #define is_executable(p) (access(p, R_OK | X_OK) != -1)
 

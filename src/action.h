@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-bool handle_do_action(char *command);
-void shutdown(void *data);
+void do_action(char *message, char *response);
+void terminate(void *data);
 void exec_command(void *data);
 void change_vt(void *data);
 void close_window(void *data);
