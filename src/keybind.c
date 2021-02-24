@@ -60,7 +60,6 @@ static bool dir_handler(struct binding *kb, char *data) {
 
 static bool str_handler(struct binding *kb, char *data) {
     if (!data) {
-	wlr_log(WLR_ERROR, "Command requires arguments.");
 	return false;
     }
     if (is_number(data)) {
@@ -77,18 +76,18 @@ static bool str_handler(struct binding *kb, char *data) {
 static bool motion_handler(struct binding *kb, char *data) {
     char *s;
     if (!data) {
-	goto err;
+	return false;
     }
 
     s = strtok(data, " \t\n\r");
     if (!is_number(s) || !data) {
-	goto err;
+	return false;
     }
     int x = atoi(s);
 
     s = strtok(NULL, " \t\n\r");
     if (!is_number(s)) {
-	goto err;
+	return false;
     }
     int y = atoi(s);
 
@@ -100,10 +99,6 @@ static bool motion_handler(struct binding *kb, char *data) {
     kb->data = calloc(1, sizeof(struct motion));
     *(struct motion *)(kb->data) = motion;
     return true;
-
-err:
-    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
-    return false;
 }
 
 
@@ -168,16 +163,16 @@ static bool scratchpad_handler(struct binding *kb, char *data) {
     char *geo, *command;
     struct wlr_box box;
     if (!data) {
-	goto err;
+	return false;
     }
     if (!(geo = strtok(data, " \t\n\r"))) {
-	goto err;
+	return false;
     }
     if (!(command = strtok(NULL, "\n\r"))) {
-	goto err;
+	return false;
     }
     if (!wlr_box_from_str(geo, &box)) {
-	goto err;
+	return false;
     }
 
     struct scratchpad *scratchpad = calloc(1, sizeof(struct scratchpad));
@@ -192,27 +187,20 @@ static bool scratchpad_handler(struct binding *kb, char *data) {
     *(int *)(kb->data) = _scratchpad_id;
     _scratchpad_id++;
     return true;
-
-err:
-    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
-    return false;
 }
 
 
 static bool box_handler(struct binding *kb, char *data) {
     char *geo;
     if (!(geo = strtok(data, " \t\n\r"))) {
-	goto err;
+	return false;
     }
     struct wlr_box *box = calloc(1, sizeof(struct wlr_box));
     if (!wlr_box_from_str(geo, box)) {
-	goto err;
+	return false;
     }
     kb->data = box;
     return true;
-err:
-    wlr_log(WLR_ERROR, "Command malformed/incomplete.");
-    return false;
 }
 
 
@@ -260,7 +248,7 @@ static struct {
 };
 
 
-static bool assign_action(const char *name, char *data, struct binding *kb) {
+static bool assign_action(const char *name, char *data, struct binding *kb, char * response) {
     kb->action = NULL;
     kb->data = NULL;
     size_t i;
@@ -289,6 +277,7 @@ static bool assign_action(const char *name, char *data, struct binding *kb) {
 		    kb->action = action_map[i].action;
 		    if (action_map[i].data_handler != NULL) {
 			if (!action_map[i].data_handler(kb, data)){
+			    sprintf(response, "Command malformed/incomplete.");
 			    return false;
 			}
 		    }
@@ -349,10 +338,10 @@ void add_binding(char *message, char *response) {
     // action
     s = strtok(NULL, " \t\n\r");
     if (!s) {
-	sprintf(response,  "Command malformed/incompleted.");
+	sprintf(response,  "Command malformed/incomplete.");
 	return;
     }
-    if (!assign_action(s, strtok(NULL, "\n\r"), kb)) {
+    if (!assign_action(s, strtok(NULL, "\n\r"), kb, response)) {
 	free(kb);
 	return;
     }
