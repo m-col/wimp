@@ -32,7 +32,9 @@ static void handle_message(char *message, char *response) {
 
     // <action> <data>
     else {
-	do_action(message, response);
+	if (!do_action(message, response)) {
+	    sprintf(response, "Sorry, I don't recognise that command.");
+	}
     }
 }
 

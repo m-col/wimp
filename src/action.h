@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-void do_action(char *message, char *response);
+bool do_action(char *message, char *response);
 void terminate(void *data);
 void exec_command(void *data);
 void change_vt(void *data);

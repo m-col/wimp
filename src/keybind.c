@@ -312,7 +312,7 @@ static void free_binding(struct binding *kb) {
 void add_binding(char *message, char *response) {
     char *s;
     if (!(s = strtok(NULL, " \t\n\r"))) {
-	sprintf(response, "What do you want to bind?.");
+	sprintf(response, "What do you want to bind?");
 	return;
     }
 

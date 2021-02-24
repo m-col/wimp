@@ -13,10 +13,12 @@
 #include "types.h"
 
 
-void do_action(char *message, char *response) {
+bool do_action(char *message, char *response) {
     char *s;
+    bool handled = false;
 
     if (!strcasecmp(message, "to_region")) {
+	handled = true;
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    struct wlr_box box;
 	    if (wlr_box_from_str(s, &box)) {
@@ -24,6 +26,8 @@ void do_action(char *message, char *response) {
 	    }
 	}
     }
+
+    return handled;
 }
 
 
