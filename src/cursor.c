@@ -11,6 +11,91 @@
 #include "shell.h"
 #include "types.h"
 
+#define SNAP_WIDTH 42
+
+
+void try_snap(struct view *view) {
+    double x = wimp.cursor->x;
+    double y = wimp.cursor->y;
+    struct wlr_box snap_to;
+    bool snap = false;
+    struct wlr_output *output = wlr_output_layout_output_at(wimp.output_layout, x, y);
+    struct wlr_box *outgeo = wlr_output_layout_get_box(wimp.output_layout, output);
+
+    if (x < SNAP_WIDTH) {
+	snap = true;
+	snap_to.x = outgeo->x;
+	snap_to.width = outgeo->width / 2;
+	if (y <= outgeo->height / 3) {
+	    snap_to.y = outgeo->y;
+	    snap_to.height = outgeo->height / 2;
+	} else if (y <= 2 * outgeo->height / 3) {
+	    snap_to.y = outgeo->y;
+	    snap_to.height = outgeo->height;
+	} else {
+	    snap_to.y = outgeo->y + outgeo->height / 2;
+	    snap_to.height = outgeo->height / 2;
+	}
+    }
+
+    else if (x > outgeo->width - SNAP_WIDTH) {
+	snap = true;
+	snap_to.x = outgeo->width / 2;
+	snap_to.width = outgeo->width / 2;
+	if (y <= outgeo->height / 3) {
+	    snap_to.y = outgeo->y;
+	    snap_to.height = outgeo->height / 2;
+	} else if (y <= 2 * outgeo->height / 3) {
+	    snap_to.y = outgeo->y;
+	    snap_to.height = outgeo->height;
+	} else {
+	    snap_to.y = outgeo->y + outgeo->height / 2;
+	    snap_to.height = outgeo->height / 2;
+	}
+    }
+
+    else if (y < SNAP_WIDTH) {
+	snap = true;
+	snap_to.y = outgeo->y;
+	snap_to.height = outgeo->height / 2;
+	if (x <= outgeo->width / 3) {
+	    snap_to.x = outgeo->x;
+	    snap_to.width = outgeo->width / 2;
+	} else if (x < 2 * outgeo->width / 3) {
+	    snap_to.x = outgeo->x;
+	    snap_to.width = outgeo->width;
+	} else {
+	    snap_to.x = outgeo->x + outgeo->width / 2;
+	    snap_to.width = outgeo->width / 2;
+	}
+    }
+
+    else if (y > outgeo->height - SNAP_WIDTH) {
+	snap = true;
+	snap_to.y = outgeo->height / 2;
+	snap_to.height = outgeo->height / 2;
+	if (x <= outgeo->width / 3) {
+	    snap_to.x = outgeo->x;
+	    snap_to.width = outgeo->width / 2;
+	} else if (x <= 2 * outgeo->width / 3) {
+	    snap_to.x = outgeo->x;
+	    snap_to.width = outgeo->width;
+	} else {
+	    snap_to.x = outgeo->x + outgeo->width / 2;
+	    snap_to.width = outgeo->width / 2;
+	}
+    }
+
+    if (snap) {
+	int border_width = wimp.current_desk->border_width;
+	snap_to.x += border_width;
+	snap_to.y += border_width;
+	snap_to.width -= border_width * 2;
+	snap_to.height -= border_width * 2;
+	view_apply_geometry(view, &snap_to);
+    }
+}
+
 
 void centre_cursor() {
     struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
@@ -329,6 +414,7 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	    wimp.cursor_mode = CURSOR_PASSTHROUGH;
 	}
 	if (wimp.grabbed_view) {
+	    try_snap(wimp.grabbed_view);
 	    wimp.grabbed_view = NULL;
 	}
     }
