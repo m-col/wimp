@@ -290,7 +290,7 @@ static bool assign_action(const char *name, char *data, struct binding *kb, char
 }
 
 
-static void free_binding(struct binding *kb) {
+void free_binding(struct binding *kb) {
     if (kb->data)
 	free(kb->data);
     wl_list_remove(&kb->link);

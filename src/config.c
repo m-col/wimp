@@ -95,7 +95,12 @@ static void set_wallpaper(struct desk *desk, char *wallpaper) {
 
 
 static void disable_vt_switching() {
-    // TODO
+    struct binding *kb, *tmp;
+    wl_list_for_each_safe(kb, tmp, &wimp.key_bindings, link) {
+	if (kb->action == &change_vt) {
+	    free_binding(kb);
+	}
+    }
 }
 
 
