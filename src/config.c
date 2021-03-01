@@ -20,18 +20,29 @@
 
 
 void assign_colour(char *hex, float dest[4]) {
-    if (strlen(hex) != 7 || hex[0] != '#') {
+    if (!hex) {
+	return;
+    }
+    if (hex[0] == '#') {
+	hex++;
+    }
+
+    char c[2];
+    int copy;
+    if (strlen(hex) == 6) {
+	dest[3] = 1;
+	copy = 3;
+    } else if (strlen(hex) == 8) {
+	copy = 4;
+    } else {
 	wlr_log(WLR_INFO, "Invalid colour: %s. Should be in the form #rrggbb.", hex);
 	return;
     }
-    hex++;
 
-    char c[2];
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < copy; i++) {
 	strncpy(c, &hex[i * 2], 2);
 	dest[i] = (float)strtol(c, NULL, 16) / 255;
     }
-    dest[3] = 1;
 }
 
 
