@@ -395,8 +395,17 @@ static void on_cursor_motion(struct wl_listener *listener, void *data){
 
 static void on_cursor_motion_absolute(struct wl_listener *listener, void *data) {
     struct wlr_event_pointer_motion_absolute *event = data;
-    wlr_cursor_warp_absolute(wimp.cursor, event->device, event->x, event->y);
-    process_cursor_motion(event->time_msec, 0, 0);
+    double lx, ly;
+    wlr_cursor_absolute_to_layout_coords(
+	wimp.cursor, event->device, event->x, event->y, &lx, &ly
+    );
+
+    struct wlr_event_pointer_motion relative = {
+	.device = event->device,
+	.delta_x = lx - wimp.cursor->x,
+	.delta_y = ly - wimp.cursor->y,
+    };
+    on_cursor_motion(NULL, &relative);
 }
 
 
