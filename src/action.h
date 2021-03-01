@@ -21,7 +21,7 @@ void zoom_pinch_begin(void *data);
 void set_mark(void *data);
 void actually_set_mark(const xkb_keysym_t sym);
 void go_to_mark(void *data);
-void actually_go_to_mark(const xkb_keysym_t sym);
+void actually_go_to_mark(void *data);
 void toggle_fullscreen(void *data);
 void halfimize(void *data);
 void maximize(void *data);

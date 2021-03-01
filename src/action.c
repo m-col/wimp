@@ -289,6 +289,22 @@ void actually_set_mark(const xkb_keysym_t sym) {
 
     mark = wl_container_of(wimp.marks.next, mark, link);
     mark->key = sym;
+
+    if (wimp.bind_marks) {
+	struct binding *kb, *tmp;
+	wl_list_for_each_safe(kb, tmp, &wimp.key_bindings, link) {
+	    if (kb->key == sym && kb->mods == 0) {
+		return;
+	    }
+	}
+	kb = calloc(1, sizeof(struct binding));
+	kb->mods = 0;
+	kb->key = sym;
+	kb->data = calloc(1, sizeof(xkb_keysym_t));
+	kb->action = &actually_go_to_mark;
+	*(xkb_keysym_t *)(kb->data) = sym;
+	wl_list_insert(&wimp.key_bindings, &kb->link);
+    }
 }
 
 
@@ -298,7 +314,8 @@ void go_to_mark(void *data) {
 }
 
 
-void actually_go_to_mark(const xkb_keysym_t sym) {
+void actually_go_to_mark(void *data) {
+    const xkb_keysym_t sym = *(xkb_keysym_t *)data;
     struct mark *mark;
 
     if (sym == XKB_KEY_Escape) {

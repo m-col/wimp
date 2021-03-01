@@ -59,6 +59,7 @@ struct wimp {
     struct wl_list marks;
     bool mark_waiting;
     struct mark_indicator mark_indicator;
+    bool bind_marks;
 
     struct wlr_xdg_decoration_manager_v1 *decoration_manager;
     struct wl_listener decoration_listener;

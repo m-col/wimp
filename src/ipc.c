@@ -72,6 +72,7 @@ void set_up_defaults(){
 	"set snap_box 47315c66",
 	"set mod Logo",
 	"set vt_switching on",
+	"set bind_marks on",
 	"bind Ctrl Escape terminate",
     };
     for (size_t i = 0; i < sizeof(defaults) / sizeof(defaults[0]); i++) {

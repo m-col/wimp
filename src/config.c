@@ -240,9 +240,18 @@ void set_configurable(char *message, char *response) {
 	    wimp.reverse_scrolling = true;
     }
 
-    // e.g.: set_modifier logo
+    // mod <modifier>
     else if (!strcasecmp(s, "mod")) {
 	set_mod(message, response);
+    }
+
+    // bind_marks [on|off]
+    else if (!strcasecmp(s, "bind_marks")) {
+	s = strtok(NULL, " \t\n\r");
+	if (!strcasecmp(s, "off"))
+	    wimp.bind_marks = false;
+	else if (!strcasecmp(s, "on"))
+	    wimp.bind_marks = true;
     }
 
     // auto_focus [on|off]

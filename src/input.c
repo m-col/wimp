@@ -76,7 +76,7 @@ static void on_key(struct wl_listener *listener, void *data) {
 	    xkb_state_key_get_syms(wlr_kb->xkb_state, keycode, &syms);
 	    mark = wl_container_of(wimp.marks.next, mark, link);
 	    if (mark->key) {
-		actually_go_to_mark(syms[0]);
+		actually_go_to_mark((void *)&syms[0]);
 	    } else {
 		actually_set_mark(syms[0]);
 	    }
