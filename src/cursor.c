@@ -432,10 +432,11 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	if (wimp.grabbed_view) {
 	    if (try_snap()) {
 		int border_width = wimp.current_desk->border_width;
-		wimp.snap_geobox.x += border_width;
-		wimp.snap_geobox.y += border_width;
-		wimp.snap_geobox.width -= border_width * 2;
-		wimp.snap_geobox.height -= border_width * 2;
+		double zoom = wimp.current_desk->zoom;
+		wimp.snap_geobox.x = (wimp.snap_geobox.x + border_width) / zoom;
+		wimp.snap_geobox.y = (wimp.snap_geobox.y + border_width) / zoom;
+		wimp.snap_geobox.width = (wimp.snap_geobox.width - border_width * 2) / zoom;
+		wimp.snap_geobox.height = (wimp.snap_geobox.height - border_width * 2) / zoom;
 		view_apply_geometry(wimp.grabbed_view, &wimp.snap_geobox);
 	    }
 	    wimp.grabbed_view = NULL;
