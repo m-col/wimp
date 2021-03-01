@@ -201,6 +201,11 @@ void set_configurable(char *message, char *response) {
 	wimp.mark_indicator.box.y = 0;
     }
 
+    // snap_box #rrggbb
+    else if (!strcasecmp(s, "snap_box")) {
+	assign_colour(strtok(NULL, " \t\n\r"), wimp.snapbox_colour);
+    }
+
     // vt_switching [off|on]
     else if (!strcasecmp(s, "vt_switching")) {
 	s = strtok(NULL, " \t\n\r");
@@ -210,7 +215,7 @@ void set_configurable(char *message, char *response) {
 	    setup_vt_switching();
     }
 
-    // scroll_direciton [natural|reverse]
+    // scroll_direction [natural|reverse]
     else if (!strcasecmp(s, "scroll_direction")) {
 	s = strtok(NULL, " \t\n\r");
 	if (!strcasecmp(s, "natural"))

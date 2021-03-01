@@ -255,7 +255,7 @@ static void on_frame(struct wl_listener *listener, void *data) {
     // paint snap box
     if (wimp.can_snap) {
 	wlr_render_rect(
-	    renderer, &wimp.snap_geobox, wimp.mark_indicator.colour,
+	    renderer, &wimp.snap_geobox, wimp.snapbox_colour,
 	    output->wlr_output->transform_matrix
 	);
     }

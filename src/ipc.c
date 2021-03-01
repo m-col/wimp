@@ -69,6 +69,7 @@ void set_up_defaults(){
 	"set desk 2 borders normal #31475c",
 	"set desk 2 corners normal #3e5973",
 	"set mark_indicator #47315c",
+	"set snap_box #47315c",
 	"set mod Logo",
 	"set vt_switching on",
 	"bind Ctrl Escape terminate",

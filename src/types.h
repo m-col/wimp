@@ -114,6 +114,7 @@ struct wimp {
 
     bool can_snap;
     struct wlr_box snap_geobox;
+    float snapbox_colour[4];
 
     struct wl_list scratchpads;
     pid_t scratchpad_waiting;
