@@ -26,9 +26,11 @@ Using WIMP
 WIMP can be called directly from a TTY as ``wimp``. I recommend writing a small
 script to set up the session's environment and ``exec wimp``.
 
-WIMP looks for a configuration file first at ``$XDG_CONFIG_HOME/wimp/config``
-then ``$HOME/.config/wimp/config``. An example configuration file is provided
-and also serves as a reference of all possible settings and actions.
+WIMP looks for a startup script first at ``$XDG_CONFIG_HOME/wimp/startup`` then
+``$HOME/.config/wimp/startup``. This script is executed once the compositor has
+started up and can be used to configure wimp via ``wimptool`` and launch any
+startup programs. An example startup script is provided and also serves as a
+reference of all possible options and actions.
 
 Users migrating from X may find `arewewaylandyet.com
 <https://arewewaylandyet.com/>`_ and `this page
