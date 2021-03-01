@@ -17,7 +17,75 @@ bool do_action(char *message, char *response) {
     char *s;
     bool handled = false;
 
-    if (!strcasecmp(message, "to_region")) {
+    if (!strcasecmp(message, "terminate")) {
+	handled = true;
+	terminate(NULL);
+    }
+
+    else if (!strcasecmp(message, "exec")) {
+	handled = true;
+	if ((s = strtok(NULL, "\n\r"))) {
+	    exec_command(s);
+	}
+    }
+
+    else if (!strcasecmp(message, "change_vt")) {
+	handled = true;
+	if ((s = strtok(NULL, " \t\n\r"))) {
+	    int vt = strtod(s, NULL);
+	    if (vt && 0 < vt && vt <= 12) {
+		change_vt(&vt);
+	    } else {
+		sprintf(response, "Expected a number from 1 to 12");
+	    }
+	}
+    }
+
+    else if (!strcasecmp(message, "close_window")) {
+	handled = true;
+	close_window(NULL);
+    }
+
+    else if (!strcasecmp(message, "move_window")) {
+	handled = true;
+	char *x, *y;
+	if (
+	    (x = strtok(NULL, " \t\n\r")) && (y = strtok(NULL, " \t\n\r"))
+	    && is_number_perc(x) && is_number_perc(y)
+	    && (is_number(x) == is_number(y))
+	) {
+	    struct motion motion;
+	    if (is_number(x)) {
+		motion.dx = atoi(x);
+		motion.dy = atoi(y);
+		motion.is_percentage = false;
+		move_window(&motion);
+	    } else {
+		if ((x = strtok(x, "%")) && (y = strtok(y, "%"))) {
+		    motion.dx = atoi(x);
+		    motion.dy = atoi(y);
+		    motion.is_percentage = true;
+		    move_window(&motion);
+		} else {
+		    sprintf(response, "Expected args in the form of 'x y' or 'x%% y%%'");
+		}
+	    }
+	} else {
+	    sprintf(response, "Expected args in the form of 'x y' or 'x%% y%%'");
+	}
+    }
+
+    else if (!strcasecmp(message, "focus_in_direction")) {
+	handled = true;
+	if ((s = strtok(NULL, " \t\n\r"))) {
+	    struct wlr_box box;
+	    if (wlr_box_from_str(s, &box)) {
+		to_region(&box);
+	    }
+	}
+    }
+
+    else if (!strcasecmp(message, "to_region")) {
 	handled = true;
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    struct wlr_box box;
@@ -51,7 +119,7 @@ void exec_command(void *data) {
 
 
 void change_vt(void *data) {
-    unsigned vt = *(unsigned*)data;
+    unsigned vt = *(unsigned *)data;
     struct wlr_session *session = wlr_backend_get_session(wimp.backend);
     wlr_session_change_vt(session, vt);
 }
