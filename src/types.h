@@ -112,6 +112,9 @@ struct wimp {
     double zoom_min, zoom_max;
     bool auto_focus;
 
+    bool can_snap;
+    struct wlr_box snap_geobox;
+
     struct wl_list scratchpads;
     pid_t scratchpad_waiting;
 };

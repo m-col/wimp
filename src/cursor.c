@@ -14,16 +14,16 @@
 #define SNAP_WIDTH 42
 
 
-void try_snap(struct view *view) {
+bool try_snap() {
     double x = wimp.cursor->x;
     double y = wimp.cursor->y;
     struct wlr_box snap_to;
-    bool snap = false;
+    bool can_snap = false;
     struct wlr_output *output = wlr_output_layout_output_at(wimp.output_layout, x, y);
     struct wlr_box *outgeo = wlr_output_layout_get_box(wimp.output_layout, output);
 
     if (x < SNAP_WIDTH) {
-	snap = true;
+	can_snap = true;
 	snap_to.x = outgeo->x;
 	snap_to.width = outgeo->width / 2;
 	if (y <= outgeo->height / 3) {
@@ -39,7 +39,7 @@ void try_snap(struct view *view) {
     }
 
     else if (x > outgeo->width - SNAP_WIDTH) {
-	snap = true;
+	can_snap = true;
 	snap_to.x = outgeo->width / 2;
 	snap_to.width = outgeo->width / 2;
 	if (y <= outgeo->height / 3) {
@@ -55,7 +55,7 @@ void try_snap(struct view *view) {
     }
 
     else if (y < SNAP_WIDTH) {
-	snap = true;
+	can_snap = true;
 	snap_to.y = outgeo->y;
 	snap_to.height = outgeo->height / 2;
 	if (x <= outgeo->width / 3) {
@@ -71,7 +71,7 @@ void try_snap(struct view *view) {
     }
 
     else if (y > outgeo->height - SNAP_WIDTH) {
-	snap = true;
+	can_snap = true;
 	snap_to.y = outgeo->height / 2;
 	snap_to.height = outgeo->height / 2;
 	if (x <= outgeo->width / 3) {
@@ -86,14 +86,8 @@ void try_snap(struct view *view) {
 	}
     }
 
-    if (snap) {
-	int border_width = wimp.current_desk->border_width;
-	snap_to.x += border_width;
-	snap_to.y += border_width;
-	snap_to.width -= border_width * 2;
-	snap_to.height -= border_width * 2;
-	view_apply_geometry(view, &snap_to);
-    }
+    wimp.snap_geobox = snap_to;
+    return can_snap;
 }
 
 
@@ -346,6 +340,9 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 		};
 		wimp.on_mouse_motion(&motion);
 	    }
+	    if (wimp.grabbed_view) {
+		wimp.can_snap = try_snap();
+	    }
 	    break;
 
 	case CURSOR_MOVE:
@@ -414,8 +411,16 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	    wimp.cursor_mode = CURSOR_PASSTHROUGH;
 	}
 	if (wimp.grabbed_view) {
-	    try_snap(wimp.grabbed_view);
+	    if (try_snap()) {
+		int border_width = wimp.current_desk->border_width;
+		wimp.snap_geobox.x += border_width;
+		wimp.snap_geobox.y += border_width;
+		wimp.snap_geobox.width -= border_width * 2;
+		wimp.snap_geobox.height -= border_width * 2;
+		view_apply_geometry(wimp.grabbed_view, &wimp.snap_geobox);
+	    }
 	    wimp.grabbed_view = NULL;
+	    wimp.can_snap = false;
 	}
     }
 

@@ -252,6 +252,14 @@ static void on_frame(struct wl_listener *listener, void *data) {
 	);
     }
 
+    // paint snap box
+    if (wimp.can_snap) {
+	wlr_render_rect(
+	    renderer, &wimp.snap_geobox, wimp.mark_indicator.colour,
+	    output->wlr_output->transform_matrix
+	);
+    }
+
     wlr_output_render_software_cursors(output->wlr_output, NULL);  // no-op with HW cursors
     wlr_renderer_end(renderer);
     wlr_output_commit(output->wlr_output);
