@@ -358,7 +358,7 @@ static void process_cursor_motion(uint32_t time, double dx, double dy) {
 
 static void on_cursor_motion(struct wl_listener *listener, void *data){
     struct wlr_event_pointer_motion *event = data;
-    if (wimp.grabbed_view) {
+    if (wimp.resize_edges) {
 	if (wimp.resize_edges & WLR_EDGE_TOP) {
 	    if (wimp.grabbed_view->surface->geometry.height <= CORNER && event->delta_y > 0) {
 		event->delta_y = 0;
@@ -378,7 +378,17 @@ static void on_cursor_motion(struct wl_listener *listener, void *data){
 	    }
 	}
     }
+
+    double x = wimp.cursor->x;
+    double y = wimp.cursor->y;
     wlr_cursor_move(wimp.cursor, event->device, event->delta_x, event->delta_y);
+    if (x == wimp.cursor->x) {
+	event->delta_x = 0;
+    }
+    if (y == wimp.cursor->y) {
+	event->delta_y = 0;
+    }
+
     process_cursor_motion(event->time_msec, event->delta_x, event->delta_y);
 }
 
@@ -421,6 +431,7 @@ static void on_cursor_button(struct wl_listener *listener, void *data) {
 	    }
 	    wimp.grabbed_view = NULL;
 	    wimp.can_snap = false;
+	    wimp.resize_edges = 0;
 	}
     }
 
