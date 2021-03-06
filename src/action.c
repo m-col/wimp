@@ -15,22 +15,19 @@
 
 bool do_action(char *message, char *response) {
     char *s;
-    bool handled = false;
+    bool handled = true;
 
     if (!strcasecmp(message, "terminate")) {
-	handled = true;
 	terminate(NULL);
     }
 
     else if (!strcasecmp(message, "exec")) {
-	handled = true;
 	if ((s = strtok(NULL, "\n\r"))) {
 	    exec_command(s);
 	}
     }
 
     else if (!strcasecmp(message, "change_vt")) {
-	handled = true;
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    int vt = strtod(s, NULL);
 	    if (vt && 0 < vt && vt <= 12) {
@@ -42,12 +39,10 @@ bool do_action(char *message, char *response) {
     }
 
     else if (!strcasecmp(message, "close_window")) {
-	handled = true;
 	close_window(NULL);
     }
 
     else if (!strcasecmp(message, "move_window")) {
-	handled = true;
 	char *x, *y;
 	if (
 	    (x = strtok(NULL, " \t\n\r")) && (y = strtok(NULL, " \t\n\r"))
@@ -76,7 +71,6 @@ bool do_action(char *message, char *response) {
     }
 
     else if (!strcasecmp(message, "focus_in_direction")) {
-	handled = true;
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    struct wlr_box box;
 	    if (wlr_box_from_str(s, &box)) {
@@ -85,14 +79,25 @@ bool do_action(char *message, char *response) {
 	}
     }
 
+    else if (!strcasecmp(message, "next_desk")) {
+	next_desk(NULL);
+    }
+
+    else if (!strcasecmp(message, "prev_desk")) {
+	prev_desk(NULL);
+    }
+
     else if (!strcasecmp(message, "to_region")) {
-	handled = true;
 	if ((s = strtok(NULL, " \t\n\r"))) {
 	    struct wlr_box box;
 	    if (wlr_box_from_str(s, &box)) {
 		to_region(&box);
 	    }
 	}
+    }
+
+    else {
+	handled = false;
     }
 
     return handled;
