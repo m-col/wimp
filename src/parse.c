@@ -6,7 +6,7 @@
 
 /* To get the length of these arrays we need to calculate that before passing
  * them to the getter so the macro in the header hides this. */
-int _get(struct value_map *values, const int len, const char *name) {
+int _get(struct dict *values, const int len, const char *name) {
     for (int i = 0; i < len; i++) {
 	if (strcasecmp(values[i].name, name) == 0)
 	    return values[i].value;
@@ -15,7 +15,7 @@ int _get(struct value_map *values, const int len, const char *name) {
 }
 
 
-bool wlr_box_from_str(char* str, struct wlr_box *box) {
+static bool wlr_box_from_str(char* str, struct wlr_box *box) {
     // turns e.g. 1920x1800+500+500 into a wlr_box
     char *w, *h, *x, *y;
     if (str) {
@@ -69,7 +69,7 @@ bool wlr_box_from_str(char* str, struct wlr_box *box) {
 }
 
 
-static struct value_map dirs[] = {
+static struct dict dirs[] = {
     { "up", UP },
     { "right", RIGHT },
     { "down", DOWN },

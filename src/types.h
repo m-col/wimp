@@ -193,7 +193,6 @@ struct binding {
     enum wlr_keyboard_modifier mods;
     uint32_t key;
     action action;
-    action begin;
     void *data;
 };
 
@@ -237,7 +236,7 @@ struct scratchpad {
     struct wlr_box geo; // negative values represent a percentage of the output's geometry
 };
 
-struct value_map {
+struct dict {
     const char *name;
     const int value;
 };

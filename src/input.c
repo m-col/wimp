@@ -45,7 +45,7 @@ static void on_modifier(struct wl_listener *listener, void *data) {
 			break;
 		    case PINCH:
 			wimp.on_pinch = kb->action;
-			wimp.on_pinch_begin = kb->begin;
+			wimp.on_pinch_begin = *(action* )kb->data;
 			break;
 		}
 		wimp.cursor_mode = CURSOR_MOD;

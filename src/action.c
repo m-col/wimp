@@ -8,108 +8,145 @@
 #include "cursor.h"
 #include "desk.h"
 #include "output.h"
+#include "parse.h"
 #include "scratchpad.h"
 #include "shell.h"
 #include "types.h"
 
 
-bool do_action(char *message, char *response) {
-    char *s;
-    bool handled = true;
+static void terminate(void *data);
+static void exec_command(void *data);
+static void close_window(void *data);
+static void move_window(void *data);
+static void focus_in_direction(void *data);
+static void next_desk(void *data);
+static void prev_desk(void *data);
+static void reset_zoom(void *data);
+static void zoom(void *data);
+static void set_mark(void *data);
+static void go_to_mark(void *data);
+static void halfimize(void *data);
+static void maximize(void *data);
+static void send_to_desk(void *data);
+static void toggle_scratchpad(void *data);
+static void to_region(void *data);
+static void zoom_pinch(void *data);
+static void zoom_pinch_begin(void *data);
+static void zoom_scroll(void *data);
 
-    if (!strcasecmp(message, "terminate")) {
-	terminate(NULL);
-    }
 
-    else if (!strcasecmp(message, "exec")) {
-	if ((s = strtok(NULL, "\n\r"))) {
-	    exec_command(s);
-	}
-    }
+static struct {
+    const char *name;
+    const action action;
+    const action begin;
+} pinch_map[] = {
+    { "zoom", &zoom_pinch, &zoom_pinch_begin },
+};
 
-    else if (!strcasecmp(message, "change_vt")) {
-	if ((s = strtok(NULL, " \t\n\r"))) {
-	    int vt = strtod(s, NULL);
-	    if (vt && 0 < vt && vt <= 12) {
-		change_vt(&vt);
-	    } else {
-		sprintf(response, "Expected a number from 1 to 12");
-	    }
-	}
-    }
 
-    else if (!strcasecmp(message, "close_window")) {
-	close_window(NULL);
-    }
+static struct {
+    const char *name;
+    const action action;
+} scroll_map[] = {
+    { "zoom", &zoom_scroll },
+    { "pan_desk", &pan_desk },
+};
 
-    else if (!strcasecmp(message, "move_window")) {
-	char *x, *y;
-	if (
-	    (x = strtok(NULL, " \t\n\r")) && (y = strtok(NULL, " \t\n\r"))
-	    && is_number_perc(x) && is_number_perc(y)
-	    && (is_number(x) == is_number(y))
-	) {
-	    struct motion motion;
-	    if (is_number(x)) {
-		motion.dx = atoi(x);
-		motion.dy = atoi(y);
-		motion.is_percentage = false;
-		move_window(&motion);
-	    } else {
-		if ((x = strtok(x, "%")) && (y = strtok(y, "%"))) {
-		    motion.dx = atoi(x);
-		    motion.dy = atoi(y);
-		    motion.is_percentage = true;
-		    move_window(&motion);
-		} else {
-		    sprintf(response, "Expected args in the form of 'x y' or 'x%% y%%'");
+
+static struct {
+    const char *name;
+    const action action;
+    bool (*data_handler)(void **data, char *args);
+} action_map[] = {
+    { "terminate", &terminate, NULL },
+    { "exec", &exec_command, &str_handler },
+    { "close_window", &close_window, NULL },
+    { "move_window", &move_window, NULL },
+    { "focus", &focus_in_direction, &dir_handler },
+    { "next_desk", &next_desk, NULL },
+    { "prev_desk", &prev_desk, NULL },
+    { "pan_desk", &pan_desk, &motion_handler },
+    { "reset_zoom", &reset_zoom, NULL },
+    { "zoom", &zoom, &str_handler },
+    { "set_mark", &set_mark, NULL },
+    { "go_to_mark", &go_to_mark, NULL },
+    { "toggle_fullscreen", &toggle_fullscreen, NULL },
+    { "halfimize", &halfimize, &dir_handler },
+    { "maximize", &maximize, NULL },
+    { "send_to_desk", &send_to_desk, &str_handler },
+    { "scratchpad", &toggle_scratchpad, &scratchpad_handler },
+    { "to_region", &to_region, &box_handler },
+};
+
+
+bool get_action(
+    char *name, action *found, char *args, void **data, char *response, int flag
+) {
+    // flag can be PINCH or SCROLL to access their actions, otherwise neither
+    *data = NULL;
+    size_t i;
+
+    switch (flag) {
+	case PINCH:
+	    for (i = 0; i < sizeof(pinch_map) / sizeof(pinch_map[0]); i++) {
+		if (strcmp(pinch_map[i].name, name) == 0) {
+		    *found = pinch_map[i].action;
+		    action begin = pinch_map[i].begin;
+		    *data = calloc(1, sizeof(action));
+		    *(action *)(*data) = begin;
+		    return true;
 		}
 	    }
-	} else {
-	    sprintf(response, "Expected args in the form of 'x y' or 'x%% y%%'");
-	}
-    }
+	    break;
 
-    else if (!strcasecmp(message, "focus_in_direction")) {
-	if ((s = strtok(NULL, " \t\n\r"))) {
-	    struct wlr_box box;
-	    if (wlr_box_from_str(s, &box)) {
-		to_region(&box);
+	case SCROLL:
+	    for (i = 0; i < sizeof(scroll_map) / sizeof(scroll_map[0]); i++) {
+		if (strcmp(scroll_map[i].name, name) == 0) {
+		    *found = scroll_map[i].action;
+		    return true;
+		}
 	    }
-	}
-    }
+	    break;
 
-    else if (!strcasecmp(message, "next_desk")) {
-	next_desk(NULL);
-    }
+	default:
+	    for (i = 0; i < sizeof(action_map) / sizeof(action_map[0]); i++) {
+		if (strcmp(action_map[i].name, name) == 0) {
+		    *found = action_map[i].action;
 
-    else if (!strcasecmp(message, "prev_desk")) {
-	prev_desk(NULL);
-    }
+		    if (action_map[i].data_handler != NULL) {
+			if (!action_map[i].data_handler(data, args)) {
+			    sprintf(response, "Command malformed/incomplete.");
+			    return false;
+			}
+		    }
 
-    else if (!strcasecmp(message, "to_region")) {
-	if ((s = strtok(NULL, " \t\n\r"))) {
-	    struct wlr_box box;
-	    if (wlr_box_from_str(s, &box)) {
-		to_region(&box);
+		    return true;
+		}
 	    }
-	}
     }
 
-    else {
-	handled = false;
-    }
-
-    return handled;
+    return false;
 }
 
 
-void terminate(void *data) {
+bool do_action(char *message, char *response) {
+    void *data;
+    action action;
+    if (get_action(message, &action, strtok(NULL, "\n\r"), &data, response, 0)) {
+	(*action)(data);
+	return true;
+    } else {
+	return false;
+    }
+}
+
+
+static void terminate(void *data) {
     wl_display_terminate(wimp.display);
 }
 
 
-void exec_command(void *data) {
+static void exec_command(void *data) {
     pid_t pid = fork();
     if (pid == 0) {
 	if (execl("/bin/sh", "/bin/sh", "-c", data, (void *)NULL) == -1) {
@@ -130,7 +167,7 @@ void change_vt(void *data) {
 }
 
 
-void close_window(void *data) {
+static void close_window(void *data) {
     struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
     if (surface) {
 	struct wlr_xdg_surface *xdg_surface = surface->role_data;
@@ -141,7 +178,7 @@ void close_window(void *data) {
 }
 
 
-void move_window(void *data) {
+static void move_window(void *data) {
     struct view *view;
     if (wimp.grabbed_view) {
 	view = wimp.grabbed_view;
@@ -180,7 +217,7 @@ void move_window(void *data) {
 }
 
 
-void focus_in_direction(void *data) {
+static void focus_in_direction(void *data) {
     if (wl_list_empty(&wimp.current_desk->views)) {
 	return;
     }
@@ -226,7 +263,7 @@ void focus_in_direction(void *data) {
 }
 
 
-void next_desk(void *data) {
+static void next_desk(void *data) {
     struct desk *desk;
     if (wimp.current_desk->index + 1 == wimp.desk_count) {
 	desk = wl_container_of(wimp.desks.next, desk, link);
@@ -237,7 +274,7 @@ void next_desk(void *data) {
 }
 
 
-void prev_desk(void *data) {
+static void prev_desk(void *data) {
     struct desk *desk;
     if (wimp.current_desk->index == 0) {
 	desk = wl_container_of(wimp.desks.prev, desk, link);
@@ -270,7 +307,7 @@ void pan_desk(void *data) {
 }
 
 
-void zoom(void *data) {
+static void zoom(void *data) {
     /* Passed value (data) is the percentage step (+ve or -ve) */
     struct desk *desk = wimp.current_desk;
     double f = 1 + (*(double*)data / 100);
@@ -296,13 +333,13 @@ void zoom(void *data) {
 }
 
 
-void reset_zoom(void *data) {
+static void reset_zoom(void *data) {
     double dz = 100 * 1 / wimp.current_desk->zoom - 100;
     zoom(&dz);
 }
 
 
-void zoom_scroll(void *data) {
+static void zoom_scroll(void *data) {
     struct motion motion = *(struct motion*)data;
     double dz = - motion.dx - motion.dy;
     zoom(&dz);
@@ -312,19 +349,19 @@ void zoom_scroll(void *data) {
 static double zoom_pinch_initial;
 
 
-void zoom_pinch(void *data) {
+static void zoom_pinch(void *data) {
     double scale = *(double*)data;
     double dz = 100 * scale * zoom_pinch_initial / wimp.current_desk->zoom - 100;
     zoom(&dz);
 }
 
 
-void zoom_pinch_begin(void *data) {
+static void zoom_pinch_begin(void *data) {
     zoom_pinch_initial = wimp.current_desk->zoom;
 }
 
 
-void set_mark(void *data) {
+static void set_mark(void *data) {
     struct mark *mark = calloc(1, sizeof(struct mark));
     struct desk *desk = wimp.current_desk;
     mark->desk = desk;
@@ -381,7 +418,7 @@ void actually_set_mark(const xkb_keysym_t sym) {
 }
 
 
-void go_to_mark(void *data) {
+static void go_to_mark(void *data) {
     wimp.mark_waiting = true;
     damage_mark_indicator();
 }
@@ -442,7 +479,7 @@ void toggle_fullscreen(void *data) {
 }
 
 
-void halfimize(void *data) {
+static void halfimize(void *data) {
     struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
     if (!surface || !wlr_surface_is_xdg_surface(surface) || wl_list_empty(&wimp.current_desk->views)) {
 	return;
@@ -497,7 +534,7 @@ void halfimize(void *data) {
 }
 
 
-void maximize(void *data) {
+static void maximize(void *data) {
     struct wlr_surface *surface = wimp.seat->keyboard_state.focused_surface;
     if (!surface || !wlr_surface_is_xdg_surface(surface) || wl_list_empty(&wimp.current_desk->views)) {
 	return;
@@ -523,7 +560,7 @@ void maximize(void *data) {
 }
 
 
-void send_to_desk(void *data) {
+static void send_to_desk(void *data) {
     struct view *view = wl_container_of(wimp.current_desk->views.next, view, link);
     int index = *(double*)data - 1;
     unfullscreen();
@@ -531,7 +568,7 @@ void send_to_desk(void *data) {
 }
 
 
-void toggle_scratchpad(void *data) {
+static void toggle_scratchpad(void *data) {
     struct scratchpad *scratchpad = scratchpad_from_id(*(int *)data);
 
     if (scratchpad->view) {
@@ -558,7 +595,7 @@ void toggle_scratchpad(void *data) {
 }
 
 
-void to_region(void *data) {
+static void to_region(void *data) {
     struct wlr_box *box = (struct wlr_box *)data;
     struct wlr_box *extents = wlr_output_layout_get_box(wimp.output_layout, NULL);
 

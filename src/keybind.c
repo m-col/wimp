@@ -4,7 +4,7 @@
 #include "types.h"
 
 
-static struct value_map mods[] = {
+static struct dict mods[] = {
     { "shift", WLR_MODIFIER_SHIFT },
     { "caps", WLR_MODIFIER_CAPS },
     { "ctrl", WLR_MODIFIER_CTRL },
@@ -16,7 +16,7 @@ static struct value_map mods[] = {
 };
 
 
-static struct value_map mouse_keys[] = {
+static struct dict mouse_keys[] = {
     { "motion", MOTION },
     { "scroll", SCROLL },
     { "drag1", DRAG1 },
@@ -26,89 +26,9 @@ static struct value_map mouse_keys[] = {
 };
 
 
-static struct {
-    const char *name;
-    const action action;
-    bool (*data_handler)(void **data, char *args);
-} action_map[] = {
-    { "terminate", &terminate, NULL },
-    { "exec", &exec_command, &str_handler },
-    { "close_window", &close_window, NULL },
-    { "move_window", &move_window, NULL },
-    { "focus", &focus_in_direction, &dir_handler },
-    { "next_desk", &next_desk, NULL },
-    { "prev_desk", &prev_desk, NULL },
-    { "pan_desk", &pan_desk, &motion_handler },
-    { "reset_zoom", &reset_zoom, NULL },
-    { "zoom", &zoom, &str_handler },
-    { "set_mark", &set_mark, NULL },
-    { "go_to_mark", &go_to_mark, NULL },
-    { "toggle_fullscreen", &toggle_fullscreen, NULL },
-    { "halfimize", &halfimize, &dir_handler },
-    { "maximize", &maximize, NULL },
-    { "send_to_desk", &send_to_desk, &str_handler },
-    { "scratchpad", &toggle_scratchpad, &scratchpad_handler },
-    { "to_region", &to_region, &box_handler },
-};
-
-
-static struct {
-    const char *name;
-    const action action;
-    const action begin;
-} pinch_map[] = {
-    { "zoom", &zoom_pinch, &zoom_pinch_begin },
-};
-
-
-static struct {
-    const char *name;
-    const action action;
-} scroll_map[] = {
-    { "zoom", &zoom_scroll },
-    { "pan_desk", &pan_desk },
-};
-
-
-static bool assign_action(const char *name, char *args, struct binding *kb, char * response) {
-    kb->action = NULL;
-    kb->data = NULL;
-    size_t i;
-
-    switch (kb->key) {
-	case PINCH:
-	    for (i = 0; i < sizeof(pinch_map) / sizeof(pinch_map[0]); i++) {
-		if (strcmp(pinch_map[i].name, name) == 0) {
-		    kb->action = pinch_map[i].action;
-		    kb->begin = pinch_map[i].begin;
-		    return true;
-		}
-	    }
-	    break;
-	case SCROLL:
-	    for (i = 0; i < sizeof(scroll_map) / sizeof(scroll_map[0]); i++) {
-		if (strcmp(scroll_map[i].name, name) == 0) {
-		    kb->action = scroll_map[i].action;
-		    return true;
-		}
-	    }
-	    break;
-	default:
-	    for (i = 0; i < sizeof(action_map) / sizeof(action_map[0]); i++) {
-		if (strcmp(action_map[i].name, name) == 0) {
-		    kb->action = action_map[i].action;
-		    if (action_map[i].data_handler != NULL) {
-			if (!action_map[i].data_handler(&kb->data, args)){
-			    sprintf(response, "Command malformed/incomplete.");
-			    return false;
-			}
-		    }
-		    return true;
-		}
-	    }
-    }
-
-    return false;
+static bool assign_action(char *name, char *args, struct binding *kb, char *response) {
+    // TODO: remove
+    return get_action(name, &kb->action, args, &kb->data, response, kb->key);
 }
 
 
