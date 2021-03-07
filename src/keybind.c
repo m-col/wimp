@@ -1,24 +1,7 @@
 #include "action.h"
 #include "keybind.h"
+#include "parse.h"
 #include "types.h"
-
-struct value_map {
-    const char *name;
-    const int value;
-};
-
-
-/* To get the length of these arrays we need to calculate that before passing
- * them to the getter so the macro hides this. */
-static int _get(struct value_map *values, const int len, const char *name) {
-    for (int i = 0; i < len; i++) {
-	if (strcasecmp(values[i].name, name) == 0)
-	    return values[i].value;
-    }
-    return 0;
-}
-
-#define get(arr, name) _get(arr, sizeof(arr) / sizeof(arr[0]), name)
 
 
 static struct value_map mods[] = {
@@ -33,14 +16,6 @@ static struct value_map mods[] = {
 };
 
 
-static struct value_map dirs[] = {
-    { "up", UP },
-    { "right", RIGHT },
-    { "down", DOWN },
-    { "left", LEFT },
-};
-
-
 static struct value_map mouse_keys[] = {
     { "motion", MOTION },
     { "scroll", SCROLL },
@@ -51,163 +26,10 @@ static struct value_map mouse_keys[] = {
 };
 
 
-static bool dir_handler(struct binding *kb, char *data) {
-    kb->data = calloc(1, sizeof(enum direction));
-    *(enum direction *)(kb->data) = get(dirs, strtok(data, " \t\n\r"));
-    return true;
-}
-
-
-static bool str_handler(struct binding *kb, char *data) {
-    if (!data) {
-	return false;
-    }
-    if (is_number(data)) {
-	kb->data = calloc(1, sizeof(double));
-	*(double *)(kb->data) = strtod(data, NULL);
-    } else {
-	kb->data = calloc(strlen(data), sizeof(char));
-	strncpy(kb->data, data, strlen(data));
-    }
-    return true;
-}
-
-
-static bool motion_handler(struct binding *kb, char *data) {
-    char *s;
-    if (!data) {
-	return false;
-    }
-
-    s = strtok(data, " \t\n\r");
-    if (!is_number(s) || !data) {
-	return false;
-    }
-    int x = atoi(s);
-
-    s = strtok(NULL, " \t\n\r");
-    if (!is_number(s)) {
-	return false;
-    }
-    int y = atoi(s);
-
-    struct motion motion = {
-	.dx = x,
-	.dy = y,
-	.is_percentage = true,
-    };
-    kb->data = calloc(1, sizeof(struct motion));
-    *(struct motion *)(kb->data) = motion;
-    return true;
-}
-
-
-bool wlr_box_from_str(char* str, struct wlr_box *box) {
-    // turns e.g. 1920x1800+500+500 into a wlr_box
-    char *w, *h, *x, *y;
-    if (str) {
-	if ((w = strtok(str, "x")) && is_number_perc(w)) {
-	    if ((h = strtok(NULL, "+")) && is_number_perc(h)) {
-		if ((x = strtok(NULL, "+")) && is_number_perc(x)) {
-		    if ((y = strtok(NULL, " \t\n\r")) && is_number_perc(y)) {
-			if (is_number(w)) {
-			    box->width = atoi(w);
-			} else {
-			    if ((w = strtok(w, "%"))) {
-				box->width = - atoi(w);
-			    } else {
-				return false;
-			    }
-			}
-			if (is_number(h)) {
-			    box->height = atoi(h);
-			} else {
-			    if ((h = strtok(h, "%"))) {
-				box->height = - atoi(h);
-			    } else {
-				return false;
-			    }
-			}
-			if (is_number(x)) {
-			    box->x = atoi(x);
-			} else {
-			    if ((x = strtok(x, "%"))) {
-				box->x = - atoi(x);
-			    } else {
-				return false;
-			    }
-			}
-			if (is_number(y)) {
-			    box->y = atoi(y);
-			} else {
-			    if ((y = strtok(y, "%"))) {
-				box->y = - atoi(y);
-			    } else {
-				return false;
-			    }
-			}
-			return true;
-		    }
-		}
-	    }
-	}
-    }
-    return false;
-}
-
-
-static int _scratchpad_id = 0;
-
-
-static bool scratchpad_handler(struct binding *kb, char *data) {
-    char *geo, *command;
-    struct wlr_box box;
-    if (!data) {
-	return false;
-    }
-    if (!(geo = strtok(data, " \t\n\r"))) {
-	return false;
-    }
-    if (!(command = strtok(NULL, "\n\r"))) {
-	return false;
-    }
-    if (!wlr_box_from_str(geo, &box)) {
-	return false;
-    }
-
-    struct scratchpad *scratchpad = calloc(1, sizeof(struct scratchpad));
-    wl_list_insert(wimp.scratchpads.prev, &scratchpad->link);
-    scratchpad->command = strdup(command);
-    scratchpad->id = _scratchpad_id;
-    scratchpad->is_mapped = false;
-    scratchpad->view = NULL;
-    scratchpad->geo = box;
-
-    kb->data = calloc(1, sizeof(int));
-    *(int *)(kb->data) = _scratchpad_id;
-    _scratchpad_id++;
-    return true;
-}
-
-
-static bool box_handler(struct binding *kb, char *data) {
-    char *geo;
-    if (!(geo = strtok(data, " \t\n\r"))) {
-	return false;
-    }
-    struct wlr_box *box = calloc(1, sizeof(struct wlr_box));
-    if (!wlr_box_from_str(geo, box)) {
-	return false;
-    }
-    kb->data = box;
-    return true;
-}
-
-
 static struct {
     const char *name;
     const action action;
-    bool (*data_handler)(struct binding *kb, char *data);
+    bool (*data_handler)(void **data, char *args);
 } action_map[] = {
     { "terminate", &terminate, NULL },
     { "exec", &exec_command, &str_handler },
@@ -248,7 +70,7 @@ static struct {
 };
 
 
-static bool assign_action(const char *name, char *data, struct binding *kb, char * response) {
+static bool assign_action(const char *name, char *args, struct binding *kb, char * response) {
     kb->action = NULL;
     kb->data = NULL;
     size_t i;
@@ -276,7 +98,7 @@ static bool assign_action(const char *name, char *data, struct binding *kb, char
 		if (strcmp(action_map[i].name, name) == 0) {
 		    kb->action = action_map[i].action;
 		    if (action_map[i].data_handler != NULL) {
-			if (!action_map[i].data_handler(kb, data)){
+			if (!action_map[i].data_handler(&kb->data, args)){
 			    sprintf(response, "Command malformed/incomplete.");
 			    return false;
 			}

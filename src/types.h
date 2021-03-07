@@ -237,4 +237,9 @@ struct scratchpad {
     struct wlr_box geo; // negative values represent a percentage of the output's geometry
 };
 
+struct value_map {
+    const char *name;
+    const int value;
+};
+
 #endif
