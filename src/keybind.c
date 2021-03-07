@@ -26,12 +26,6 @@ static struct dict mouse_keys[] = {
 };
 
 
-static bool assign_action(char *name, char *args, struct binding *kb, char *response) {
-    // TODO: remove
-    return get_action(name, &kb->action, args, &kb->data, response, kb->key);
-}
-
-
 void free_binding(struct binding *kb) {
     if (kb->data)
 	free(kb->data);
@@ -83,7 +77,7 @@ void add_binding(char *message, char *response) {
 	sprintf(response,  "Command malformed/incomplete.");
 	return;
     }
-    if (!assign_action(s, strtok(NULL, "\n\r"), kb, response)) {
+    if (!get_action(s, &kb->action, strtok(NULL, "\n\r"), &kb->data, response, kb->key)) {
 	free(kb);
 	return;
     }
