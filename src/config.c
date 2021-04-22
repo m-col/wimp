@@ -1,4 +1,5 @@
 #include <cairo/cairo.h>
+#include <drm_fourcc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,7 @@ static void load_wallpaper(struct desk *desk, char *path) {
     cairo_paint(cr);
 
     wallpaper->texture = wlr_texture_from_pixels(
-	wimp.renderer, WL_SHM_FORMAT_ARGB8888, stride, wallpaper->width,
+	wimp.renderer, DRM_FORMAT_ARGB8888, stride, wallpaper->width,
 	wallpaper->height, cairo_image_surface_get_data(canvas)
     );
     desk->wallpaper = wallpaper;
